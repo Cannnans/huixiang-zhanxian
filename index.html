@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>回响战线</title>
+<style>
+:root{
+  --bg:#10141d; --panel:#1a2130; --panel2:#232c40; --line:#33405c;
+  --txt:#e8ecf4; --dim:#8b96ad; --gold:#e8c15a; --red:#e05c5c; --green:#5cc98a;
+  --blue:#5aa9e8; --purple:#a97fe0;
+  --rar-R:#9aa7bd; --rar-SR:#5aa9e8; --rar-SSR:#a97fe0; --rar-UR:#e8c15a;
+}
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:"Microsoft YaHei","PingFang SC",sans-serif;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+
+/* ---------- 横屏提示 ---------- */
+#rotate-tip{display:none;position:fixed;inset:0;background:var(--bg);z-index:999;
+  align-items:center;justify-content:center;flex-direction:column;gap:12px;font-size:18px;color:var(--dim)}
+#rotate-tip .phone{font-size:48px;animation:rot 2s infinite ease-in-out}
+@keyframes rot{0%,20%{transform:rotate(0)}60%,100%{transform:rotate(90deg)}}
+@media (orientation:portrait){#rotate-tip{display:flex}}
+
+/* ---------- 通用界面 ---------- */
+.screen{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  background:radial-gradient(ellipse at 50% 30%,#1d2942 0%,var(--bg) 70%)}
+.screen h1{font-size:42px;letter-spacing:8px;color:var(--gold);text-shadow:0 0 24px rgba(232,193,90,.4)}
+.screen .sub{color:var(--dim);letter-spacing:3px;margin-bottom:8px}
+.menu-btn{width:280px;padding:13px 0;font-size:18px;letter-spacing:6px;border:1px solid var(--line);border-radius:10px;
+  background:var(--panel);color:var(--txt);transition:.15s}
+.menu-btn:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-2px)}
+.menu-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.menu-btn.primary{background:linear-gradient(135deg,#c99a3a,#e8c15a);color:#20180a;font-weight:700;border:none}
+.menu-btn.small{width:150px;padding:9px 0;font-size:15px}
+.row-btns{display:flex;gap:14px;margin-top:8px}
+
+/* ---------- 主界面 ---------- */
+#game{display:none;height:100vh;grid-template-columns:1fr 240px;grid-template-rows:auto 1fr auto auto;
+  grid-template-areas:"einfo einfo" "board log" "pbar log" "hand hand";gap:5px;padding:7px}
+.topbar{grid-area:einfo;display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px 14px}
+.topbar .who{font-size:15px;font-weight:700;color:var(--red)}
+.stat-chip{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--dim)}
+.stat-chip b{color:var(--txt);font-size:15px}
+.core-hp{color:var(--red)}
+#board{grid-area:board;display:flex;flex-direction:column;gap:5px;min-height:0}
+.brow{flex:1;display:grid;grid-template-columns:64px repeat(7,1fr);gap:5px;min-height:0}
+.row-label{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:var(--dim);
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;letter-spacing:2px;writing-mode:vertical-lr}
+.brow.base .row-label{color:var(--gold)}
+.slot{position:relative;background:rgba(35,44,64,.55);border:1px dashed #2c3852;border-radius:8px;min-height:0;transition:.12s}
+.slot.hl{border:2px solid var(--green);background:rgba(92,201,138,.12);cursor:pointer;box-shadow:0 0 10px rgba(92,201,138,.3);animation:pulse 1.2s infinite}
+.slot.hl-atk{border:2px solid var(--red);background:rgba(224,92,92,.12);cursor:pointer;box-shadow:0 0 10px rgba(224,92,92,.35);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 18px rgba(92,201,138,.5)}}
+.brow.front .slot{background:rgba(64,52,28,.35)}
+.core-slot{position:relative;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:linear-gradient(160deg,#3a3050,#241c36);border:2px solid var(--gold);cursor:default;min-height:0}
+.core-slot .ico{font-size:24px}
+.core-slot .chp{font-size:16px;font-weight:800;color:var(--red)}
+.core-slot .clabel{font-size:10px;color:var(--dim);letter-spacing:2px}
+.core-slot.hl-atk{border-color:var(--red);cursor:crosshair;box-shadow:0 0 14px rgba(224,92,92,.5);animation:pulse 1.2s infinite}
+
+/* ---------- 卡面（紧凑：名称/攻击/生命） ---------- */
+.card{position:absolute;inset:1px;border-radius:7px;background:linear-gradient(160deg,#2a3550,#1c2436);
+  border:2px solid #4a5878;display:flex;flex-direction:column;overflow:hidden;cursor:pointer;transition:.12s}
+.card:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.5)}
+.card .c-attr{position:absolute;top:2px;right:3px;font-size:11px;width:17px;height:17px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45)}
+.card .c-rar{position:absolute;top:19px;right:4px;font-size:9px;font-weight:800}
+.card .c-name{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:13px;font-weight:700;padding:12px 2px 2px;line-height:1.25;letter-spacing:1px}
+.card .c-kw{position:absolute;top:2px;left:3px;display:flex;flex-direction:column;gap:2px;max-width:60%}
+.card .c-kw span{font-size:10px;background:rgba(0,0,0,.55);border:1px solid #556;border-radius:4px;padding:0 3px;color:#bcd}
+.card .c-stats{display:flex;justify-content:space-between;padding:0 2px 2px}
+.card .atk,.card .hp{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+.card .atk{background:radial-gradient(circle at 35% 30%,#f4b74a,#a3630e);color:#1c1000}
+.card .hp{background:radial-gradient(circle at 35% 30%,#e77d7d,#8c1f1f);color:#fff}
+.card .c-cost{position:absolute;top:-6px;left:-6px;width:25px;height:25px;border-radius:50%;z-index:2;
+  background:radial-gradient(circle at 35% 30%,#7cc0f5,#1c5aa0);color:#fff;font-weight:800;font-size:14px;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.6)}
+.card .info-btn{position:absolute;bottom:28px;right:2px;width:16px;height:16px;border-radius:50%;font-size:10px;
+  background:rgba(0,0,0,.6);color:#9ab;display:flex;align-items:center;justify-content:center;z-index:2}
+.card .info-btn:hover{color:#fff;background:#345}
+.card.t-英雄{border-color:var(--gold)}
+.card.t-部队{border-color:#5f7ba6}
+.card.t-建筑{border-color:#a67c52}
+.card.t-装备{border-color:#7fbf7f}
+.card.t-技能{border-color:var(--purple)}
+.card.exhausted{filter:grayscale(.7) brightness(.75)}
+.card.selected{outline:3px solid var(--green);outline-offset:1px}
+.card.targetable{outline:3px solid var(--red);outline-offset:1px;cursor:crosshair}
+.card .sleep{position:absolute;bottom:28px;left:4px;font-size:13px;opacity:.85}
+
+/* ---------- 玩家栏 / 手牌 ---------- */
+#player-bar{grid-area:pbar;display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px 14px}
+#player-bar .who{font-size:15px;font-weight:700;color:var(--blue)}
+#rp-box{display:flex;align-items:center;gap:3px}
+.rp-pip{width:12px;height:12px;border-radius:50%;background:#26314a;border:1px solid #3a4a6e}
+.rp-pip.on{background:radial-gradient(circle at 35% 30%,#8fd0ff,#2a7fd4);box-shadow:0 0 6px rgba(90,169,232,.7)}
+#end-turn{margin-left:auto;padding:8px 28px;font-size:15px;font-weight:700;letter-spacing:3px;border:none;border-radius:8px;
+  background:linear-gradient(135deg,#3f7d54,#5cc98a);color:#08150c}
+#end-turn:disabled{filter:grayscale(.9);opacity:.45;cursor:not-allowed}
+#ingame-menu-btn{padding:8px 14px;font-size:15px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--dim)}
+#hand{grid-area:hand;display:flex;gap:8px;justify-content:center;align-items:flex-end;min-height:118px;padding:2px 8px;overflow-x:auto}
+#hand .hcard{position:relative;width:100px;height:116px;flex:0 0 auto}
+#hand .hcard.unplayable{filter:grayscale(.6) brightness(.7)}
+#hand .card{inset:0}
+#hand .card .c-name{font-size:13px}
+
+/* ---------- 日志 ---------- */
+#log{grid-area:log;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;
+  overflow-y:auto;font-size:12px;line-height:1.65;color:var(--dim)}
+#log .t{color:var(--gold);font-weight:700;margin-top:4px}
+#log .dmg{color:var(--red)}
+#log .heal{color:var(--green)}
+#log .sys{color:var(--blue)}
+
+/* ---------- 弹窗 ---------- */
+.overlay{position:fixed;inset:0;background:rgba(5,8,14,.75);z-index:90;display:none;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+#detail-box{width:380px;max-width:92vw;background:var(--panel2);border:2px solid var(--line);border-radius:14px;padding:20px 22px;position:relative}
+#detail-box h2{font-size:22px;margin-bottom:4px}
+#detail-box .dtype{color:var(--dim);font-size:13px;margin-bottom:12px}
+#detail-box table{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:12px}
+#detail-box td{padding:5px 8px;border:1px solid var(--line)}
+#detail-box td:first-child{color:var(--dim);width:76px;background:rgba(0,0,0,.2)}
+#detail-box .eff{font-size:13.5px;line-height:1.8;background:rgba(0,0,0,.25);border-radius:8px;padding:10px 12px;color:#cfd8ea;white-space:pre-line}
+.overlay .x{position:absolute;top:8px;right:12px;font-size:20px;color:var(--dim);cursor:pointer;background:none;border:none}
+.dialog-box{text-align:center;background:var(--panel2);border:2px solid var(--gold);border-radius:14px;padding:30px 46px;display:flex;flex-direction:column;gap:12px;min-width:320px}
+.dialog-box h2{color:var(--gold);letter-spacing:4px;margin-bottom:4px}
+#dice-vals{display:flex;gap:40px;justify-content:center;font-size:15px;margin-bottom:6px}
+#dice-vals b{font-size:44px;display:block;color:#fff}
+#dice-msg{font-size:16px;color:var(--green)}
+.btn{padding:10px 34px;font-size:15px;border:none;border-radius:8px;background:linear-gradient(135deg,#c99a3a,#e8c15a);color:#20180a;font-weight:700}
+.btn.ghost{background:var(--panel);color:var(--txt);border:1px solid var(--line)}
+#phase-tip{position:fixed;left:50%;top:44%;transform:translateX(-50%);font-size:30px;font-weight:800;letter-spacing:8px;
+  color:var(--gold);text-shadow:0 2px 18px #000;opacity:0;pointer-events:none;transition:opacity .3s;z-index:60}
+#hint{position:fixed;left:50%;bottom:8px;transform:translateX(-50%);z-index:200;background:rgba(20,26,40,.95);
+  border:1px solid var(--gold);border-radius:8px;padding:7px 18px;font-size:13.5px;color:var(--gold);
+  opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw;text-align:center}
+#reward-line{font-size:17px;color:var(--gold);font-weight:700}
+
+/* ---------- 教程条 ---------- */
+#tut-bar{display:none;position:fixed;left:50%;bottom:132px;transform:translateX(-50%);z-index:70;width:min(680px,92vw);
+  background:linear-gradient(160deg,#2c2742,#1c1830);border:2px solid var(--gold);border-radius:12px;padding:14px 18px;
+  box-shadow:0 6px 30px rgba(0,0,0,.6)}
+#tut-bar .tt{font-size:14.5px;line-height:1.8;color:#e8e2f4}
+#tut-bar .tt b{color:var(--gold)}
+#tut-bar .tb{display:flex;gap:10px;justify-content:flex-end;margin-top:10px}
+#tut-bar button{padding:7px 20px;font-size:14px;border-radius:7px;border:none}
+#tut-next{background:linear-gradient(135deg,#c99a3a,#e8c15a);color:#20180a;font-weight:700}
+#tut-quit{background:transparent;color:var(--dim);border:1px solid var(--line)!important}
+#tut-step{font-size:11px;color:var(--dim);margin-bottom:4px;letter-spacing:2px}
+
+/* ---------- 我的卡包 / 商店 ---------- */
+#shop-screen{justify-content:flex-start;padding:0}
+.shop-head{width:100%;display:flex;align-items:center;gap:10px;padding:12px 18px;background:rgba(26,33,48,.85);border-bottom:1px solid var(--line)}
+.shop-head .gold{margin-left:auto;font-size:18px;color:var(--gold);font-weight:700}
+.shop-body{flex:1;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:16px}
+#free-claim{display:none;padding:10px 22px;border:1px dashed var(--gold);border-radius:10px;color:var(--gold);font-size:15px;background:rgba(232,193,90,.08);cursor:pointer}
+#free-claim:hover{background:rgba(232,193,90,.18)}
+.shop-grid{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+.shop-pack{width:200px;padding:20px 16px;border:2px solid var(--line);border-radius:14px;background:var(--panel);text-align:center;display:flex;flex-direction:column;gap:8px}
+.shop-pack h3{font-size:19px}
+.shop-pack .pdesc{font-size:12px;color:var(--dim);line-height:1.6}
+.shop-pack .pprice{font-size:16px;color:var(--gold);font-weight:700}
+.shop-pack button{padding:9px 0;border:none;border-radius:8px;background:linear-gradient(135deg,#3f7d54,#5cc98a);color:#08150c;font-weight:700;font-size:15px}
+.shop-pack button:disabled{filter:grayscale(.9);opacity:.45;cursor:not-allowed}
+#btn-deckbuild{position:fixed;right:22px;bottom:22px;padding:14px 26px;font-size:17px;letter-spacing:3px;border:none;border-radius:12px;
+  background:linear-gradient(135deg,#c99a3a,#e8c15a);color:#20180a;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.5);z-index:55}
+
+/* ---------- 开包 ---------- */
+#packopen-box{background:var(--panel2);border:2px solid var(--gold);border-radius:16px;padding:24px 28px;max-width:94vw}
+#packopen-box h2{color:var(--gold);text-align:center;letter-spacing:4px;margin-bottom:16px}
+#packopen-grid{display:grid;grid-template-columns:repeat(5,110px);gap:10px;justify-content:center}
+#packopen-grid .poc{position:relative;width:110px;height:132px;animation:flip .5s backwards}
+@keyframes flip{from{opacity:0;transform:rotateY(90deg)}to{opacity:1;transform:rotateY(0)}}
+#packopen-box .btn{display:block;margin:18px auto 0}
+
+/* ---------- 图鉴 / 机制 ---------- */
+.wide-box{background:var(--panel2);border:2px solid var(--line);border-radius:14px;padding:16px 20px;width:min(1060px,94vw);height:min(640px,88vh);display:flex;flex-direction:column;position:relative}
+.wide-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.wide-head h2{color:var(--gold);letter-spacing:3px;font-size:20px}
+.filter-sel{background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:13px}
+#gallery-grid{flex:1;overflow-y:auto;display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start;padding:4px}
+.gcard{position:relative;width:100px;height:120px}
+.gcard .cnt{position:absolute;bottom:-2px;right:-2px;background:var(--gold);color:#20180a;font-size:12px;font-weight:800;border-radius:8px;padding:0 6px;z-index:3}
+.gcard .card{inset:0}
+#mech-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px}
+.mech-item{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.mech-item b{color:var(--gold);font-size:15px;margin-right:8px}
+.mech-item span{font-size:13.5px;color:#cfd8ea;line-height:1.7}
+
+/* ---------- 设计卡包 ---------- */
+#deckbuild-box{background:var(--panel2);border:2px solid var(--line);border-radius:14px;width:min(1100px,96vw);height:min(660px,92vh);display:flex;flex-direction:column;position:relative;padding:14px 18px}
+.db-cols{flex:1;display:grid;grid-template-columns:1.4fr 1fr;gap:14px;min-height:0}
+.db-col{display:flex;flex-direction:column;min-height:0}
+.db-col h3{font-size:15px;color:var(--gold);margin-bottom:8px;letter-spacing:2px}
+.db-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding:2px}
+.db-row{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13.5px;cursor:pointer;transition:.1s}
+.db-row:hover{border-color:var(--blue)}
+.db-row .rcost{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7cc0f5,#1c5aa0);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex:0 0 auto}
+.db-row .rname{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.db-row .rtype{font-size:11px;color:var(--dim)}
+.db-row .rown{color:var(--dim);font-size:12px}
+.db-row.dis{opacity:.4;cursor:not-allowed}
+.db-foot{display:flex;align-items:center;gap:14px;padding-top:12px}
+#db-status{font-size:13px;color:var(--red);flex:1}
+#db-status.ok{color:var(--green)}
+
+/* ---------- 联机对战 ---------- */
+#room-code{font-size:38px;letter-spacing:12px;color:var(--gold);font-weight:800;padding:8px 0;user-select:text;-webkit-user-select:text}
+#code-input{width:170px;padding:9px 12px;font-size:20px;letter-spacing:6px;text-transform:uppercase;text-align:center;background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:8px;outline:none}
+#code-input:focus{border-color:var(--gold)}
+#online-status{color:var(--dim);font-size:14px;min-height:20px;text-align:center}
+.card .c-kw span.fx{color:#f2b08a;border-color:#8a5a3a}
+
+/* ---------- 存档列表 ---------- */
+#savelist-box{background:var(--panel2);border:2px solid var(--gold);border-radius:14px;padding:24px 28px;min-width:440px;max-width:92vw;display:flex;flex-direction:column;gap:10px;max-height:80vh}
+#savelist-box h2{color:var(--gold);letter-spacing:4px;text-align:center}
+#savelist-items{overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.save-row{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:14px}
+.save-row .sl{flex:1}
+.save-row .sl small{color:var(--dim);display:block;font-size:12px}
+.save-row button{padding:5px 14px;font-size:13px;border-radius:6px;border:1px solid var(--line);background:var(--panel2);color:var(--txt)}
+.save-row button:hover{border-color:var(--gold)}
+.save-empty{color:var(--dim);text-align:center;padding:20px 0}
+</style>
+</head>
+<body>
+<div id="rotate-tip"><div class="phone">📱</div><div>请旋转设备，横屏游玩</div></div>
+
+<!-- 主菜单 -->
+<div class="screen" id="menu-screen">
+  <h1>回 响 战 线</h1>
+  <div class="sub">五 条 战 线 · 共 鸣 对 决</div>
+  <button class="menu-btn" id="btn-tutorial">新 手 教 程</button>
+  <button class="menu-btn primary" id="btn-sim">模 拟 对 局</button>
+  <button class="menu-btn" id="btn-online">联 机 对 战</button>
+  <button class="menu-btn" id="btn-shop">我 的 卡 包</button>
+  <button class="menu-btn" id="btn-savelist">存 档 列 表</button>
+  <button class="menu-btn" id="btn-continue">继 续 游 戏</button>
+  <button class="menu-btn" id="btn-settings">设 置</button>
+</div>
+
+<!-- 模拟对局（卡组确认） -->
+<div class="screen" id="pregame-screen" style="display:none">
+  <h1 style="font-size:30px">模 拟 对 局</h1>
+  <div class="sub">使用你自己设计的卡包作战 · 敌方使用系统卡包</div>
+  <div class="dialog-box" style="border-color:var(--line);min-width:380px">
+    <div id="pregame-deck-info" style="font-size:15px;line-height:2"></div>
+    <button class="menu-btn primary" id="start-btn" style="width:220px">开 始 对 决</button>
+    <button class="menu-btn small" id="btn-goto-deck">设计卡包</button>
+  </div>
+  <button class="menu-btn small" onclick="showScreen('menu-screen')">返 回</button>
+</div>
+
+<!-- 联机对战 -->
+<div class="screen" id="online-screen" style="display:none">
+  <h1 style="font-size:30px">联 机 对 战</h1>
+  <div class="sub">通过 6 位邀请码与好友对战 · 双方使用各自设计的卡包</div>
+  <div class="dialog-box" style="border-color:var(--line);min-width:400px">
+    <div id="online-create-row"><button class="menu-btn primary" id="btn-create-room" style="width:240px">创 建 房 间</button></div>
+    <div id="room-code-box" style="display:none;text-align:center">
+      <div style="color:var(--dim);font-size:13px">把邀请码告诉好友，等待其加入</div>
+      <div id="room-code"></div>
+    </div>
+    <div style="color:var(--dim)">— 或 —</div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <input id="code-input" maxlength="6" placeholder="邀请码" autocomplete="off">
+      <button class="menu-btn" id="btn-join-room" style="width:160px">加 入 房 间</button>
+    </div>
+    <div id="online-status"></div>
+  </div>
+  <button class="menu-btn small" id="btn-online-back">返 回</button>
+</div>
+
+<!-- 我的卡包（商店） -->
+<div class="screen" id="shop-screen" style="display:none">
+  <div class="shop-head">
+    <button class="menu-btn small" onclick="showScreen('menu-screen')">← 返回</button>
+    <button class="menu-btn small" onclick="openGallery()">📖 图鉴</button>
+    <button class="menu-btn small" onclick="openMech()">📜 机制</button>
+    <span class="gold" id="gold-num">💰 0</span>
+  </div>
+  <div class="shop-body">
+    <div id="free-claim" onclick="claimFreePacks()">🎁 新牌手福利：点击领取 3 个免费通用卡包！</div>
+    <div class="shop-grid" id="shop-grid"></div>
+  </div>
+  <button id="btn-deckbuild" onclick="openDeckbuild()">🛠 设计卡包</button>
+</div>
+
+<!-- 对局 -->
+<div id="game">
+  <div class="topbar" id="enemy-bar"></div>
+  <div id="board"></div>
+  <div id="player-bar"></div>
+  <div id="hand"></div>
+  <aside id="log"></aside>
+</div>
+
+<!-- 教程条 -->
+<div id="tut-bar">
+  <div id="tut-step"></div>
+  <div class="tt" id="tut-text"></div>
+  <div class="tb">
+    <button id="tut-quit" onclick="quitTutorial()">退出教程</button>
+    <button id="tut-next" onclick="tutNext()">下一步 →</button>
+  </div>
+</div>
+
+<!-- 详情 -->
+<div class="overlay" id="detail-overlay">
+  <div id="detail-box"><button class="x" onclick="closeDetail()">✕</button><div id="detail-body"></div></div>
+</div>
+<!-- 骰子 -->
+<div class="overlay" id="dice-overlay">
+  <div class="dialog-box">
+    <h2>先 手 判 定</h2>
+    <div id="dice-vals"><div>我方<b id="dice-me">?</b></div><div>敌方<b id="dice-ai">?</b></div></div>
+    <div id="dice-msg">投掷 D20 中……</div>
+  </div>
+</div>
+<!-- 结算 -->
+<div class="overlay" id="gameover-overlay">
+  <div class="dialog-box">
+    <h2 id="gameover-title" style="font-size:32px"></h2>
+    <div id="reward-line"></div>
+    <button class="btn" id="btn-again">再来一局</button>
+    <button class="btn ghost" onclick="backToMenu()">返回主菜单</button>
+  </div>
+</div>
+<!-- 对局菜单 -->
+<div class="overlay" id="ingame-menu">
+  <div class="dialog-box">
+    <h2>菜 单</h2>
+    <button class="btn ghost" onclick="hide('ingame-menu')">继续对局</button>
+    <button class="btn ghost" id="btn-save-ingame">保存对局</button>
+    <button class="btn ghost" onclick="backToMenu()">返回主菜单</button>
+  </div>
+</div>
+<!-- 设置 -->
+<div class="overlay" id="settings-overlay">
+  <div class="dialog-box">
+    <h2>设 置</h2>
+    <div style="display:flex;align-items:center;gap:10px;justify-content:space-between">
+      <span style="color:var(--dim)">AI 行动速度</span>
+      <select id="set-speed" style="background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:14px">
+        <option value="400">快</option>
+        <option value="650">中</option>
+        <option value="1000">慢</option>
+      </select>
+    </div>
+    <button class="btn ghost" id="btn-clear-save">清除所有存档与收藏</button>
+    <button class="btn" onclick="hide('settings-overlay')">完 成</button>
+  </div>
+</div>
+<!-- 存档列表 -->
+<div class="overlay" id="savelist-overlay">
+  <div id="savelist-box">
+    <button class="x" onclick="hide('savelist-overlay')">✕</button>
+    <h2>存 档 列 表</h2>
+    <button class="btn ghost" id="btn-save-new">＋ 保存当前对局</button>
+    <div id="savelist-items"></div>
+  </div>
+</div>
+<!-- 开包 -->
+<div class="overlay" id="packopen-overlay">
+  <div id="packopen-box">
+    <h2 id="packopen-title">开 包</h2>
+    <div id="packopen-grid"></div>
+    <button class="btn" onclick="hide('packopen-overlay')">收 下</button>
+  </div>
+</div>
+<!-- 图鉴 -->
+<div class="overlay" id="gallery-overlay">
+  <div class="wide-box">
+    <button class="x" onclick="hide('gallery-overlay')">✕</button>
+    <div class="wide-head">
+      <h2>图 鉴</h2>
+      <select class="filter-sel" id="gal-pack" onchange="renderGallery()"><option value="">全部阵营</option></select>
+      <select class="filter-sel" id="gal-rar" onchange="renderGallery()"><option value="">全部稀有度</option><option value="UR">UR 传说</option><option value="SSR">SSR 史诗</option><option value="SR">SR 稀有</option><option value="R">R 普通</option></select>
+      <select class="filter-sel" id="gal-type" onchange="renderGallery()"><option value="">全部类型</option><option>英雄</option><option>部队</option><option>装备</option><option>技能</option><option>建筑</option></select>
+      <span style="margin-left:auto;color:var(--dim);font-size:13px" id="gal-count"></span>
+    </div>
+    <div id="gallery-grid"></div>
+  </div>
+</div>
+<!-- 机制 -->
+<div class="overlay" id="mech-overlay">
+  <div class="wide-box" style="width:min(720px,94vw)">
+    <button class="x" onclick="hide('mech-overlay')">✕</button>
+    <div class="wide-head"><h2>机 制 · 通 用 词 条</h2></div>
+    <div id="mech-list"></div>
+  </div>
+</div>
+<!-- 设计卡包 -->
+<div class="overlay" id="deckbuild-overlay">
+  <div id="deckbuild-box">
+    <button class="x" onclick="hide('deckbuild-overlay')">✕</button>
+    <div class="wide-head">
+      <h2>设 计 卡 包</h2>
+      <select class="filter-sel" id="db-pack" onchange="renderDeckbuild()"><option value="">全部阵营</option></select>
+      <select class="filter-sel" id="db-type" onchange="renderDeckbuild()"><option value="">全部类型</option><option>英雄</option><option>部队</option><option>装备</option><option>技能</option><option>建筑</option></select>
+      <span style="margin-left:auto;color:var(--dim);font-size:12px">规则：10~30 张 · 英雄 1~3 张 · 同名英雄限 1 · 不超过拥有数量</span>
+    </div>
+    <div class="db-cols">
+      <div class="db-col"><h3>我的收藏（点击加入）</h3><div class="db-list" id="db-collection"></div></div>
+      <div class="db-col"><h3>当前卡包（点击移除）</h3><div class="db-list" id="db-deck"></div></div>
+    </div>
+    <div class="db-foot">
+      <div id="db-status"></div>
+      <button class="btn" onclick="saveDeck()">保存卡包</button>
+    </div>
+  </div>
+</div>
+<div id="phase-tip"></div>
+<div id="hint"></div>
+
+<script>
+const CARD_DATA = {"通用卡包（80张）":[{"type":"英雄","name":"民兵队长","rarity":"R","attr":"无","range":"近","cost":7,"atk":4,"hp":5,"move":1,"dist":1,"effect":"【士气鼓舞】，（主动，消耗2RP）指定一个相邻友方部队本回合+1攻击。"},{"type":"英雄","name":"流浪剑客","rarity":"R","attr":"无","range":"近","cost":6,"atk":5,"hp":4,"move":2,"dist":1,"effect":"【匹夫之勇】：回合开始时，可选择+2攻击，-2生命或-2攻击，+2生命。"},{"type":"英雄","name":"村庄长老","rarity":"SR","attr":"无","range":"近","cost":5,"atk":2,"hp":4,"move":1,"dist":1,"effect":"【经验之谈】：你的回合结束时，指定一个相邻的友方单位+1生命。"},{"type":"英雄","name":"采石场工头","rarity":"R","attr":"土","range":"近","cost":6,"atk":3,"hp":6,"move":1,"dist":1,"effect":"【督促干活】：本单位在场时，你所有的土属性单位+1生命。"},{"type":"英雄","name":"见习法师","rarity":"SR","attr":"无","range":"远","cost":5,"atk":1,"hp":3,"move":1,"dist":2,"effect":"【不稳定的飞弹】，（主动，消耗2RP）指定一个敌方单位造成1~3点随机伤害。"},{"type":"英雄","name":"草药医生","rarity":"SR","attr":"木","range":"近","cost":5,"atk":2,"hp":4,"move":1,"dist":1,"effect":"【膏药】，（主动，消耗1RP）指定一个友方单位+1生命。每回合限一次。"},{"type":"英雄","name":"邋遢盗贼","rarity":"SR","attr":"无","range":"近","cost":4,"atk":3,"hp":3,"move":2,"dist":1,"effect":"【顺手牵羊】：本单位攻击核心时，对其造成1点额外伤害。闪击"},{"type":"英雄","name":"固执盾卫","rarity":"R","attr":"土","range":"近","cost":7,"atk":2,"hp":7,"move":1,"dist":1,"effect":"【坚守】：本单位无法后退。守卫。"},{"type":"英雄","name":"狂热信徒","rarity":"R","attr":"光","range":"近","cost":6,"atk":4,"hp":4,"move":1,"dist":1,"effect":"【盲信】：本单位无法攻击光属性单位。"},{"type":"英雄","name":"笨拙发明家","rarity":"SR","attr":"无","range":"近","cost":8,"atk":3,"hp":5,"move":1,"dist":1,"effect":"【蹩脚造物】：入场时，将一张随机通用卡包装备加入手牌。"},{"type":"部队","name":"民兵","rarity":"R","attr":"无","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"持矛民兵","rarity":"R","attr":"无","range":"近","cost":3,"atk":2,"hp":3,"move":1,"dist":1,"effect":"守卫"},{"type":"部队","name":"农夫","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"樵夫","rarity":"R","attr":"木","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"猎人","rarity":"R","attr":"无","range":"远","cost":3,"atk":3,"hp":2,"move":1,"dist":2,"effect":"无"},{"type":"部队","name":"石匠","rarity":"R","attr":"土","range":"近","cost":2,"atk":1,"hp":3,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"学徒","rarity":"R","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":2,"dist":1,"effect":"无"},{"type":"部队","name":"哨兵","rarity":"SR","attr":"无","range":"近","cost":3,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【眺望】：入场时，抽一张牌。"},{"type":"部队","name":"流浪狗","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":2,"dist":1,"effect":"闪击"},{"type":"部队","name":"街头混混","rarity":"R","attr":"无","range":"近","cost":2,"atk":2,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"笨重傀儡","rarity":"R","attr":"土","range":"近","cost":5,"atk":4,"hp":4,"move":1,"dist":1,"effect":"守卫"},{"type":"部队","name":"蹩脚弓手","rarity":"SR","attr":"无","range":"远","cost":3,"atk":2,"hp":1,"move":1,"dist":2,"effect":"【流矢】：攻击时有50%几率对随机目标额外造成1点伤害。"},{"type":"部队","name":"胆小鬼","rarity":"R","attr":"无","range":"远","cost":1,"atk":1,"hp":1,"move":1,"dist":2,"effect":"本单位仅可攻击非相邻战线的敌方单位"},{"type":"部队","name":"临时工","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【磨洋工】：本单位被摧毁后返还1RP。"},{"type":"部队","name":"酒鬼","rarity":"SR","attr":"无","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"【酗酒】：你的回合开始时，有50%几率+1攻击。"},{"type":"部队","name":"传令兵","rarity":"R","attr":"无","range":"近","cost":2,"atk":0,"hp":2,"move":2,"dist":1,"effect":"【送信】：入场时，抽一张牌。"},{"type":"部队","name":"疯癫预言者","rarity":"SR","attr":"无","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"【胡言乱语】：入场时，双方玩家各随机丢弃一张手牌。"},{"type":"部队","name":"老马","rarity":"R","attr":"无","range":"近","cost":2,"atk":1,"hp":3,"move":2,"dist":1,"effect":"闪击"},{"type":"部队","name":"见习水手","rarity":"R","attr":"水","range":"近","cost":3,"atk":2,"hp":3,"move":2,"dist":1,"effect":"无"},{"type":"部队","name":"矿工","rarity":"R","attr":"土","range":"近","cost":3,"atk":2,"hp":4,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"乌鸦","rarity":"SR","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":2,"dist":1,"effect":"【呱噪】：本单位被摧毁时，对手卡组洗入一张乌鸦。"},{"type":"部队","name":"迷路小孩","rarity":"SR","attr":"无","range":"近","cost":1,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【哭喊】：本单位被攻击时，攻击者本回合无法再次攻击。"},{"type":"部队","name":"稻草人","rarity":"R","attr":"无","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"守卫、【稻草人】：相邻战线有敌方单位时无法移动。"},{"type":"部队","name":"病弱的村民","rarity":"SR","attr":"无","range":"近","cost":1,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【传染】：本单位被摧毁时，对本战线所有单位和造成攻击单位造成1点伤害。"},{"type":"部队","name":"笨拙学徒","rarity":"R","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":2,"dist":1,"effect":"【打翻试剂】：入场时，指定一个随机单位造成1点伤害。"},{"type":"部队","name":"失眠守卫","rarity":"R","attr":"无","range":"近","cost":3,"atk":2,"hp":4,"move":1,"dist":1,"effect":"【疲惫】：无法获得闪击、连击。"},{"type":"部队","name":"贪吃鼠","rarity":"SR","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":2,"dist":1,"effect":"【偷吃粮草】：本单位首次攻击时，获得1点RP。"},{"type":"部队","name":"破旧扫帚","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"话痨鹦鹉","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【学舌】：入场时，+1点攻击力或生命值。"},{"type":"部队","name":"锈蚀铠甲","rarity":"R","attr":"无","range":"近","cost":2,"atk":0,"hp":3,"move":0,"dist":1,"effect":"守卫"},{"type":"部队","name":"笨重石像","rarity":"SR","attr":"土","range":"近","cost":3,"atk":0,"hp":5,"move":0,"dist":1,"effect":"守卫"},{"type":"部队","name":"闪烁的萤火虫","rarity":"SR","attr":"光","range":"近","cost":1,"atk":1,"hp":1,"move":2,"dist":1,"effect":"【微光】：本单位仅在该战线无其他友方单位时可被攻击。"},{"type":"部队","name":"湿滑苔藓","rarity":"SR","attr":"水","range":"近","cost":2,"atk":0,"hp":2,"move":0,"dist":1,"effect":"【滑腻】：进入本单位相邻战线的单位本回合移动力-1。"},{"type":"部队","name":"不安的幽灵","rarity":"SR","attr":"暗","range":"近","cost":3,"atk":2,"hp":1,"move":2,"dist":1,"effect":"【无形】：只被光属性单位攻击。"},{"type":"部队","name":"迷途蝴蝶","rarity":"R","attr":"无","range":"近","cost":0,"atk":0,"hp":1,"move":2,"dist":1,"effect":"无"},{"type":"部队","name":"陶罐","rarity":"R","attr":"土","range":"近","cost":1,"atk":0,"hp":1,"move":0,"dist":1,"effect":"【易碎】：被摧毁时，对攻击者造成1点伤害。"},{"type":"部队","name":"野猪","rarity":"R","attr":"无","range":"近","cost":3,"atk":3,"hp":2,"move":1,"dist":1,"effect":"【冲撞】：入场回合必须移动，否则将在结束回合摧毁。"},{"type":"部队","name":"瘦弱豺狼","rarity":"SR","attr":"无","range":"近","cost":2,"atk":2,"hp":1,"move":2,"dist":1,"effect":"闪击、【食腐】：本单位攻击受伤单位时，额外造成1点伤害。"},{"type":"部队","name":"地痞","rarity":"R","attr":"无","range":"近","cost":3,"atk":3,"hp":2,"move":1,"dist":1,"effect":"【勒索】：消灭本单位的单位操控者失去1点RP。"},{"type":"部队","name":"失眠的猫头鹰","rarity":"SR","attr":"无","range":"远","cost":2,"atk":2,"hp":2,"move":1,"dist":2,"effect":"【夜啼】：你的回合结束时，有50%几率使一个随机敌方单位本回合无法攻击。"},{"type":"装备","name":"生锈的剑","rarity":"R","attr":"金","cost":2,"effect":"装备单位+1攻击。"},{"type":"装备","name":"木盾","rarity":"R","attr":"木","cost":2,"effect":"装备单位+1生命。"},{"type":"装备","name":"破皮甲","rarity":"R","attr":"无","cost":3,"effect":"装备单位+2生命。"},{"type":"装备","name":"弹弓","rarity":"R","attr":"无","cost":2,"effect":"装备单位+1攻击，且攻击距离+1（距离≤2）。"},{"type":"装备","name":"磨刀石","rarity":"R","attr":"金","cost":1,"effect":"装备单位本回合攻击+1。（回合结束时破坏）"},{"type":"装备","name":"厚书本","rarity":"R","attr":"无","cost":3,"effect":"装备单位+2生命。"},{"type":"装备","name":"褪色披风","rarity":"SR","attr":"无","cost":1,"effect":"装备单位获得伪装。（仅在其未移动时生效）"},{"type":"装备","name":"不稳定的法杖","rarity":"R","attr":"无","cost":4,"effect":"装备单位+2攻击。此单位攻击时，有25%几率对自己造成2点伤害。"},{"type":"装备","name":"重枷锁","rarity":"R","attr":"土","cost":2,"effect":"装备单位+3生命，-1移动力。"},{"type":"装备","name":"漏水的桶","rarity":"SR","attr":"水","cost":3,"effect":"装备单位获得：“你的回合结束时，为此单位+1生命”。本效果在提供3点生命后摧毁。"},{"type":"技能","name":"头球","rarity":"R","attr":"无","cost":2,"effect":"指定一个敌方单位造成1点伤害。"},{"type":"技能","name":"呐喊","rarity":"R","attr":"无","cost":1,"effect":"指定一个友方单位本回合+1攻击。"},{"type":"技能","name":"简易包扎","rarity":"R","attr":"无","cost":2,"effect":"指定一个友方单位+2生命。"},{"type":"技能","name":"绊脚索","rarity":"R","attr":"无","cost":3,"effect":"指定一个敌方单位本回合-2移动力。"},{"type":"技能","name":"烟雾弹","rarity":"SR","attr":"无","cost":3,"effect":"指定一个友方单位获得伪装，直到其下次行动。"},{"type":"技能","name":"虚张声势","rarity":"SR","attr":"无","cost":2,"effect":"本回合内，一个友方单位获得+2攻击，但下回合其-2攻击。"},{"type":"技能","name":"征用粮草","rarity":"SR","attr":"无","cost":1,"effect":"你获得2点RP。下回合你的-1RP上限。"},{"type":"技能","name":"天气不佳","rarity":"SSR","attr":"无","cost":5,"effect":"所有敌方单位-1移动力，-1攻击，至下一个己方回合恢复。"},{"type":"技能","name":"计算失误","rarity":"R","attr":"无","cost":0,"effect":"抽一张牌，然后随机丢弃一张手牌。"},{"type":"技能","name":"临阵磨枪","rarity":"SR","attr":"无","cost":3,"effect":"本回合内，你所有单位获得+1攻击。回合结束时，所有友方单位受到1点伤害。"},{"type":"建筑","name":"简陋工事","rarity":"SR","attr":"土","cost":4,"hp":3,"effect":"【沙包墙】：此战线上的友方单位获得+1防御。"},{"type":"建筑","name":"瞭望塔","rarity":"R","attr":"无","cost":3,"hp":2,"effect":"【登高望远】：入场时，抽一张牌。"},{"type":"建筑","name":"篝火","rarity":"SR","attr":"火","cost":2,"hp":2,"effect":"【取暖】：你的回合结束时，指定此战线的一个友方单位+1生命。"},{"type":"建筑","name":"捕兽陷阱","rarity":"R","attr":"无","cost":3,"hp":1,"effect":"【机关】：当一个敌方单位移动至此战线时，对其造成2点伤害，然后本单位摧毁。"},{"type":"建筑","name":"摇摇欲坠的棚屋","rarity":"SR","attr":"无","cost":2,"hp":1,"effect":"【避风】：你的回合结束时，你获得1点RP上限。本单位在你获得2点RP上限后摧毁。"},{"type":"建筑","name":"杂乱的书桌","rarity":"R","attr":"无","cost":3,"hp":2,"effect":"【翻找】，（主动，消耗1RP）从你的牌库顶翻三张牌，将一张技能卡加入手牌，其余置入墓地。"},{"type":"建筑","name":"小药圃","rarity":"SR","attr":"木","cost":3,"hp":2,"effect":"【采收】：你的回合结束时，指定一个友方单位+1生命。"},{"type":"建筑","name":"破旧锻炉","rarity":"SR","attr":"火","cost":5,"hp":3,"effect":"【打铁】，（主动，消耗3RP）指定一个友方单位永久获得+1攻击。每回合限一次。"},{"type":"建筑","name":"蜂箱","rarity":"R","attr":"木","cost":4,"hp":1,"effect":"【蜂群】：本单位被破坏时，对所在战线所有单位造成1点伤害。"},{"type":"建筑","name":"告示牌","rarity":"SR","attr":"无","cost":1,"hp":1,"effect":"【谣言】：入场时，双方玩家各抽一张牌。"}],"古罗马文明卡包（80张）":[{"type":"英雄","name":"罗慕路斯","rarity":"SSR","attr":"火","range":"近","cost":7,"atk":4,"hp":6,"move":1,"dist":1,"effect":"【建城者】：入场时，召唤2个罗马新兵在本单位相邻站位。\n【掠夺萨宾妇女】：（主动，消耗2RP）获得对手一个指定非英雄衍生物部队的控制权，直到本单位离场。同一时间限控制一张卡。"},{"type":"英雄","name":"尤利乌斯·凯撒","rarity":"UR","attr":"金","range":"近","cost":10,"atk":6,"hp":8,"move":2,"dist":1,"effect":"【高卢征服】：(主动，消耗4RP)指定一个战线，该战线友方罗马军团部队本回合+2攻击并获得闪击。每三回合限一次。\n【跨越卢比孔】：(被动)核心耐久<10时，本单位获得+2攻击和连击。"},{"type":"英雄","name":"斯巴达克斯","rarity":"SR","attr":"火","range":"近","cost":9,"atk":5,"hp":6,"move":2,"dist":1,"effect":"【角斗士起义】：入场时，召唤2个角斗士在本单位相邻站位。\n【不屈意志】：(被动)复生。"},{"type":"英雄","name":"大西庇阿·非洲努斯","rarity":"SSR","attr":"光","range":"近","cost":9,"atk":4,"hp":7,"move":2,"dist":1,"effect":"【扎马之战】：入场时，选择一条战线，该战线所有敌方单位获得削弱直至下回合结束。\n【战略大师】：（被动）你所有罗马军团部队的+1移动力。"},{"type":"英雄","name":"图拉真","rarity":"UR","attr":"土","range":"近","cost":11,"atk":5,"hp":9,"move":1,"dist":1,"effect":"【帝国极壁】：本单位所在战线可部署建筑。\n【达契亚征服】：本单位每摧毁一个敌方单位，为你的核心恢复1点耐久。"},{"type":"英雄","name":"格拉古兄弟","rarity":"SR","attr":"水","range":"近","cost":6,"atk":3,"hp":5,"move":2,"dist":1,"effect":"(入场时选择模式)【土地改革】：(提比略)你的回合结束时，所有友方罗马农兵获得+1攻击，+1生命。\n【谷物法】：(盖乌斯)你的回合结束时，抽一张卡并降低1点该被抽卡的RP消耗。"},{"type":"英雄","name":"卢克蕾提亚","rarity":"SR","attr":"暗","range":"远","cost":6,"atk":2,"hp":4,"move":1,"dist":2,"effect":"【高贵之殇】：(被动)本单位被敌方攻击摧毁时，所有友方单位下回合获得连击和+2攻击。"},{"type":"英雄","name":"马克里努斯","rarity":"SR","attr":"无","range":"近","cost":7,"atk":4,"hp":6,"move":2,"dist":1,"effect":"【昙花一现】：入场时，额外获得2点RP上限。三回合后，自动摧毁此卡。"},{"type":"英雄","name":"圣乔治","rarity":"SSR","attr":"光","range":"远","cost":10,"atk":6,"hp":4,"move":1,"dist":2,"effect":"【屠龙者】：攻击英雄卡时，攻击力翻倍。\n【神圣庇护】：相邻的友方光属性单位获得+1防御。"},{"type":"英雄","name":"狄奥多西一世","rarity":"SSR","attr":"光","range":"远","cost":10,"atk":4,"hp":8,"move":1,"dist":2,"effect":"【国教诏令】：入场时，你场上所有光属性单位的+1生命。\n【帝国分裂】：（遗语）在你的下个准备阶段，召唤一个西罗马核心(10耐久，建筑)在我方二线，代替你原本的核心。"},{"type":"部队","name":"罗马新兵","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"罗马农兵","rarity":"R","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"动员"},{"type":"部队","name":"罗马青年军","rarity":"SR","attr":"金","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"罗马军团、动员"},{"type":"部队","name":"征召投石兵","rarity":"R","attr":"无","range":"远","cost":2,"atk":2,"hp":1,"move":1,"dist":2,"effect":"无"},{"type":"部队","name":"罗马探路者","rarity":"SR","attr":"无","range":"近","cost":2,"atk":2,"hp":1,"move":1,"dist":1,"effect":"进入前线后，获得伪装"},{"type":"部队","name":"罗马哨兵","rarity":"R","attr":"无","range":"远","cost":2,"atk":1,"hp":2,"move":2,"dist":2,"effect":"预警"},{"type":"部队","name":"奴隶矿工","rarity":"R","attr":"土","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"罗马军乐手","rarity":"SR","attr":"无","range":"近","cost":2,"atk":0,"hp":2,"move":2,"dist":1,"effect":"【士气号角】：回合开始时，相邻友方单位+1移动力。"},{"type":"部队","name":"罗马书记官","rarity":"SR","attr":"无","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【记录】：入场时，抽一张卡。"},{"type":"部队","name":"维斯塔贞女","rarity":"SSR","attr":"光","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"【圣火守护】：相邻友方单位不受属性相克加成影响。"},{"type":"部队","name":"罗马重步兵","rarity":"R","attr":"土","range":"近","cost":4,"atk":3,"hp":4,"move":1,"dist":1,"effect":"罗马军团、守卫、重甲（1）"},{"type":"部队","name":"百夫长","rarity":"SR","attr":"金","range":"近","cost":4,"atk":3,"hp":3,"move":1,"dist":1,"effect":"罗马军团、【鼓舞】：相邻友方部队+1攻击。"},{"type":"部队","name":"角斗士","rarity":"R","attr":"火","range":"近","cost":4,"atk":3,"hp":2,"move":2,"dist":1,"effect":"连击"},{"type":"部队","name":"罗马工程师","rarity":"SR","attr":"土","range":"近","cost":3,"atk":1,"hp":3,"move":2,"dist":1,"effect":"【快速修筑】：入场时，指定一个友方建筑+2耐久。"},{"type":"部队","name":"辅助骑兵","rarity":"R","attr":"火","range":"近","cost":4,"atk":3,"hp":2,"move":2,"dist":1,"effect":"游击"},{"type":"部队","name":"同盟军标枪兵","rarity":"SR","attr":"无","range":"远","cost":3,"atk":2,"hp":2,"move":1,"dist":2,"effect":"【标枪投掷】，（主动，消耗1RP）指定一名敌方单位造成1点伤害并使其获得削弱。"},{"type":"部队","name":"罗马弩炮","rarity":"SR","attr":"金","range":"远","cost":6,"atk":3,"hp":2,"move":1,"dist":2,"effect":"打击、畏惧"},{"type":"部队","name":"罗马禁卫军","rarity":"UR","attr":"暗","range":"近","cost":6,"atk":4,"hp":5,"move":1,"dist":1,"effect":"【帝国之刃】：入场时，可消灭一个指定友方单位，若如此做，获得+2攻击+2生命和闪击。重甲（1）"},{"type":"部队","name":"堕落的百夫长","rarity":"SSR","attr":"暗","range":"近","cost":5,"atk":4,"hp":4,"move":1,"dist":1,"effect":"【克扣军饷】：你的回合开始时，你抽一张牌，相邻友方单位-1生命。"},{"type":"部队","name":"日耳曼佣兵","rarity":"SR","attr":"木","range":"近","cost":5,"atk":5,"hp":3,"move":1,"dist":1,"effect":"【狂暴】：攻击后，若目标未被消灭，则对自身造成2点伤害。"},{"type":"部队","name":"乌鸦战船","rarity":"SR","attr":"水","range":"近","cost":4,"atk":3,"hp":3,"move":2,"dist":1,"effect":"【跳帮】：每击杀一名敌方单位，可选择获得+1攻击或+1生命。"},{"type":"部队","name":"伊特鲁里亚祭司","rarity":"SR","attr":"暗","range":"近","cost":4,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【肝卜术】，（主动，消耗1RP）窥视对手的一张手牌。"},{"type":"部队","name":"罗马间谍","rarity":"SR","attr":"暗","range":"近","cost":3,"atk":2,"hp":1,"move":1,"dist":1,"effect":"【情报】：入场时，查看对手一张手牌。伪装。"},{"type":"部队","name":"高卢驻屯长","rarity":"SR","attr":"木","range":"近","cost":4,"atk":3,"hp":3,"move":2,"dist":1,"effect":"【驻屯】：未移动时，获得+2攻击。"},{"type":"部队","name":"努米底亚标枪骑兵","rarity":"R","attr":"火","range":"远","cost":4,"atk":3,"hp":1,"move":2,"dist":2,"effect":"游击、打击"},{"type":"部队","name":"城墙巡逻队","rarity":"R","attr":"土","range":"远","cost":3,"atk":2,"hp":3,"move":1,"dist":2,"effect":"警戒"},{"type":"部队","name":"宫廷宦官","rarity":"SR","attr":"暗","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【谗言】，（主动，消耗2RP）指定一个敌方单位本回合-2攻击。"},{"type":"部队","name":"贝尔萨轻骑兵","rarity":"R","attr":"火","range":"近","cost":5,"atk":3,"hp":2,"move":2,"dist":1,"effect":"游击"},{"type":"部队","name":"伏尔甘神柱","rarity":"UR","attr":"火","range":"远","cost":6,"atk":5,"hp":2,"move":0,"dist":2,"effect":"燃烧、【献祭】：本单位每消灭一个敌方单位，便获得+1攻击。"},{"type":"部队","name":"军团士兵","rarity":"SR","attr":"金","range":"近","cost":5,"atk":4,"hp":4,"move":1,"dist":1,"effect":"罗马军团、重甲（2）、【军阵】：每与一个友方罗马军团单位相邻，则获得+1生命，+1攻击。"},{"type":"部队","name":"罗马执政官","rarity":"SR","attr":"光","range":"近","cost":7,"atk":3,"hp":3,"move":1,"dist":1,"effect":"【政令】：你的回合开始时，同一战线友方单位本回合+1移动力。"},{"type":"部队","name":"达尔马提亚重骑兵","rarity":"SR","attr":"火","range":"近","cost":6,"atk":5,"hp":3,"move":2,"dist":1,"effect":"重甲（1）、【重装冲锋】：本单位移动至前线的第一个回合，+3攻击，回合结束后复原。"},{"type":"部队","name":"五列桨帆船","rarity":"SR","attr":"土","range":"近","cost":7,"atk":5,"hp":6,"move":1,"dist":1,"effect":"重甲（1）、削弱"},{"type":"部队","name":"布匿战争老兵","rarity":"SSR","attr":"金","range":"近","cost":4,"atk":3,"hp":4,"move":1,"dist":1,"effect":"罗马军团、【汉尼拔之惧】：与英雄卡相邻时，获得+2攻击，+1生命。"},{"type":"部队","name":"老兵殖民者","rarity":"SR","attr":"光","range":"近","cost":4,"atk":2,"hp":2,"move":1,"dist":1,"effect":"【屯田】：你的回合结束时，若本单位未移动，则你摸一张牌。"},{"type":"部队","name":"祭司团成员","rarity":"SR","attr":"光","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"【占卜】：（主动，消耗1RP）查看牌库顶三张牌，将其中一张加入手牌，其余洗回牌库。"},{"type":"部队","name":"罗马消防队","rarity":"SR","attr":"水","range":"近","cost":3,"atk":1,"hp":4,"move":1,"dist":1,"effect":"【灭火】：部署时移除一个指定友方单位的燃烧效果并为其+2生命。"},{"type":"部队","name":"日耳曼尼亚辅兵","rarity":"R","attr":"木","range":"近","cost":4,"atk":4,"hp":3,"move":1,"dist":1,"effect":"【蛮族血性】：攻击后，若自身生命≤2，则获得+2攻击。"},{"type":"部队","name":"罗马执旗手","rarity":"SR","attr":"木","range":"近","cost":4,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【军旗】：同一战线友方罗马军团获得+1攻击。"},{"type":"部队","name":"罗马伤病员","rarity":"R","attr":"无","range":"近","cost":1,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【伤兵营】：本单位被摧毁时，你获得1点RP。"},{"type":"装备","name":"罗马短剑","rarity":"R","attr":"金","cost":3,"effect":"装备单位+2攻击，并获得打击。"},{"type":"装备","name":"罗马大盾","rarity":"R","attr":"土","cost":4,"effect":"装备单位+3生命，并获得守卫。"},{"type":"装备","name":"军团鹰旗","rarity":"SR","attr":"光","cost":5,"effect":"装备单位+1攻击+1生命。【军团象征】：与本单位同一战线的所有友方罗马军团+1攻击。"},{"type":"装备","name":"凯旋盔甲","rarity":"SR","attr":"光","cost":5,"effect":"装备单位+1攻击+2生命，并在装备单位消灭一个敌方单位后，你+1RP。"},{"type":"装备","name":"密特拉神像","rarity":"SR","attr":"光","cost":5,"effect":"装备单位+1攻击+1生命。【太阳神的祝福】：你的回合开始时，装备单位+1生命。"},{"type":"装备","name":"法西斯卡","rarity":"SR","attr":"火","cost":5,"effect":"装备单位获得【飞斧】：装备单位+2攻击，距离+1（距离≤2）。"},{"type":"装备","name":"喀戎的教诲","rarity":"SR","attr":"无","cost":6,"effect":"装备单位获得+1攻击+2生命和吸血。"},{"type":"装备","name":"尼禄的金琴","rarity":"SSR","attr":"暗","cost":7,"effect":"装备英雄卡获得【纵火者的狂欢】：装备单位攻击时，对目标相邻单位造成1点伤害。装备单位被摧毁时，对所在战线所有单位造成3点伤害。"},{"type":"装备","name":"朱庇特之雷","rarity":"SSR","attr":"光","cost":8,"effect":"装备单位+3攻击。【神怒】：装备单位攻击时，有30%几率对目标造成额外2点光属性伤害。"},{"type":"装备","name":"冥王普鲁托的硬币","rarity":"UR","attr":"暗","cost":3,"effect":"装备单位获得【买路钱】：装备单位被摧毁时，你支付2RP，若如此做，则装备单位复生。若剩余RP不足2RP，不得发动效果。"},{"type":"技能","name":"龟甲阵","rarity":"R","attr":"土","cost":5,"effect":"本回合内，选择一条战线，该战线友方单位获得+1生命，且免疫下一次受到的远程伤害。"},{"type":"技能","name":"投掷标枪","rarity":"R","attr":"金","cost":4,"effect":"对一条战线上的所有敌方单位造成2点伤害，并使其-1移动力。"},{"type":"技能","name":"万神殿的祈祷","rarity":"SR","attr":"光","cost":7,"effect":"复活一个本场对决中被摧毁的友方非英雄单位，并使其本回合获得免疫伤害。"},{"type":"技能","name":"以神之名","rarity":"SR","attr":"光","cost":8,"effect":"本回合内，你所有单位的攻击无视守卫，且造成的伤害视为光属性。"},{"type":"技能","name":"迦太基的诅咒","rarity":"SR","attr":"暗","cost":5,"effect":"选择一个敌方单位，其攻击或生命变为1，持续两回合。"},{"type":"技能","name":"罗马大道急行军","rarity":"SSR","attr":"无","cost":3,"effect":"本回合内，你所有单位+2移动力。"},{"type":"技能","name":"元老院决议","rarity":"SSR","attr":"光","cost":5,"effect":"抽两张牌。你每控制一个英雄或建筑，便额外抽一张。"},{"type":"技能","name":"最终议和","rarity":"UR","attr":"无","cost":10,"effect":"【迦太基必须毁灭】：消灭场上所有单位，并对其所有者的核心造成等同于其费用总和一半（向下取整）的伤害。"},{"type":"技能","name":"神谴","rarity":"UR","attr":"光","cost":8,"effect":"消灭场上所有攻击≥5的单位。"},{"type":"技能","name":"酒神节狂欢","rarity":"SSR","attr":"火","cost":6,"effect":"本回合内，你所有单位获得+2攻击，-1生命，结束阶段时，未发动攻击的的友方单位全部摧毁。"},{"type":"建筑","name":"罗马水道","rarity":"SR","attr":"水","cost":6,"hp":4,"effect":"【清水涌流】：你的回合结束时，为此战线所有友方单位+1生命。"},{"type":"建筑","name":"罗马斗兽场","rarity":"SR","attr":"火","cost":8,"hp":5,"effect":"【血腥娱乐】：（主动：消耗2RP）召唤一个角斗士在相邻站位，每回合限一次。"},{"type":"建筑","name":"图拉真纪功柱","rarity":"SSR","attr":"金","cost":7,"hp":3,"effect":"【战功铭刻】：每有一个友方单位消灭敌方单位，你RP上限+1，每回合限1次。被破坏时移除此建筑提供的RP上限。"},{"type":"建筑","name":"哈德良长城","rarity":"SSR","attr":"土","cost":9,"hp":6,"effect":"【边境屏障】：本建筑相邻战线，敌方单位入场额外消耗1点移动力。本建筑仅可部署于我方二线。\n【烽火台】：本建筑相邻战线，敌方单位进入时，你抽一张卡。"},{"type":"建筑","name":"密特拉地下神庙","rarity":"SSR","attr":"暗","cost":6,"hp":3,"effect":"【秘密祭礼】：你的回合开始时，若本建筑相邻战线无敌方单位，你回复1点核心耐久。"},{"type":"建筑","name":"卡拉卡拉浴场","rarity":"UR","attr":"水","cost":7,"hp":4,"effect":"【休闲社交】：你的结束阶段，所在战线所有友方单位获得净化。"},{"type":"建筑","name":"朱庇特神庙","rarity":"UR","attr":"光","cost":9,"hp":5,"effect":"【神王怒火】：（主动，消耗3RP）对一条战线上所有单位造成3点光属性伤害。每局限一次。\n【神王赐福】：你的回合开始时，为友方随机一名非暗属性单位施加重甲（1）。"},{"type":"建筑","name":"谷神仓廪","rarity":"SSR","attr":"土","cost":5,"hp":3,"effect":"【丰饶】：你的回合结束时，若本建筑未被破坏，你获得1点RP上限。最多提供3点RP上限。"},{"type":"建筑","name":"罗曼军械库","rarity":"SSR","attr":"金","cost":5,"hp":4,"effect":"【装备补给】：你的回合开始时，从卡包中生成一张罗马装备牌至手牌。每回合限一次。"},{"type":"建筑","name":"西塞罗演讲台","rarity":"UR","attr":"光","cost":7,"hp":2,"effect":"【雄辩】：（主动，消耗5RP）选择一条战线，其上所有敌方单位本回合无法攻击。每三回合限一次。\n【号召】：（主动，消耗2RP）召唤一个罗马青年军在本建筑相邻站位。每回合限一次。"}],"古埃及文明卡包（80张）":[{"type":"英雄","name":"纳尔迈","rarity":"SSR","attr":"光","range":"远","cost":9,"atk":5,"hp":6,"move":1,"dist":2,"effect":"【上下埃及之王】：入场时，RP上限+2并抽一张牌。\n【调色板】，（主动，消耗3RP）指定一个友方单位本回合获得连击，但每次攻击后受到1点伤害。"},{"type":"英雄","name":"拉美西斯二世","rarity":"UR","attr":"光","range":"近","cost":11,"atk":5,"hp":9,"move":1,"dist":1,"effect":"【卡迭石之战】：被攻击时，召唤一个埃及战车兵(3/2/3/1)在相邻空位，赋予其守卫并抵挡本次伤害（每三回合限一次）。\n【伟大的建造者】：本单位在场时，尼罗河管家部署消耗-1RP。"},{"type":"英雄","name":"哈特谢普苏特","rarity":"SSR","attr":"水","range":"远","cost":8,"atk":3,"hp":6,"move":1,"dist":2,"effect":"【庞特远征】：你的回合结束时，若本单位未移动，则为随机一个我方建筑+1耐久。\n【女法老的威严】：本单位及相邻友方单位无法成为敌方技能卡目标。"},{"type":"英雄","name":"图特摩斯三世","rarity":"UR","attr":"火","range":"近","cost":10,"atk":6,"hp":7,"move":2,"dist":1,"effect":"【美吉多之战】：闪击。入场时对敌方一名指定单位造成2点伤害。\n【帝国扩张】：本单位消灭一个敌方单位后，你抽一张牌。"},{"type":"英雄","name":"阿赫摩斯一世","rarity":"SSR","attr":"金","range":"近","cost":8,"atk":4,"hp":6,"move":2,"dist":1,"effect":"【驱逐希克索斯】：对暗属性单位造成伤害时，额外造成2点伤害。\n【新时代】：入场时，所有友方埃及单位获得+1攻击，+1生命。"},{"type":"英雄","name":"托勒密一世","rarity":"SSR","attr":"光","range":"近","cost":9,"atk":4,"hp":7,"move":2,"dist":1,"effect":"【继业者】：入场时，复制场上一个非英雄单位的词条（除攻击/生命外），直至离场。\n【亚历山大遗产】：你的手牌每控制一个不同类型的卡牌，RP上限+1。"},{"type":"英雄","name":"拉美西斯三世","rarity":"SSR","attr":"土","range":"近","cost":9,"atk":4,"hp":8,"move":1,"dist":1,"effect":"【海民之战】：守卫。攻击时，对目标的相邻单位造成1点伤害。\n【防御态势】：未移动的回合，获得重甲（1）。"},{"type":"英雄","name":"普萨美提克一世","rarity":"SR","attr":"无","range":"远","cost":7,"atk":3,"hp":5,"move":1,"dist":2,"effect":"【希腊雇佣兵】：入场时，从牌库中随机抽取一张费用≤4的部队卡置入手牌。\n【复兴时代】：本单位在场时，尼罗河管家+1攻击，+1生命。"},{"type":"英雄","name":"斯尼弗鲁","rarity":"SSR","attr":"土","range":"近","cost":8,"atk":3,"hp":7,"move":1,"dist":1,"effect":"【弯曲金字塔】：入场时，选择一个友方建筑卡，其获得“无法被攻击”直到你的下个回合开始。\n【资源征收】：本单位攻击核心时，造成额外2点伤害。"},{"type":"英雄","name":"蝎子王","rarity":"SR","attr":"火","range":"近","cost":7,"atk":4,"hp":4,"move":2,"dist":1,"effect":"【早期征服者】：连击。第二次攻击时伤害不减少。\n【狩猎】：本单位攻击并消灭一个单位后，为其自身+2点生命。"},{"type":"部队","name":"埃及征召兵","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"尼罗河农夫","rarity":"R","attr":"水","range":"近","cost":2,"atk":1,"hp":1,"move":1,"dist":1,"effect":"尼罗河管家、【灌溉】：你的回合结束时，若本单位未移动，你获得1点RP上限。每单位限一次。"},{"type":"部队","name":"埃及弓箭手","rarity":"R","attr":"无","range":"远","cost":3,"atk":2,"hp":2,"move":1,"dist":2,"effect":"【齐射】：其他埃及弓箭手相邻时，攻击+1。"},{"type":"部队","name":"埃及长矛兵","rarity":"R","attr":"土","range":"近","cost":3,"atk":2,"hp":3,"move":1,"dist":1,"effect":"守卫"},{"type":"部队","name":"埃及精锐步兵","rarity":"SR","attr":"金","range":"近","cost":4,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【战斧】：攻击木属性或无属性单位时，攻击+1。"},{"type":"部队","name":"埃及战车兵","rarity":"SR","attr":"火","range":"近","cost":5,"atk":3,"hp":2,"move":2,"dist":1,"effect":"闪击。【蹂躏】：攻击后，使目标单位获得削弱。"},{"type":"部队","name":"努比亚弓箭手","rarity":"R","attr":"火","range":"远","cost":4,"atk":2,"hp":2,"move":1,"dist":2,"effect":"【精准射击】：本单位攻击未被守卫的单位时，造成额外1点伤害。"},{"type":"部队","name":"麦德查人雇佣兵","rarity":"SR","attr":"土","range":"近","cost":5,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【忠诚佣兵】：我方二线无其他单位时，不能部署。入场时和相邻单位获得+1攻击，+1生命。"},{"type":"部队","name":"法老禁卫军","rarity":"SR","attr":"光","range":"近","cost":5,"atk":3,"hp":4,"move":1,"dist":1,"effect":"守卫、重甲（1）。【王室之盾】：为英雄卡守卫时，+2生命。"},{"type":"部队","name":"沙漠侦察兵","rarity":"R","attr":"火","range":"近","cost":3,"atk":2,"hp":1,"move":2,"dist":1,"effect":"伪装。【沙海踪迹】：本单位首次攻击时，造成额外2点伤害。"},{"type":"部队","name":"埃及工兵","rarity":"R","attr":"土","range":"近","cost":3,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【建造者】：入场时，指定一个友方建筑卡+1耐久。"},{"type":"部队","name":"法老执扇官","rarity":"SR","attr":"光","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【宫廷仪仗】：相邻的英雄卡+1攻击，+1生命。"},{"type":"部队","name":"石板书记员","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【记录】：入场时，抽一张牌。"},{"type":"部队","name":"沙漠投石手","rarity":"R","attr":"无","range":"远","cost":2,"atk":2,"hp":1,"move":1,"dist":2,"effect":"无"},{"type":"部队","name":"贝都因骆驼骑兵","rarity":"SR","attr":"火","range":"近","cost":4,"atk":2,"hp":2,"move":2,"dist":1,"effect":"【沙漠适应】：部署时选择+1移动力并获得连击，或+1生命并获得守卫。"},{"type":"部队","name":"苇草陆战队","rarity":"SR","attr":"水","range":"近","cost":4,"atk":2,"hp":2,"move":1,"dist":1,"effect":"【两栖登陆】：进入前线后获得伪装。"},{"type":"部队","name":"法老护卫射手","rarity":"SR","attr":"土","range":"远","cost":6,"atk":4,"hp":3,"move":1,"dist":2,"effect":"燃烧、打击"},{"type":"部队","name":"阿蒙祭司","rarity":"SR","attr":"光","range":"近","cost":3,"atk":1,"hp":1,"move":1,"dist":1,"effect":"尼罗河管家、【祭祀】，（主动，消耗1RP）指定一个友方单位+1生命。每回合限一次。"},{"type":"部队","name":"采石矿工","rarity":"R","attr":"土","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【采石】：本单位被摧毁时，你获得1点RP。"},{"type":"部队","name":"埃及斥候","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【侦查】：入场时，查看敌方随机一张手牌。"},{"type":"部队","name":"方阵长枪兵","rarity":"R","attr":"土","range":"近","cost":4,"atk":2,"hp":4,"move":1,"dist":1,"effect":"【长枪阵列】：同时2个方阵长枪兵相邻时，获得守卫和+1攻击。"},{"type":"部队","name":"镰刃战车","rarity":"SR","attr":"火","range":"近","cost":6,"atk":4,"hp":1,"move":2,"dist":1,"effect":"【轮刃】：攻击时，对目标及其相邻单位造成伤害。"},{"type":"部队","name":"努比亚标枪兵","rarity":"R","attr":"火","range":"远","cost":3,"atk":2,"hp":2,"move":1,"dist":2,"effect":"削弱"},{"type":"部队","name":"三角洲粮官","rarity":"R","attr":"水","range":"近","cost":4,"atk":0,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【分配粮饷】：你的回合结束时，指定此战线两个友方单位+1生命。"},{"type":"部队","name":"绿洲建筑师","rarity":"SR","attr":"土","range":"近","cost":3,"atk":1,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【设计】：入场时，你下一个部署的建筑卡费用-1。"},{"type":"部队","name":"王室信使","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":2,"dist":1,"effect":"尼罗河管家、【疾驰】：部署后可移动。"},{"type":"部队","name":"法老侍从","rarity":"SR","attr":"光","range":"近","cost":4,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【谏言】，（主动，消耗2RP）随机抽一张牌，然后指定一张牌弃置。每回合限一次。"},{"type":"部队","name":"海岸巡逻队","rarity":"SR","attr":"水","range":"近","cost":3,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【警戒】：本单位相邻战线有敌方单位进入时，你抽一张卡。每回合限一次。"},{"type":"部队","name":"沙漠部落战士","rarity":"SR","attr":"火","range":"近","cost":3,"atk":3,"hp":2,"move":2,"dist":1,"effect":"【劫掠】：本单位攻击核心时，你获得1点RP。"},{"type":"部队","name":"埃及战俘","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"【苦力】：本单位被摧毁时，指定一个友方建筑+1耐久。"},{"type":"部队","name":"精锐努比亚矛兵","rarity":"SR","attr":"木","range":"近","cost":4,"atk":3,"hp":3,"move":1,"dist":1,"effect":"【部落战术】：场上存在友方努比亚弓箭手时，获得+1攻击，+1生命。"},{"type":"部队","name":"雇佣希腊方阵兵","rarity":"SSR","attr":"金","range":"近","cost":5,"atk":3,"hp":4,"move":1,"dist":1,"effect":"守卫、重甲（1）。【长枪阵】：攻击本单位的单位受到1点反弹伤害。"},{"type":"部队","name":"法老驯兽师","rarity":"SSR","attr":"火","range":"近","cost":4,"atk":1,"hp":1,"move":1,"dist":1,"effect":"尼罗河管家、【驱使战狮】：入场时，召唤两个战狮(2/1/2/1)在相邻空位。"},{"type":"部队","name":"战狮","rarity":"SR","attr":"火","range":"近","cost":2,"atk":2,"hp":1,"move":2,"dist":1,"effect":"闪击、驱散"},{"type":"部队","name":"运河船夫","rarity":"SR","attr":"水","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【漕运】：本单位在场时，建筑卡的部署消耗-1RP。可叠加。"},{"type":"部队","name":"王室工匠","rarity":"SR","attr":"无","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"尼罗河管家、【雕琢】：入场时，指定一个友方装备卡的使用费用-1（最低为0）。可叠加。"},{"type":"部队","name":"沙漠强盗","rarity":"R","attr":"暗","range":"近","cost":3,"atk":3,"hp":1,"move":1,"dist":1,"effect":"伪装、【伏击】：攻击伪装状态下的单位时，直接将其毁坏且不受伤害。"},{"type":"部队","name":"双轮战车","rarity":"SR","attr":"火","range":"近","cost":4,"atk":3,"hp":1,"move":2,"dist":1,"effect":"游击"},{"type":"部队","name":"尼罗河测量员","rarity":"SR","attr":"土","range":"近","cost":2,"atk":1,"hp":1,"move":1,"dist":1,"effect":"尼罗河管家、【勘测】：入场时，无RP消耗发动指定一个友方建筑主动词条。"},{"type":"部队","name":"庆典舞者","rarity":"SR","attr":"无","range":"近","cost":1,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【鼓舞】：入场时，指定一个友方单位本回合攻击+1。"},{"type":"装备","name":"青铜战斧","rarity":"R","attr":"金","cost":3,"effect":"装备单位+2攻击。"},{"type":"装备","name":"芦苇盾牌","rarity":"R","attr":"水","cost":2,"effect":"装备单位+1生命，并获得守卫。"},{"type":"装备","name":"复合弓","rarity":"R","attr":"火","cost":4,"effect":"装备单位+2攻击，+1距离（距离≤2），获得打击。"},{"type":"装备","name":"金鹰盔甲","rarity":"SR","attr":"光","cost":5,"effect":"装备单位+1/+2。【神圣守护】：装备单位首次被摧毁时，将其移回手牌。"},{"type":"装备","name":"圣甲虫护身符","rarity":"SR","attr":"光","cost":3,"effect":"装备单位获得复生。"},{"type":"装备","name":"法老权杖","rarity":"SSR","attr":"光","cost":6,"effect":"装备英雄卡获得+2攻击，+2攻击。【至高命令】：装备单位所在战线上的所有友方单位+1攻击。"},{"type":"装备","name":"豹皮披风","rarity":"SR","attr":"火","cost":3,"effect":"装备单位+1攻击，并获得伪装。"},{"type":"装备","name":"荷鲁斯之眼挂坠","rarity":"SR","attr":"光","cost":4,"effect":"装备单位获得【洞察】：装备单位可攻击伪装单位。装备单位攻击伪装单位时，造成额外2点伤害。"},{"type":"装备","name":"青铜镜盾","rarity":"SSR","attr":"金","cost":5,"effect":"装备单位+3生命，获得重甲（1）。【反射】：受到技能卡伤害时，将一半伤害（向上取整）反弹给技能卡使用者核心。"},{"type":"装备","name":"莎草纸卷轴","rarity":"SR","attr":"无","cost":2,"effect":"装备单位获得【书写】：主动，消耗2RP：抽一张埃及技能卡。每回合限一次。"},{"type":"技能","name":"尼罗河泛滥","rarity":"R","attr":"水","cost":5,"effect":"选择一条战线，其上所有单位移动力清0，持续一回合。"},{"type":"技能","name":"沙暴","rarity":"R","attr":"土","cost":4,"effect":"对敌方所有非土属性单位造成1点伤害，并使其获得削弱。"},{"type":"技能","name":"木乃伊化","rarity":"SR","attr":"暗","cost":6,"effect":"指定一个友方单位消灭（可触发单位词条），然后将其以1点生命复生，并获得+2攻击，+2生命。"},{"type":"技能","name":"太阳神之怒","rarity":"SR","attr":"光","cost":7,"effect":"对一条战线上的所有敌方单位造成3点伤害。"},{"type":"技能","name":"纸莎草沼泽","rarity":"SR","attr":"水","cost":3,"effect":"指定一条战线，使所有单位在此战线结束回合时，-1攻击，-1生命。持续两回合"},{"type":"技能","name":"法老的诅咒","rarity":"SR","attr":"暗","cost":8,"effect":"指定一个敌方英雄，选择其攻击力或生命值变为1，且无法使用技能，持续两回合。"},{"type":"技能","name":"尼罗河之怒","rarity":"SSR","attr":"火","cost":10,"effect":"献祭所有在场的尼罗河管家，每献祭一名尼罗河管家，对敌方二线所有单位和核心造成1点伤害。"},{"type":"技能","name":"丰饶仪式","rarity":"SR","attr":"水","cost":4,"effect":"获得1点RP上限。指定一个友方单位+3生命。"},{"type":"技能","name":"倾泻箭雨","rarity":"SR","attr":"无","cost":5,"effect":"对所有攻击距离大于1的敌方单位造成2点伤害。"},{"type":"技能","name":"巨石滚落","rarity":"SR","attr":"土","cost":6,"effect":"摧毁场上所有远程单位。"},{"type":"建筑","name":"金字塔群","rarity":"SSR","attr":"土","cost":12,"hp":7,"effect":"【永恒陵墓】：你的回合结束时，指定一张手牌-1RP部署消耗。"},{"type":"建筑","name":"太阳方尖碑","rarity":"SR","attr":"光","cost":7,"hp":2,"effect":"【太阳指针】：入场时，抽两张牌。【尖顶倒塌】：被破坏时，对手弃一张牌。"},{"type":"建筑","name":"孟菲斯大神庙","rarity":"SSR","attr":"光","cost":8,"hp":4,"effect":"【信仰中心】：你的回合结束时，为此战线所有光属性单位+1生命。"},{"type":"建筑","name":"河口运河网络","rarity":"SSR","attr":"水","cost":6,"hp":4,"effect":"【灌溉】：此战线所有水属性单位的+1生命。【运输】：（主动，消耗3RP）抽一张埃及水属性牌。每回合限一次。"},{"type":"建筑","name":"西奈军营","rarity":"SSR","attr":"金","cost":6,"hp":3,"effect":"【征兵】：（主动，消耗2RP）在本建筑相邻站位随机部署埃及征召兵、埃及弓箭手、埃及长矛兵、埃及战车兵中的一个单位。每回合限一次。"},{"type":"建筑","name":"尼罗河粮仓","rarity":"SR","attr":"水","cost":5,"hp":3,"effect":"【储备】：你的回合结束时，若本单位未被破坏，为随机一个友方单位+1生命。"},{"type":"建筑","name":"沙漠采石场","rarity":"SR","attr":"土","cost":5,"hp":3,"effect":"【巨石开采】：入场时，获得2点RP上限。本单位被破坏时，失去这2点RP上限。"},{"type":"建筑","name":"亚历山大里亚港","rarity":"SSR","attr":"水","cost":7,"hp":4,"effect":"【贸易与舰队】：你的回合结束时，从卡包中生成一张埃及金属性牌、一张埃及木属性牌至手牌。"},{"type":"建筑","name":"青铜铸造坊","rarity":"SR","attr":"火","cost":5,"hp":3,"effect":"【锻造】，（主动，消耗2RP）抽一张装备牌。每回合限一次。"},{"type":"建筑","name":"莎草纸作坊","rarity":"SR","attr":"无","cost":3,"hp":2,"effect":"【抄写】：你的回合结束时，抽一张技能牌。"}]};
+
+/* ================= 基础常量 ================= */
+const ROWS = ['enemyBase','enemyBack','front','playerBack','playerBase'];   // 行距 = 下标差
+const ROW_NAME = {enemyBase:'敌方后场', enemyBack:'敌方二线', front:'前线', playerBack:'我方二线', playerBase:'我方后场'};
+function rowName(row){
+  // 联机模式下用绝对颜色方称呼，保证双方日志与棋盘标注一致
+  if(row==='front') return '前线';
+  const side=(row==='enemyBase'||row==='enemyBack')?'enemy':'player';
+  const suffix=row.endsWith('Base')?'后场':'二线';
+  if(NET.mode) return (side==='player'?'蓝方':'红方')+suffix;
+  return (side===CTRL?'我方':'敌方')+suffix;
+}
+const COLS = 7, CORE_COL = 3;
+const CORE_HP = 30, RP_MAX = 15;
+const BASE_ROW = {player:'playerBase', enemy:'enemyBase'};
+const DEPLOY_ROW = {player:'playerBase', enemy:'enemyBase'};   // 部署在各自后场
+const PATH = {  // 各方可通行的战线（不可进入对方后场）
+  player:['playerBase','playerBack','front','enemyBack'],
+  enemy:['enemyBase','enemyBack','front','playerBack']
+};
+const ATTR_BEATS = {金:'木', 木:'土', 土:'水', 水:'火', 火:'金'}; // 金→木→土→水→火→金
+const ATTR_ICON = {金:'⚙',木:'🌿',水:'💧',火:'🔥',土:'🪨',光:'☀',暗:'🌙',无:'○'};
+const KW_FLAGS = ['闪击','守卫','伪装','连击','吸血','警戒','游击','打击','压制','燃烧','驱散','净化','震慑','削弱','畏惧','动员','复生','预警'];
+const SAVE_AUTO='hx_auto', SET_KEY='hx_settings', PROFILE_KEY='hx_profile', SAVES_KEY='hx_saves', SAVE_VER=4;
+const PACK_KEYS = Object.keys(CARD_DATA);
+const RARITY_NAME = {R:'普通', SR:'稀有', SSR:'史诗', UR:'传说'};
+const FACTION_LABEL = {'通用卡包（80张）':'无阵营 · 基础','古罗马文明卡包（80张）':'古罗马','古埃及文明卡包（80张）':'古埃及'};
+const packLabel = pk => FACTION_LABEL[pk] || pk.replace(/（\d+张）/,'');
+function fillPackSelect(sel){
+  if(sel.options.length>1) return;
+  PACK_KEYS.forEach(pk=>{ const o=document.createElement('option'); o.textContent=packLabel(pk); o.value=pk; sel.appendChild(o); });
+}
+
+/* 卡包商店 */
+const SHOP_PACKS = [
+  {id:'base',  name:'基础卡包',   price:50,  pool:['通用卡包（80张）'], desc:'无阵营基础卡牌<br>以 R / SR 为主'},
+  {id:'rome',  name:'罗马卡包',   price:200, pool:['古罗马文明卡包（80张）'], desc:'罗马军团 · 重甲推进<br>可开出 UR 英雄'},
+  {id:'egypt', name:'古埃及卡包', price:200, pool:['古埃及文明卡包（80张）'], desc:'尼罗河管家 · 诡秘术法<br>可开出 UR 英雄'},
+  {id:'univ',  name:'通用卡包',   price:100, pool:PACK_KEYS.slice(), desc:'三家卡牌皆有可能<br>新人启动首选'},
+];
+const RARITY_ODDS = [['UR',2],['SSR',8],['SR',30],['R',60]];   // 单抽出率；每包保底1张SR及以上
+
+/* 通用词条（机制图鉴，来自《通用词条.docx》） */
+const MECH_GLOSSARY = [
+  ['闪击','单位部署的回合可以立即移动和攻击。'],
+  ['守卫','本单位未死亡时，左右相邻友方单位不可被攻击。'],
+  ['连击','一回合内攻击两次，但第二次攻击力减半（向下取整）。'],
+  ['动员','本单位在其回合开始时获得+1+1，但在受到伤害后会失去此加成。'],
+  ['打击','被本单位攻击后，目标单位移动力-1，下一个我方回合复原。'],
+  ['压制','被本单位攻击后，目标单位移动力清0，下一个我方回合复原。'],
+  ['削弱','被本目标攻击后，目标单位攻击-1，下一个我方回合复原。'],
+  ['畏惧','被本目标攻击后，目标单位攻击清0，下一个我方回合复原。'],
+  ['伪装','本单位上回合未移动或攻击时，本回合不可被攻击。移动后失去伪装。'],
+  ['吸血','本卡牌造成伤害后会为本单位恢复1生命值。'],
+  ['燃烧','使目标单位-1生命/回合，持续2回合。'],
+  ['驱散','消除目标单位正面效果。'],
+  ['净化','消除目标单位负面效果。'],
+  ['震慑','消除目标部队卡全部词条。'],
+  ['复生','本单位第一次死亡后会以1点生命值复活。'],
+  ['群体（X）','入场时召唤X个衍生物在本单位左右。'],
+  ['预警','敌方部署单位进入战场时，抽一张卡。'],
+  ['警戒','本单位相邻战线有敌方单位进入时，抽一张卡。'],
+  ['游击','本单位攻击后可移动。'],
+  ['重甲（X）','本单位受到攻击时，受到伤害≤1，溢出部分免除，并失去一层重甲。'],
+  ['属性克制','金→木→土→水→火→金循环克制，光暗互克；克制时攻击效果+2。无属性不参与克制。'],
+  ['战线规则','双方各有后场与二线，中央为前线。单位从己方后场部署，可沿直线或斜向移动；一方进入前线后另一方不可进入；任何单位不可进入对方后场。摧毁位于敌方后场中央的核心的牌手获胜。'],
+];
+
+let S = null;
+let SETTINGS = loadSettings();
+let PROFILE = loadProfile();
+let CTRL = 'player';   // 本端操控的一方：单机/房主为 player，联机加入方为 enemy
+
+/* ================= 联机对战（邀请码房间，P2P 中继） ================= */
+const NET = {mode:null, room:null, peer:null, code:null, lib:null, actPeer:null, overShown:false,
+  sendState:null, sendAct:null, sendHello:null, sendMsg:null};
+const NET_RELAYS = ['wss://broker.hivemq.com:8884/mqtt','wss://broker.emqx.io:8084/mqtt','wss://test.mosquitto.org:8081/mqtt'];
+function genCode(){ const abc='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s=''; for(let i=0;i<6;i++) s+=abc[Math.floor(Math.random()*abc.length)]; return s; }
+async function netLoad(){
+  if(NET.lib) return NET.lib;
+  NET.lib = await import('https://esm.run/trystero@0.21.5/mqtt');
+  return NET.lib;
+}
+function setOnlineStatus(t){ document.getElementById('online-status').textContent=t; }
+function resetOnlineUI(){
+  document.getElementById('online-create-row').style.display='';
+  document.getElementById('room-code-box').style.display='none';
+}
+function leaveRoomSilent(){
+  try{ NET.room && NET.room.leave(); }catch(e){}
+  NET.mode=null; NET.room=null; NET.peer=null; NET.actPeer=null; NET.overShown=false;
+}
+function leaveLobby(){ leaveRoomSilent(); resetOnlineUI(); setOnlineStatus(''); }
+async function createRoom(){
+  const errs = deckErrors(PROFILE.deck);
+  if(errs.length){ hint('卡包未就绪：'+errs[0]+'，请先设计卡包'); return; }
+  setOnlineStatus('正在连接联机网络…');
+  try{ await netLoad(); }catch(e){ setOnlineStatus('联机模块加载失败，请检查网络后重试'); return; }
+  NET.mode='host'; NET.code=genCode();
+  setupRoom(NET.code);
+  document.getElementById('online-create-row').style.display='none';
+  document.getElementById('room-code-box').style.display='block';
+  document.getElementById('room-code').textContent = NET.code.split('').join(' ');
+  setOnlineStatus('房间已创建，等待对手加入…');
+}
+async function joinRoomByCode(){
+  const errs = deckErrors(PROFILE.deck);
+  if(errs.length){ hint('卡包未就绪：'+errs[0]+'，请先设计卡包'); return; }
+  const code = document.getElementById('code-input').value.trim().toUpperCase();
+  if(code.length!==6){ hint('请输入 6 位邀请码'); return; }
+  setOnlineStatus('正在连接联机网络…');
+  try{ await netLoad(); }catch(e){ setOnlineStatus('联机模块加载失败，请检查网络后重试'); return; }
+  NET.mode='guest'; NET.code=code; CTRL='enemy';
+  setupRoom(code);
+  setOnlineStatus('正在寻找房间「'+code+'」…（长时间无响应请核对邀请码）');
+}
+function setupRoom(code){
+  NET.room = NET.lib.joinRoom({appId:'huixiang-zhanxian-v1', relayUrls:NET_RELAYS}, code);
+  const a1=NET.room.makeAction('state'), a2=NET.room.makeAction('act'),
+        a3=NET.room.makeAction('hello'), a4=NET.room.makeAction('msg');
+  NET.sendState=a1[0]; NET.sendAct=a2[0]; NET.sendHello=a3[0]; NET.sendMsg=a4[0];
+  const onState=a1[1], onAct=a2[1], onHello=a3[1], onMsg=a4[1];
+  NET.room.onPeerJoin(id=>{
+    if(NET.mode==='host'){
+      if(NET.peer && NET.peer!==id){ try{NET.sendMsg({kind:'full'}, id);}catch(e){} return; }
+      setOnlineStatus('对手已连接，正在接收卡包…');
+    } else if(NET.mode==='guest'){
+      try{ NET.sendHello({deck:PROFILE.deck}, id); }catch(e){}
+      setOnlineStatus('已连接房主，等待对局开始…');
+    }
+  });
+  NET.room.onPeerLeave(id=>{
+    if(NET.mode==='host' && id!==NET.peer) return;
+    if(S && NET.mode && !S.over){
+      S.over=true; NET.overShown=true; S.sel=null;
+      showGameOver('leave'); render();
+    }
+  });
+  onHello((data,id)=>{
+    if(NET.mode!=='host' || NET.peer) return;
+    const keys=(data.deck||[]).filter(k=>CARD_DB[k]);
+    const heroes=keys.filter(k=>CARD_DB[k].type==='英雄');
+    let reason=null;
+    if(keys.length<10||keys.length>30) reason='卡包需为 10~30 张';
+    else if(heroes.length<1||heroes.length>3||new Set(heroes).size!==heroes.length) reason='英雄卡需 1~3 张且不可重复';
+    if(reason){ try{NET.sendMsg({kind:'reject',reason},id);}catch(e){} return; }
+    NET.peer=id;
+    startOnlineGame(keys);
+  });
+  onAct((data,id)=>{
+    if(NET.mode!=='host' || id!==NET.peer || !S || S.over || S.active!=='enemy') return;
+    NET.actPeer=id;
+    execAct('enemy', data);
+    NET.actPeer=null;
+  });
+  onState((data)=>{
+    if(NET.mode!=='guest') return;
+    receiveState(data);
+  });
+  onMsg((data)=>{
+    if(NET.mode!=='guest') return;
+    if(data.kind==='reject'){ leaveLobby(); setOnlineStatus('房主拒绝了加入：'+data.reason); }
+    else if(data.kind==='full'){ leaveLobby(); setOnlineStatus('该房间已有对局进行中'); }
+    else if(data.kind==='hint'){ hint(data.text); }
+  });
+}
+function execAct(side, data){
+  const {fn,args}=data||{};
+  if(fn==='slot') doSlotClick(side, args[0], args[1]);
+  else if(fn==='hand') doHandClick(side, args[0]);
+  else if(fn==='core') doCoreClick(side, args[0]);
+  else if(fn==='end') doEndTurn(side);
+}
+function receiveState(data){
+  if(!data || data.ver!==SAVE_VER || !data.board || !data.sides) return;
+  S=data; S.sel=null; S.busy=false;
+  if(document.getElementById('game').style.display!=='grid'){
+    showScreen(null);
+    document.getElementById('game').style.display='grid';
+  }
+  rebuildLog();
+  render();
+  if(S.over && !NET.overShown){ NET.overShown=true; showGameOver(); }
+}
+function startOnlineGame(guestKeys){
+  CTRL='player';
+  const playerDeck=shuffle(PROFILE.deck.map(k=>({...CARD_DB[k]})));
+  const enemyDeck=shuffle(guestKeys.map(k=>({...CARD_DB[k]})));
+  S = {
+    ver:SAVE_VER, round:1, active:'player', over:false, sel:null, busy:false, tut:null, online:true, log:[],
+    board: emptyBoard(),
+    sides: {
+      player:{name:'蓝方', pack:'蓝方卡包', deck:playerDeck, hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:false},
+      enemy:{name:'红方', pack:'红方卡包', deck:enemyDeck, hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:false}
+    }
+  };
+  showScreen(null);
+  document.getElementById('game').style.display='grid';
+  document.getElementById('log').innerHTML='';
+  log('系统',`联机对局开始：蓝方（房主）${playerDeck.length} 张 vs 红方 ${enemyDeck.length} 张`,'sys');
+  const first=Math.random()<0.5?'player':'enemy';
+  drawCards(first,4); drawCards(first==='player'?'enemy':'player',5);
+  log('系统','随机先手：'+(first==='player'?'蓝方':'红方')+'先手（先手方摸四张，后手方摸五张）','sys');
+  NET.overShown=false;
+  startTurn(first);
+}
+
+/* ================= 卡牌数据库 ================= */
+const CARD_DB = {};   // key: pack::name
+for(const pk of PACK_KEYS) for(const c of CARD_DATA[pk]) CARD_DB[pk+'::'+c.name] = {...c, pack:pk};
+const cardKey = c => (c.pack?c.pack+'::':'')+c.name;
+
+/* ================= 词条解析 ================= */
+function parseKeywords(effect){
+  const kw = {}; const tags = [];
+  if(!effect) return {kw,tags};
+  const head = effect.split(/【|：|，|,|\n/)[0];
+  head.split('、').forEach(t=>{
+    t = t.trim(); if(!t) return;
+    let m = t.match(/^重甲[（(](\d+)[)）]$/);
+    if(m){ kw.armor = +m[1]; return; }
+    m = t.match(/^群体[（(](\d+)[)）]$/);
+    if(m){ kw.swarm = +m[1]; return; }
+    if(KW_FLAGS.includes(t)){ kw[t] = true; return; }
+    if(!/^(无|预警)$/.test(t) && t.length<=6 && !/\d/.test(t)) tags.push(t);
+  });
+  return {kw,tags};
+}
+function parseMods(text){
+  const m = {atk:0,hp:0,dist:0,move:0,temp:false};
+  if(!text) return m;
+  m.temp = /本回合/.test(text);
+  (text.match(/\+(\d+)攻击/g)||[]).forEach(s=>m.atk+=+s.match(/\d+/)[0]);
+  (text.match(/\+(\d+)生命/g)||[]).forEach(s=>m.hp+=+s.match(/\d+/)[0]);
+  (text.match(/\+(\d+)(?:攻击)?距离|距离\+(\d+)/g)||[]).forEach(s=>m.dist+=+s.match(/\d+/)[0]);
+  (text.match(/-(\d+)移动力/g)||[]).forEach(s=>m.move-=+s.match(/\d+/)[0]);
+  return m;
+}
+const restrain = (a,d)=> a!=='无' && d!=='无' && (ATTR_BEATS[a]===d || (a==='光'&&d==='暗') || (a==='暗'&&d==='光'));
+
+/* ================= 初始化 ================= */
+function buildAIDeck(packKey){
+  const cards = CARD_DATA[packKey];
+  const heroes = cards.filter(c=>c.type==='英雄');
+  const others = cards.filter(c=>c.type!=='英雄');
+  shuffle(heroes); shuffle(others);
+  return shuffle(heroes.slice(0,2).concat(others.slice(0,28)).map(c=>({...c, pack:packKey})));
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function emptyBoard(){ const b={}; ROWS.forEach(r=>b[r]=Array(COLS).fill(null)); return b; }
+
+function newGame(){
+  const errs = deckErrors(PROFILE.deck);
+  if(errs.length){ hint('卡包未就绪：'+errs[0]+'，请先设计卡包'); return; }
+  const aiPack = PACK_KEYS[Math.floor(Math.random()*PACK_KEYS.length)];
+  const playerDeck = shuffle(PROFILE.deck.map(k=>({...CARD_DB[k]})));
+  S = {
+    ver:SAVE_VER, round:1, active:'player', over:false, sel:null, busy:false, tut:null, log:[],
+    board: emptyBoard(),
+    sides: {
+      player:{name:'我方', pack:'我的卡包', deck:playerDeck, hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:false},
+      enemy:{name:'敌方', pack:aiPack, deck:buildAIDeck(aiPack), hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:false}
+    }
+  };
+  showScreen(null);
+  document.getElementById('game').style.display='grid';
+  document.getElementById('log').innerHTML='';
+  log('系统','对局开始：我方「我的卡包」('+playerDeck.length+'张) vs 敌方「'+aiPack+'」','sys');
+  rollInitiative();
+}
+
+function rollInitiative(){
+  show('dice-overlay');
+  let n=0;
+  const iv=setInterval(()=>{
+    document.getElementById('dice-me').textContent = 1+Math.floor(Math.random()*20);
+    document.getElementById('dice-ai').textContent = 1+Math.floor(Math.random()*20);
+    if(++n>14){
+      clearInterval(iv);
+      let me,ai; do{ me=1+Math.floor(Math.random()*20); ai=1+Math.floor(Math.random()*20); }while(me===ai);
+      document.getElementById('dice-me').textContent=me;
+      document.getElementById('dice-ai').textContent=ai;
+      const first = me>ai ? 'player':'enemy';
+      document.getElementById('dice-msg').textContent = first==='player'?'我方先手！摸四张牌':'敌方先手！我方摸五张牌';
+      drawCards(first, 4); drawCards(first==='player'?'enemy':'player', 5);
+      log('系统',`D20：我方 ${me} vs 敌方 ${ai} —— ${first==='player'?'我方':'敌方'}先手`,'sys');
+      setTimeout(()=>{ hide('dice-overlay'); startTurn(first); },1500);
+    }
+  },80);
+}
+
+/* ================= 回合流程 ================= */
+function startTurn(side){
+  if(S.over) return;
+  S.active = side; S.sel = null;
+  const sd = S.sides[side];
+  if(sd.rpCap < RP_MAX) sd.rpCap++;
+  sd.rp = sd.rpCap;
+  if(sd.firstTurnDone) drawCards(side,1); else sd.firstTurnDone = true;
+  expireDebuffs(side);   // 我方施加的削弱在「我方」下回合开始时复原
+  tickBurn(side);        // 燃烧在持有者的每个回合开始结算
+  for(const row of ROWS) for(const u of S.board[row]) if(u && u.owner===side){
+    u.ap = u.move; u.hasAttacked = false; u._combo2 = false;
+    // 伪装：上回合未行动则本回合不可被攻击
+    u.stealthed = !!u.kw.伪装 && !u.acted;
+    u.acted = false;
+  }
+  phaseTip((side==='player'?'我方':'敌方')+'回合 · 第'+S.round+'轮');
+  log('回合',`—— ${S.sides[side].name}回合（RP ${sd.rp}/${sd.rpCap}）——`,'t');
+  if(side==='enemy'){
+    S.busy=true; render();
+    if(S.tut){ log('系统','教官跳过了回合','sys'); setTimeout(()=>endTurn(), 700); }
+    else if(!NET.mode) setTimeout(aiMain, SETTINGS.aiDelay+250);
+    // 联机：等待对手通过邀请码房间远程操作
+  } else { S.busy=false; render(); }
+}
+function endTurn(){
+  const side = S.active;
+  for(const row of ROWS) for(let i=0;i<COLS;i++){
+    const u = S.board[row][i];
+    if(u && u.tempMods.length){
+      u.tempMods.forEach(m=>{ u.atk-=m.atk; u.hp-=m.hp; u.maxHp-=m.hp; u.dist-=m.dist; });
+      u.tempMods = [];
+      if(u.hp<=0){ killUnit(row,i); continue; }
+    }
+  }
+  if(side==='enemy') S.round++;
+  log('系统',`${S.sides[side].name}回合结束`,'sys');
+  if(S.tut && side==='player') tutNotify('endTurn');
+  startTurn(side==='player'?'enemy':'player');
+}
+function drawCards(side,n){
+  const sd = S.sides[side];
+  for(let i=0;i<n;i++){
+    if(!sd.deck.length){
+      if(!sd.discard.length){ log('系统',sd.name+'牌组已耗尽，停止抽牌'); break; }
+      sd.deck = shuffle(sd.discard.splice(0));
+      log('系统',sd.name+'重置出战牌组','sys');
+    }
+    sd.hand.push(sd.deck.pop());
+  }
+}
+
+/* ================= 单位操作 ================= */
+function mkUnit(card, owner){
+  const {kw,tags} = parseKeywords(card.effect);
+  const u = {card, owner, name:card.name, type:card.type, attr:card.attr, range:card.range||'近',
+    atk:card.atk||0, hp:card.hp||0, maxHp:card.hp||0, move:card.move??0, dist:Math.min(card.dist||1,2),
+    kw, tags, ap:0, hasAttacked:false, acted:false, justDeployed:true, tempMods:[], equips:[],
+    buffs:[], debuffs:[], burn:0,
+    stealthed:!!kw.伪装, _combo2:false, _revived:false};
+  if(kw.闪击) u.ap = u.move;
+  if(u.type==='建筑') u.ap = 0;
+  return u;
+}
+function deploy(side, card, col){
+  const sd = S.sides[side];
+  const row = DEPLOY_ROW[side];
+  if(col===CORE_COL || S.board[row][col]) return false;   // 后场中央是核心
+  if(sd.rp < card.cost) return false;
+  sd.rp -= card.cost;
+  sd.hand.splice(sd.hand.indexOf(card),1);
+  const u = mkUnit(card, side);
+  S.board[row][col] = u;
+  log(sd.name,`部署【${card.name}】(${card.atk??'-'}/${card.hp}) 至${rowName(row)}${col+1}号位`);
+  if(/入场时，抽一张牌/.test(card.effect||'')){ drawCards(side,1); log('效果','【'+card.name+'】入场：抽一张牌','sys'); }
+  // 预警：敌方部署时抽牌
+  const foe = side==='player'?'enemy':'player';
+  for(const r of ROWS) for(const x of S.board[r]) if(x && x.owner===foe && x.kw.预警){ drawCards(foe,1); log('效果','【'+x.name+'】预警：抽一张牌','sys'); }
+  if(S.tut && side==='player') tutNotify('deploy', u);
+  return true;
+}
+function moveUnit(fromRow, fromCol, toRow, toCol){
+  const u = S.board[fromRow][fromCol];
+  if(!u || u.ap<1 || (u.hasAttacked && !u.kw.游击) || u.type==='建筑') return false;
+  if(S.board[toRow][toCol]) return false;
+  if(toRow==='front' && S.board.front.some(x=>x && x.owner!==u.owner)) return false;  // 前线独占
+  S.board[toRow][toCol] = u; S.board[fromRow][fromCol] = null;
+  u.ap--; u.acted = true; u.justDeployed = false; u.stealthed = false;
+  log('',`${u.name} 移动至${rowName(toRow)}${toCol+1}号位`);
+  // 警戒：相邻战线有敌方单位进入时抽牌
+  const foe = u.owner==='player'?'enemy':'player';
+  const dr = ROWS.indexOf(toRow);
+  for(const row of ROWS) for(const x of S.board[row])
+    if(x && x.owner===foe && x.kw.警戒 && Math.abs(ROWS.indexOf(row)-dr)===1){ drawCards(foe,1); log('效果','【'+x.name+'】警戒：抽一张牌','sys'); }
+  if(S.tut && u.owner==='player') tutNotify('move', u);
+  return true;
+}
+function rowDist(a,b){ return Math.abs(ROWS.indexOf(a)-ROWS.indexOf(b)); }
+
+function unitPos(u){ for(const row of ROWS){ const i=S.board[row].indexOf(u); if(i>=0) return [row,i]; } return [null,-1]; }
+function hasGuardNeighbor(row, col, owner){
+  // 守卫：左右相邻的友方守卫存活时，本单位不可被攻击
+  for(const dc of [-1,1]){
+    const c = col+dc; if(c<0||c>=COLS) continue;
+    const g = S.board[row][c];
+    if(g && g.owner===owner && g.kw.守卫) return true;
+  }
+  return false;
+}
+function canTargetUnit(att, def){
+  if(def.stealthed) return false;
+  const [dr,dc] = unitPos(def);
+  if(dr && hasGuardNeighbor(dr, dc, def.owner)) return false;
+  return true;
+}
+
+/* ================= 增益 / 减益（打击·压制·削弱·畏惧·燃烧·驱散·净化） ================= */
+function applyDebuff(u, kind, amount, untilSide, srcName){
+  // kind: 'move'|'atk'；amount: -1 或 'zero'；untilSide 的下个回合开始时复原
+  u.debuffs = u.debuffs||[];
+  const cur = u[kind];
+  const delta = amount==='zero' ? -cur : Math.max(amount, -cur);
+  u[kind] = Math.max(0, cur+delta);
+  if(kind==='move') u.ap = Math.min(u.ap, u.move);
+  u.debuffs.push({[kind]:-delta, until:untilSide});
+  log('效果',`【${srcName}】：【${u.name}】${kind==='move'?'移动力':'攻击力'}${amount==='zero'?'清零':amount}，持续到 ${S.sides[untilSide].name} 下回合开始`,'sys');
+}
+function expireDebuffs(side){
+  for(const row of ROWS) for(const u of S.board[row]){
+    if(!u || !u.debuffs || !u.debuffs.length) continue;
+    const stay=[];
+    for(const d of u.debuffs){
+      if(d.until===side){ if(d.move) u.move+=d.move; if(d.atk) u.atk+=d.atk; }
+      else stay.push(d);
+    }
+    if(stay.length!==u.debuffs.length) log('效果',`【${u.name}】的属性削弱已复原`,'sys');
+    u.debuffs=stay;
+  }
+}
+function tickBurn(side){
+  for(const row of ROWS) for(let i=0;i<COLS;i++){
+    const u=S.board[row][i];
+    if(u && u.owner===side && u.burn>0){
+      u.hp-=1; u.burn--;
+      log('效果',`【${u.name}】燃烧：受到 1 点伤害${u.burn>0?`（还会持续 ${u.burn} 回合）`:'（燃烧结束）'}`,'dmg');
+      if(u.hp<=0) killUnit(row,i);
+    }
+  }
+}
+function dispelBuffs(u, srcName){
+  // 驱散：消除目标单位正面效果（装备增益、装备词条、正面临时增益）
+  let n=0;
+  for(const b of (u.buffs||[])){
+    u.atk-=b.atk; u.maxHp-=b.hp; u.hp=Math.min(u.hp,u.maxHp);
+    u.dist=Math.max(1,u.dist-(b.dist||0)); u.move=Math.max(0,u.move-(b.move||0)); u.ap=Math.min(u.ap,u.move);
+    (b.kw||[]).forEach(k=>delete u.kw[k]); n++;
+  }
+  u.buffs=[]; u.equips=[];
+  const keep=[];
+  for(const m of u.tempMods){ if(m.atk>0||m.hp>0){ u.atk-=m.atk; u.hp-=m.hp; u.maxHp-=m.hp; n++; } else keep.push(m); }
+  u.tempMods=keep;
+  if(n) log('效果',`【${srcName}】驱散：移除【${u.name}】的 ${n} 项正面效果`,'sys');
+  else log('效果',`【${srcName}】驱散：【${u.name}】没有正面效果可移除`,'sys');
+}
+function cleanse(u, srcName){
+  // 净化：消除目标单位负面效果（属性削弱、燃烧）
+  let n=(u.debuffs?u.debuffs.length:0)+(u.burn>0?1:0);
+  for(const d of (u.debuffs||[])){ if(d.move) u.move+=d.move; if(d.atk) u.atk+=d.atk; }
+  u.debuffs=[]; u.burn=0;
+  if(n) log('效果',`【${srcName}】净化：移除【${u.name}】的负面效果`,'sys');
+}
+
+function attack(fr, fc, tr, tc){
+  const att = S.board[fr][fc];
+  if(!att || att.ap<1 || att.atk<=0) return false;
+  att.ap--; att.hasAttacked = true; att.acted = true; att.justDeployed = false; att.stealthed = false;
+  let baseAtk = att.atk;
+  if(att.kw.连击 && att._combo2) baseAtk = Math.floor(att.atk/2);   // 连击第二次减半
+  if(tr==='core'){
+    const def = S.sides[att.owner==='player'?'enemy':'player'];
+    def.core -= baseAtk;
+    log('战斗',`【${att.name}】攻击${def.name}核心，造成 ${baseAtk} 点伤害`,'dmg');
+    if(att.kw.吸血 && baseAtk>0){ att.hp=Math.min(att.maxHp,att.hp+1); log('效果',`【${att.name}】吸血：回复 1 点生命`,'heal'); }
+    afterAttack(att, fr, fc);
+    if(S.tut && att.owner==='player') tutNotify('attackCore', att);
+    checkGameOver(); return true;
+  }
+  const def = S.board[tr][tc];
+  if(!def) return false;
+  let dmgA = baseAtk + (restrain(att.attr,def.attr)?2:0);
+  let armorNote = '';
+  if(def.kw.armor>0){   // 重甲：单次伤害≤1，失去一层
+    dmgA = Math.min(dmgA, 1); def.kw.armor--;
+    armorNote = `（重甲抵挡，剩${def.kw.armor}层）`;
+    if(def.kw.armor<=0) delete def.kw.armor;
+  }
+  def.hp -= dmgA;
+  let msg = `【${att.name}】→【${def.name}】造成 ${dmgA} 点伤害`;
+  if(restrain(att.attr,def.attr)) msg += '（克制+2）';
+  msg += armorNote;
+  log('战斗', msg, 'dmg');
+  if(att.kw.吸血 && dmgA>0){ att.hp=Math.min(att.maxHp,att.hp+1); log('效果',`【${att.name}】吸血：回复 1 点生命`,'heal'); }
+  // 反击：近↔近 或 远↔远，且防御方有攻击力且仍存活
+  if(def.atk>0 && att.range===def.range && def.type!=='建筑' && def.hp>0){
+    let dmgD = def.atk + (restrain(def.attr,att.attr)?2:0);
+    if(att.kw.armor>0){
+      dmgD = Math.min(dmgD, 1); att.kw.armor--;
+      if(att.kw.armor<=0) delete att.kw.armor;
+    }
+    att.hp -= dmgD;
+    log('战斗',`【${def.name}】反击，对【${att.name}】造成 ${dmgD} 点伤害`,'dmg');
+    if(def.kw.吸血 && dmgD>0) def.hp=Math.min(def.maxHp,def.hp+1);
+  }
+  // 攻击命中附加词条：打击/压制/削弱/畏惧/燃烧/驱散（目标仍存活才生效）
+  if(def.hp>0){
+    const A=att.owner, eff=att.card.effect||'';
+    if(att.kw.打击) applyDebuff(def,'move',-1,A,att.name+'·打击');
+    if(att.kw.压制) applyDebuff(def,'move','zero',A,att.name+'·压制');
+    if(att.kw.削弱) applyDebuff(def,'atk',-1,A,att.name+'·削弱');
+    if(att.kw.畏惧) applyDebuff(def,'atk','zero',A,att.name+'·畏惧');
+    if(/攻击后，使目标单位获得削弱/.test(eff) && !att.kw.削弱) applyDebuff(def,'atk',-1,A,att.name+'·蹂躏');
+    if(att.kw.燃烧){ def.burn=2; log('效果',`【${att.name}】点燃【${def.name}】：每回合 -1 生命，持续 2 回合`,'dmg'); }
+    if(att.kw.驱散) dispelBuffs(def, att.name);
+  }
+  if(S.tut && att.owner==='player') tutNotify(att.range==='远'?'rangedAttack':'attack', att);
+  if(att.hp<=0) killUnit(fr,fc);
+  if(def.hp<=0) killUnit(tr,tc);
+  afterAttack(att, fr, fc);
+  checkGameOver();
+  return true;
+}
+function afterAttack(att, fr, fc){
+  // 连击：获得第二次攻击（减半）
+  if(att.kw.连击 && !att._combo2 && S.board[fr] && S.board[fr][fc]===att){
+    att._combo2 = true; att.ap += 1;
+    log('效果',`【${att.name}】连击：可进行第二次攻击（伤害减半）`,'sys');
+  }
+}
+function killUnit(row,col){
+  const u = S.board[row][col]; if(!u) return;
+  if(u.kw.复生 && !u._revived){
+    u._revived = true; u.hp = 1; u.stealthed = false;
+    log('效果',`【${u.name}】复生：以 1 点生命值复活！`,'heal');
+    return;
+  }
+  log('战斗',`【${u.name}】被摧毁`,'dmg');
+  S.board[row][col] = null;
+  S.sides[u.owner].discard.push(u.card);
+}
+function checkGameOver(){
+  if(S.over) return;
+  const p=S.sides.player.core, e=S.sides.enemy.core;
+  if(p<=0 || e<=0){
+    S.over = true;
+    if(S.tut){ tutNotify('win'); render(); return; }
+    if(NET.mode){ NET.overShown=true; showGameOver(); render(); return; }
+    const win = e<=0 && p>0;
+    let rewardText = '';
+    if(e<=0 && p<=0){ PROFILE.streak=0; }
+    else if(win){
+      PROFILE.streak++;
+      const reward = PROFILE.streak>=3 ? Math.round(60*Math.pow(1.2, PROFILE.streak-2)) : 60;
+      PROFILE.gold += reward;
+      rewardText = `胜利奖励 +${reward} 金币` + (PROFILE.streak>=2 ? `（当前 ${PROFILE.streak} 连胜）` : '');
+    } else {
+      PROFILE.streak = 0;
+      rewardText = '连胜中断，再接再厉';
+    }
+    saveProfile();
+    document.getElementById('btn-again').style.display='';
+    document.getElementById('gameover-title').textContent = e<=0 && p<=0 ? '两 败 俱 伤' : (win ? '胜 利' : '战 败');
+    document.getElementById('reward-line').textContent = rewardText;
+    show('gameover-overlay'); render();
+  }
+}
+
+/* 联机/通用结算弹窗：按本端视角显示胜负 */
+function showGameOver(kind){
+  const mine=S.sides[CTRL].core, theirs=S.sides[CTRL==='player'?'enemy':'player'].core;
+  const title = kind==='leave' ? '对手离场'
+    : (mine<=0&&theirs<=0 ? '两 败 俱 伤' : (theirs<=0 ? '胜 利' : '战 败'));
+  document.getElementById('gameover-title').textContent = title;
+  document.getElementById('reward-line').textContent = kind==='leave' ? '对方已离开房间，对局结束' : '联机对局 · 无金币奖励';
+  document.getElementById('btn-again').style.display='none';
+  show('gameover-overlay');
+}
+
+/* ================= 装备 / 技能 ================= */
+function applyEquip(side, card, row, col){
+  const u = S.board[row][col];
+  const sd = S.sides[side];
+  if(!u || u.owner!==side || sd.rp<card.cost) return false;
+  sd.rp -= card.cost; sd.hand.splice(sd.hand.indexOf(card),1);
+  const m = parseMods(card.effect);
+  u.atk+=m.atk; u.hp+=m.hp; u.maxHp+=m.hp; u.dist=Math.min(2,u.dist+m.dist); u.move+=m.move;
+  if(m.temp) u.tempMods.push(m);
+  u.equips.push(card.name);
+  const granted={};   // 装备文本中的「获得XX」词条（如“装备单位+2攻击，并获得打击”）
+  (card.effect.match(/获得(?:了)?(?:重甲[（(]\d+[)）]|群体[（(]\d+[)）]|[一-龥]{2,3})/g)||[]).forEach(s=>{
+    const w=s.replace(/^获得了?/,'');
+    let m=w.match(/^重甲[（(](\d+)[)）]$/); if(m){ granted.armor=+m[1]; return; }
+    m=w.match(/^群体[（(](\d+)[)）]$/); if(m){ granted.swarm=+m[1]; return; }
+    if(KW_FLAGS.includes(w)) granted[w]=true;
+  });
+  const newKw = Object.keys(granted).filter(k=>!u.kw[k]);   // 仅记录新增的词条，驱散时可安全移除
+  Object.assign(u.kw, granted);
+  u.buffs.push({atk:m.temp?0:m.atk, hp:m.temp?0:m.hp, dist:m.temp?0:m.dist, move:m.temp?0:m.move, kw:newKw});
+  if(u.kw.伪装 && !u.acted) u.stealthed = true;
+  log(sd.name,`【${card.name}】装备给【${u.name}】（${card.effect}）`);
+  sd.discard.push(card);
+  return true;
+}
+function skillNeedsTarget(card){
+  const t = card.effect||'';
+  if(/指定一个敌方/.test(t)) return 'enemy';
+  if(/指定一个友方/.test(t)) return 'friendly';
+  return null;
+}
+function castSkill(side, card, tRow, tCol){
+  const sd = S.sides[side];
+  if(sd.rp < card.cost) return false;
+  const t = card.effect||'';
+  sd.rp -= card.cost; sd.hand.splice(sd.hand.indexOf(card),1);
+  let applied = false;
+  const tgt = (tRow!=null) ? S.board[tRow][tCol] : null;
+  // 群体伤害（如「沙暴」：对敌方所有非土属性单位造成1点伤害，并使其获得削弱）
+  const aoe = t.match(/对敌方所有(?:非(\S)属性)?单位造成(\d+)点伤害/);
+  if(aoe){
+    const foeSide = side==='player'?'enemy':'player';
+    let hits=0;
+    for(const row of ROWS) for(let i=0;i<COLS;i++){
+      const u=S.board[row][i];
+      if(!u || u.owner!==foeSide || (aoe[1] && u.attr===aoe[1])) continue;
+      let dmg=+aoe[2];
+      if(u.kw.armor>0){ dmg=Math.min(dmg,1); u.kw.armor--; if(u.kw.armor<=0) delete u.kw.armor; }
+      u.hp-=dmg; hits++;
+      if(/获得削弱/.test(t) && u.hp>0) applyDebuff(u,'atk',-1,side,card.name);
+      if(u.hp<=0) killUnit(row,i);
+    }
+    log('技能',`【${card.name}】对 ${hits} 个敌方单位各造成 ${aoe[2]} 点伤害`,'dmg');
+    applied = true;
+  }
+  let dm = t.match(/造成(\d+)点伤害/);
+  if(dm && tgt && !aoe){
+    let dmg=+dm[1];
+    if(tgt.kw.armor>0){ dmg=Math.min(dmg,1); tgt.kw.armor--; if(tgt.kw.armor<=0) delete tgt.kw.armor; }
+    tgt.hp -= dmg;
+    log('技能',`【${card.name}】对【${tgt.name}】造成 ${dmg} 点伤害`,'dmg');
+    if(tgt.hp<=0) killUnit(tRow,tCol);
+    applied = true;
+  }
+  if(/\+?\d+攻击|\+?\d+生命|-\d+移动力/.test(t) && tgt && !dm){
+    const m = parseMods(t);
+    tgt.atk+=m.atk; tgt.hp+=m.hp; tgt.maxHp+=m.hp; tgt.move+=m.move; tgt.ap=Math.max(0,tgt.ap+m.move);
+    if(m.temp) tgt.tempMods.push(m);
+    log('技能',`【${card.name}】→【${tgt.name}】：${t}`,'sys');
+    applied = true;
+  }
+  let dr = t.match(/抽(一|两|\d)张牌/);
+  if(dr){ const n = dr[1]==='一'?1:dr[1]==='两'?2:+dr[1]; drawCards(side,n); log('技能',`【${card.name}】：抽${dr[1]}张牌`,'sys'); applied = true; }
+  if(!applied) log('技能',`【${card.name}】发动（效果「${t||'无'}」将于后续版本实装）`,'sys');
+  sd.discard.push(card);
+  checkGameOver();
+  return true;
+}
+
+/* ================= AI ================= */
+function aiMain(){
+  if(S.over) return;
+  const sd = S.sides.enemy;
+  let guard=0;
+  while(guard++<12){
+    const playable = sd.hand.filter(c=>c.cost<=sd.rp);
+    if(!playable.length) break;
+    const card = playable.sort((a,b)=>b.cost-a.cost)[0];
+    if(card.type==='英雄'||card.type==='部队'||card.type==='建筑'){
+      const empt=[]; S.board.enemyBase.forEach((s,i)=>{if(!s && i!==CORE_COL)empt.push(i);});
+      if(!empt.length) break;
+      deploy('enemy',card,empt[Math.floor(Math.random()*empt.length)]);
+    } else if(card.type==='装备'){
+      const units=[]; for(const row of ROWS) S.board[row].forEach((u,i)=>{if(u&&u.owner==='enemy'&&u.type!=='建筑')units.push([row,i]);});
+      if(!units.length){ break; }
+      const [r,c]=units[Math.floor(Math.random()*units.length)]; applyEquip('enemy',card,r,c);
+    } else {
+      const need = skillNeedsTarget(card);
+      if(need==='enemy'){
+        const tg=[]; for(const row of ROWS) S.board[row].forEach((u,i)=>{if(u&&u.owner==='player'&&!u.stealthed)tg.push([row,i]);});
+        if(!tg.length) break;
+        const [r,c]=tg[Math.floor(Math.random()*tg.length)]; castSkill('enemy',card,r,c);
+      } else if(need==='friendly'){
+        const tg=[]; for(const row of ROWS) S.board[row].forEach((u,i)=>{if(u&&u.owner==='enemy')tg.push([row,i]);});
+        if(!tg.length) break;
+        const [r,c]=tg[Math.floor(Math.random()*tg.length)]; castSkill('enemy',card,r,c);
+      } else castSkill('enemy',card);
+    }
+    render();
+  }
+  const units=[];
+  for(const row of ROWS) S.board[row].forEach((u,i)=>{ if(u&&u.owner==='enemy') units.push([row,i]); });
+  let idx=0;
+  const step=()=>{
+    if(S.over) return;
+    if(idx>=units.length){ render(); setTimeout(()=>endTurn(),SETTINGS.aiDelay); return; }
+    const [row,col]=units[idx++];
+    const u=S.board[row]&&S.board[row][col];
+    if(!u){ step(); return; }
+    const tgt = bestTarget(u,row);
+    if(tgt){ attack(row,col,tgt[0],tgt[1]); render(); setTimeout(step,SETTINGS.aiDelay); return; }
+    if(u.ap>0 && !u.hasAttacked && u.type!=='建筑'){
+      const mv = moveTargets(u,row,col).filter(([r])=>PATH.enemy.indexOf(r)>PATH.enemy.indexOf(row));
+      if(mv.length){
+        mv.sort((a,b)=>(Math.abs(a[1]-3)-Math.abs(b[1]-3)));   // 优先向中线靠拢
+        moveUnit(row,col,mv[0][0],mv[0][1]);
+        const tgt2 = bestTarget(u,mv[0][0]);   // 移动后若仍可攻击则攻击
+        if(tgt2) attack(mv[0][0],mv[0][1],tgt2[0],tgt2[1]);
+        render(); setTimeout(step,SETTINGS.aiDelay); return;
+      }
+    }
+    step();
+  };
+  step();
+}
+function bestTarget(u,row){
+  const opts=[];
+  for(const r of ROWS) S.board[r].forEach((d,i)=>{
+    if(d && d.owner==='player' && rowDist(row,r)<=u.dist && canTargetUnit(u,d)) opts.push([r,i,d]);
+  });
+  if(opts.length){ opts.sort((a,b)=>a[2].hp-b[2].hp); return opts[0]; }
+  if(canAttackCore(u,row)) return ['core',0];
+  return null;
+}
+
+/* ================= 交互 ================= */
+function onSlotClick(row,col){
+  if(!S || S.over || S.active!==CTRL) return;
+  if(NET.mode==='guest'){ try{NET.sendAct({fn:'slot',args:[row,col]});}catch(e){} return; }
+  if(S.busy) return;
+  doSlotClick(CTRL,row,col);
+}
+function doSlotClick(side,row,col){
+  if(S.active!==side || S.over) return;
+  const sd = S.sides[side];
+  const u = S.board[row][col];
+  if(S.sel && S.sel.kind==='hand'){
+    const card = S.sel.card;
+    if(card.type==='英雄'||card.type==='部队'||card.type==='建筑'){
+      if(row===DEPLOY_ROW[side] && !u && col!==CORE_COL){
+        if(card.cost<=sd.rp){ deploy(side,card,col); S.sel=null; render(); }
+        else hint('共鸣点不足：需要 '+card.cost+' RP');
+      }
+    } else if(card.type==='装备'){
+      if(u && u.owner===side){ applyEquip(side,card,row,col); S.sel=null; render(); }
+    } else {
+      const need = skillNeedsTarget(card);
+      if(need==='enemy' && u && u.owner!==side && !u.stealthed){ castSkill(side,card,row,col); S.sel=null; render(); }
+      else if(need==='friendly' && u && u.owner===side){ castSkill(side,card,row,col); S.sel=null; render(); }
+    }
+    return;
+  }
+  if(S.sel && S.sel.kind==='unit'){
+    const {row:fr,col:fc}=S.sel;
+    const att=S.board[fr][fc];
+    if(att){
+      if(!u && moveTargets(att,fr,fc).some(([r,c])=>r===row&&c===col)){ moveUnit(fr,fc,row,col); S.sel=null; render(); return; }
+      if(u && u.owner!==side && attackTargets(att,fr).some(([r,c])=>r===row&&c===col)){ attack(fr,fc,row,col); S.sel=null; render(); return; }
+    }
+    S.sel=null; render(); return;
+  }
+  if(u && u.owner===side){
+    if(u.ap>0){ S.sel={kind:'unit',row,col}; render(); }
+    else hint('「'+u.name+'」本回合已无法行动（右键查看详情）');
+    return;
+  }
+  if(u) hint('右键点击卡牌查看详情');
+}
+function moveTargets(u,row,col){
+  if(!u || u.ap<1 || (u.hasAttacked && !u.kw.游击) || u.type==='建筑') return [];
+  const path = PATH[u.owner];
+  const i = path.indexOf(row);
+  if(i<0) return [];
+  const out=[];
+  [i-1,i+1].forEach(j=>{
+    if(j<0||j>=path.length) return;
+    const r = path[j];
+    if(r==='front' && S.board.front.some(x=>x&&x.owner!==u.owner)) return;  // 前线独占
+    for(const dc of [-1,0,1]){   // 可斜向移动
+      const c = col+dc; if(c<0||c>=COLS) continue;
+      if(r===BASE_ROW[u.owner] && c===CORE_COL) continue;   // 核心格不可进入
+      if(!S.board[r][c]) out.push([r,c]);
+    }
+  });
+  return out;
+}
+function attackTargets(u,row){
+  if(!u || u.ap<1 || u.atk<=0) return [];
+  const out=[];
+  for(const r of ROWS) S.board[r].forEach((d,i)=>{
+    if(d && d.owner!==u.owner && rowDist(row,r)<=u.dist && canTargetUnit(u,d)) out.push([r,i]);
+  });
+  return out;
+}
+function canAttackCore(u,row){
+  if(!u || u.ap<1 || u.atk<=0) return false;
+  const foeBase = BASE_ROW[u.owner==='player'?'enemy':'player'];
+  return rowDist(row,foeBase)<=u.dist;
+}
+function onCoreClick(coreSide){
+  if(!S || S.over || S.active!==CTRL) return;
+  if(NET.mode==='guest'){ try{NET.sendAct({fn:'core',args:[coreSide]});}catch(e){} return; }
+  if(S.busy) return;
+  doCoreClick(CTRL, coreSide);
+}
+function doCoreClick(side, coreSide){
+  if(S.active!==side || S.over) return;
+  if(coreSide!==side && S.sel && S.sel.kind==='unit'){
+    const {row,col}=S.sel; const att=S.board[row][col];
+    if(att && canAttackCore(att,row)){ attack(row,col,'core',0); S.sel=null; render(); }
+  }
+}
+function onHandClick(idx){
+  if(!S || S.over || S.active!==CTRL) return;
+  if(NET.mode==='guest'){ try{NET.sendAct({fn:'hand',args:[idx]});}catch(e){} return; }
+  if(S.busy) return;
+  doHandClick(CTRL, idx);
+}
+function doHandClick(side, idx){
+  if(S.active!==side || S.over) return;
+  const card = S.sides[side].hand[idx];
+  if(!card) return;
+  // 左键：选择 / 再点取消（右键查看详情）
+  if(S.sel && S.sel.kind==='hand' && S.sel.card===card){ S.sel=null; render(); return; }
+  if(card.type==='技能' && !skillNeedsTarget(card)){
+    if(card.cost > S.sides[side].rp){ hint('共鸣点不足：需要 '+card.cost+' RP'); return; }
+    castSkill(side,card); render(); return;
+  }
+  S.sel = {kind:'hand', card};
+  if(card.cost > S.sides[side].rp) hint('共鸣点不足：需要 '+card.cost+' RP（当前 '+S.sides[side].rp+'）');
+  render();
+}
+function playerEndTurn(){
+  if(!S || S.active!==CTRL || S.over) return;
+  if(NET.mode==='guest'){ try{NET.sendAct({fn:'end',args:[]});}catch(e){} return; }
+  if(S.busy) return;
+  doEndTurn(CTRL);
+}
+function doEndTurn(side){
+  if(S.active!==side || S.over || S._ending) return;
+  S._ending=true; S.busy=true; S.sel=null; render();
+  setTimeout(()=>{ S._ending=false; endTurn(); }, NET.mode?150:350);
+}
+
+/* ================= 渲染 ================= */
+function attrIcon(a){ return ATTR_ICON[a]||'○'; }
+function rarColor(r){ return 'var(--rar-'+(r||'R')+')'; }
+function cardFace(u,card,inHand){
+  const c = card||u.card;
+  const kw = u ? u.kw : parseKeywords(c.effect).kw;
+  const badges = Object.keys(kw).filter(k=>kw[k]&&k!=='armor'&&k!=='swarm').map(k=>`<span>${k}</span>`).join('')
+    + (kw.armor?`<span>重甲${kw.armor}</span>`:'') + (kw.swarm?`<span>群体${kw.swarm}</span>`:'')
+    + (u&&u.burn>0?`<span class="fx">🔥${u.burn}</span>`:'') + (u&&u.debuffs&&u.debuffs.length?`<span class="fx">⬇${u.debuffs.length}</span>`:'');
+  const sleep = u && u.justDeployed && !kw.闪击 ? '<div class="sleep">💤</div>' : '';
+  const cost = inHand ? `<div class="c-cost">${c.cost}</div>` : '';
+  const rar = c.rarity ? `<div class="c-rar" style="color:${rarColor(c.rarity)}">${c.rarity}</div>` : '';
+  return `${cost}<div class="c-attr">${attrIcon(c.attr)}</div>${rar}
+    <div class="c-kw">${badges}</div>
+    <div class="c-name">${c.name}</div>
+    ${sleep}<div class="info-btn">i</div>
+    <div class="c-stats"><div class="atk">${u?u.atk:(c.atk??'-')}</div><div class="hp">${u?u.hp:(c.hp??'-')}</div></div>`;
+}
+function render(){
+  if(!S) return;
+  const ME=CTRL, FOE=ME==='player'?'enemy':'player';
+  const p=S.sides[ME], e=S.sides[FOE];
+  const foeName = NET.mode ? '对手' : '敌方';
+  document.getElementById('enemy-bar').innerHTML =
+    `<span class="who">${foeName} · ${e.pack}</span>
+     <span class="stat-chip">核心 <b class="core-hp">${e.core}</b></span>
+     <span class="stat-chip">RP <b>${e.rp}/${e.rpCap}</b></span>
+     <span class="stat-chip">手牌 <b>${e.hand.length}</b></span>
+     <span class="stat-chip">牌组 <b>${e.deck.length}</b></span>
+     <span class="stat-chip" style="margin-left:auto">第 ${S.round} 轮 · ${S.active===ME?'我方行动':foeName+'行动中…'}</span>`;
+  let pips=''; for(let i=0;i<p.rpCap;i++) pips+=`<div class="rp-pip ${i<p.rp?'on':''}"></div>`;
+  document.getElementById('player-bar').innerHTML =
+    `<span class="who">我方 · ${p.pack}</span>
+     <span class="stat-chip">核心 <b class="core-hp">${p.core}</b></span>
+     <span class="stat-chip">共鸣点</span><div id="rp-box">${pips||'<span style="font-size:12px;color:var(--dim)">0</span>'}</div>
+     <span class="stat-chip">(${p.rp}/${p.rpCap})</span>
+     <span class="stat-chip">牌组 <b>${p.deck.length}</b></span>
+     <button id="ingame-menu-btn" onclick="openIngameMenu()">☰ 菜单</button>
+     <button id="end-turn" ${S.active!==ME||S.over||S.busy?'disabled':''} onclick="playerEndTurn()">结束回合</button>`;
+  // 棋盘（联机加入方视角上下镜像）
+  const board = document.getElementById('board');
+  board.innerHTML='';
+  const selU = S.sel&&S.sel.kind==='unit' ? S.board[S.sel.row][S.sel.col] : null;
+  const mvT = selU ? moveTargets(selU,S.sel.row,S.sel.col) : [];
+  const atT = selU ? attackTargets(selU,S.sel.row) : [];
+  const selH = S.sel&&S.sel.kind==='hand' ? S.sel.card : null;
+  const dispRows = ME==='enemy' ? ROWS.slice().reverse() : ROWS;
+  for(const row of dispRows){
+    const isBase = row==='enemyBase'||row==='playerBase';
+    const rowSide = isBase||row==='enemyBack'||row==='playerBack' ? ((row==='enemyBase'||row==='enemyBack')?'enemy':'player') : null;
+    const div=document.createElement('div'); div.className='brow'+(row==='front'?' front':'')+(isBase?' base':'');
+    div.innerHTML=`<div class="row-label">${rowName(row)}</div>`;
+    for(let i=0;i<COLS;i++){
+      // 核心位于双方后场正中央，不可移动
+      if(isBase && i===CORE_COL){
+        const side = rowSide;
+        const cs = S.sides[side];
+        const core=document.createElement('div');
+        core.className='core-slot'+(side!==ME&&selU&&canAttackCore(selU,S.sel.row)?' hl-atk':'');
+        core.innerHTML=`<div class="ico">🏛️</div><div class="chp">${cs.core}</div><div class="clabel">${side===ME?'我方核心':'敌方核心'}</div>`;
+        core.onclick=()=>onCoreClick(side);
+        div.appendChild(core);
+        continue;
+      }
+      const slot=document.createElement('div'); slot.className='slot';
+      slot.onclick=()=>onSlotClick(row,i);
+      const u=S.board[row][i];
+      if(selH && (selH.type==='英雄'||selH.type==='部队'||selH.type==='建筑') && row===DEPLOY_ROW[ME] && !u) slot.classList.add('hl');
+      if(selH && selH.type==='装备' && u && u.owner===ME) slot.classList.add('hl');
+      if(selH && selH.type==='技能' && u && ((skillNeedsTarget(selH)==='enemy'&&u.owner!==ME&&!u.stealthed)||(skillNeedsTarget(selH)==='friendly'&&u.owner===ME))) slot.classList.add('hl-atk');
+      if(selU && !u && mvT.some(([r,c])=>r===row&&c===i)) slot.classList.add('hl');
+      if(selU && u && atT.some(([r,c])=>r===row&&c===i)) slot.classList.add('hl-atk');
+      if(u){
+        const cd=document.createElement('div');
+        cd.className=`card t-${u.type}`+(u.ap<=0||u.hasAttacked?' exhausted':'')+(S.sel&&S.sel.kind==='unit'&&S.sel.row===row&&S.sel.col===i?' selected':'')+(selU&&atT.some(([r,c])=>r===row&&c===i)?' targetable':'');
+        cd.innerHTML=cardFace(u);
+        cd.oncontextmenu=(ev)=>{ev.preventDefault();showDetail(u.card,u);};
+        cd.querySelector('.info-btn').onclick=(ev)=>{ev.stopPropagation();showDetail(u.card,u);};
+        slot.appendChild(cd);
+      }
+      div.appendChild(slot);
+    }
+    board.appendChild(div);
+  }
+  // 手牌
+  const hand=document.getElementById('hand'); hand.innerHTML='';
+  p.hand.forEach((c,i)=>{
+    const w=document.createElement('div');
+    w.className='hcard'+(c.cost>p.rp?' unplayable':'');
+    const cd=document.createElement('div');
+    cd.className=`card t-${c.type}`+(S.sel&&S.sel.kind==='hand'&&S.sel.card===c?' selected':'');
+    cd.innerHTML=cardFace(null,c,true);
+    cd.onclick=()=>onHandClick(i);
+    cd.oncontextmenu=(ev)=>{ev.preventDefault();showDetail(c);};
+    cd.querySelector('.info-btn').onclick=(ev)=>{ev.stopPropagation();showDetail(c);};
+    w.appendChild(cd); hand.appendChild(w);
+  });
+  const logEl=document.getElementById('log'); logEl.scrollTop=logEl.scrollHeight;
+  if(S && !S.tut && !S.over && !NET.mode) saveGame(SAVE_AUTO);
+  // 联机房主：每次状态变化后同步给对手
+  if(NET.mode==='host' && NET.peer && S && !S.tut){
+    try{ NET.sendState({...S, sel:null, busy:false}); }catch(e){}
+  }
+}
+
+/* ================= 详情弹窗 ================= */
+function showDetail(card, u){
+  const kw = u?u.kw:parseKeywords(card.effect).kw;
+  const kwStr = Object.entries(kw).filter(([,v])=>v).map(([k,v])=>k==='armor'?'重甲('+v+')':(k==='swarm'?'群体('+v+')':k)).join('、')||'—';
+  const row=(k,v)=>v!==undefined?`<tr><td>${k}</td><td>${v}</td></tr>`:'';
+  document.getElementById('detail-body').innerHTML=`
+    <h2>${card.name}</h2>
+    <div class="dtype">${card.type}卡 · ${card.pack?card.pack.replace(/（\d+张）/,''):''} · 属性【${card.attr}】${card.rarity?` · <span style="color:${rarColor(card.rarity)};font-weight:700">${card.rarity} ${RARITY_NAME[card.rarity]}</span>`:''}</div>
+    <table>
+      ${row('消耗', card.cost+' RP')}
+      ${card.atk!==undefined?row('攻击', (u?u.atk:card.atk)+(u&&u.atk!==card.atk?`（基础${card.atk}）`:'')):''}
+      ${card.hp!==undefined?row(card.type==='建筑'?'耐久':'生命', (u?u.hp+' / '+u.maxHp:card.hp)):''}
+      ${card.range?row('近/远程', card.range):''}
+      ${card.move!==undefined?row('移动力', (u?u.move:card.move)+(u&&u.move!==card.move?`（基础${card.move}）`:'')):''}
+      ${card.dist!==undefined?row('攻击距离', card.dist):''}
+      ${u&&(u.burn>0||(u.debuffs&&u.debuffs.length))?row('状态', [u.burn>0?`🔥 燃烧：每回合 -1 生命（剩 ${u.burn} 回合）`:'', u.debuffs&&u.debuffs.length?`⬇ 属性被削弱 ${u.debuffs.length} 项（届时自动复原）`:''].filter(Boolean).join('<br>')):''}
+      ${row('词条', kwStr)}
+      ${u&&u.equips.length?row('已装备', u.equips.join('、')):''}
+    </table>
+    <div class="eff">${card.effect||'（无效果）'}</div>`;
+  show('detail-overlay');
+}
+function closeDetail(){ hide('detail-overlay'); }
+document.getElementById('detail-overlay').addEventListener('click',e=>{ if(e.target.id==='detail-overlay') closeDetail(); });
+
+/* ================= 存档列表 / 继续游戏 ================= */
+function saveGame(key){
+  try{ localStorage.setItem(key, JSON.stringify({...S, sel:null})); }catch(e){}
+}
+function getSaves(){ try{ return JSON.parse(localStorage.getItem(SAVES_KEY)||'[]'); }catch(e){ return []; } }
+function setSaves(list){ try{ localStorage.setItem(SAVES_KEY, JSON.stringify(list)); }catch(e){} }
+function saveToSlot(){
+  if(!S || S.over || S.tut || S.online) return;
+  const list = getSaves();
+  const d = new Date();
+  const label = `第${S.round}轮 · 我方核心${S.sides.player.core} vs 敌方${S.sides.enemy.core}`;
+  list.unshift({id:Date.now(), ts:d.toLocaleString(), label, state:{...S, sel:null}});
+  if(list.length>12) list.pop();
+  setSaves(list);
+}
+function openSaveList(){
+  document.getElementById('btn-save-new').style.display = (S && !S.over && !S.tut && !S.online) ? '' : 'none';
+  renderSaveList();
+  show('savelist-overlay');
+}
+function renderSaveList(){
+  const list = getSaves();
+  const box = document.getElementById('savelist-items');
+  if(!list.length){ box.innerHTML='<div class="save-empty">暂无手动存档</div>'; return; }
+  box.innerHTML='';
+  list.forEach(sv=>{
+    const row=document.createElement('div'); row.className='save-row';
+    row.innerHTML=`<div class="sl">${sv.label}<small>${sv.ts}</small></div>`;
+    const b1=document.createElement('button'); b1.textContent='读取';
+    b1.onclick=()=>{ loadState(sv.state); hide('savelist-overlay'); };
+    const b2=document.createElement('button'); b2.textContent='删除';
+    b2.onclick=()=>{ setSaves(getSaves().filter(x=>x.id!==sv.id)); renderSaveList(); };
+    row.appendChild(b1); row.appendChild(b2);
+    box.appendChild(row);
+  });
+}
+function loadState(data){
+  try{
+    if(!data || data.ver!==SAVE_VER || !data.board || !data.sides){ hint('存档版本不兼容'); return false; }
+    S = data; S.sel=null; S.busy=false;
+    showScreen(null);
+    document.getElementById('game').style.display='grid';
+    hide('gameover-overlay');
+    log('系统','读档成功，继续对局','sys');
+    rebuildLog();
+    render();
+    if(S.active==='enemy' && !S.over){ S.busy=true; setTimeout(aiMain, 800); }
+    return true;
+  }catch(e){ return false; }
+}
+function continueGame(){
+  const raw = localStorage.getItem(SAVE_AUTO);
+  if(!raw){ hint('没有可继续的对局'); return; }
+  try{ loadState(JSON.parse(raw)); }catch(e){ hint('存档损坏'); }
+}
+function loadSettings(){
+  try{ return Object.assign({aiDelay:650}, JSON.parse(localStorage.getItem(SET_KEY)||'{}')); }
+  catch(e){ return {aiDelay:650}; }
+}
+function saveSettings(){ try{ localStorage.setItem(SET_KEY, JSON.stringify(SETTINGS)); }catch(e){} }
+
+/* ================= 我的卡包：金币 / 收藏 / 开包 ================= */
+function loadProfile(){
+  try{ return Object.assign({gold:0,streak:0,freeClaimed:false,collection:{},deck:[]}, JSON.parse(localStorage.getItem(PROFILE_KEY)||'{}')); }
+  catch(e){ return {gold:0,streak:0,freeClaimed:false,collection:{},deck:[]}; }
+}
+function saveProfile(){ try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(PROFILE)); }catch(e){} }
+function openShop(){
+  document.getElementById('gold-num').textContent = '💰 '+PROFILE.gold;
+  document.getElementById('free-claim').style.display = PROFILE.freeClaimed ? 'none' : 'block';
+  const grid = document.getElementById('shop-grid');
+  grid.innerHTML='';
+  SHOP_PACKS.forEach(sp=>{
+    const d=document.createElement('div'); d.className='shop-pack';
+    d.innerHTML=`<h3>${sp.name}</h3><div class="pdesc">${sp.desc}</div><div class="pprice">💰 ${sp.price}</div>`;
+    const b=document.createElement('button'); b.textContent='开包 ×10';
+    b.disabled = PROFILE.gold < sp.price;
+    b.onclick=()=>buyPack(sp);
+    d.appendChild(b);
+    grid.appendChild(d);
+  });
+  showScreen('shop-screen');
+}
+function claimFreePacks(){
+  PROFILE.freeClaimed = true;
+  const all = [];
+  for(let i=0;i<3;i++) all.push(...rollPack('univ'));
+  all.forEach(c=>{ const k=cardKey(c); PROFILE.collection[k]=(PROFILE.collection[k]||0)+1; });
+  saveProfile();
+  openShop();
+  showPackOpen('新人福利 · 通用卡包 ×3', all);
+}
+function buyPack(sp){
+  if(PROFILE.gold < sp.price) return;
+  PROFILE.gold -= sp.price;
+  const cards = rollPack(sp.id);
+  cards.forEach(c=>{ const k=cardKey(c); PROFILE.collection[k]=(PROFILE.collection[k]||0)+1; });
+  saveProfile();
+  openShop();
+  showPackOpen(sp.name, cards);
+}
+function rollPack(packId){
+  const sp = SHOP_PACKS.find(x=>x.id===packId);
+  const pool=[];
+  sp.pool.forEach(pk=>CARD_DATA[pk].forEach(c=>pool.push({...c, pack:pk})));
+  const cards=[];
+  for(let i=0;i<10;i++) cards.push(rollOne(pool));
+  // 保底：每包至少一张 SR 及以上
+  if(!cards.some(c=>c.rarity!=='R')){
+    const up = pool.filter(c=>c.rarity!=='R');
+    if(up.length) cards[9] = up[Math.floor(Math.random()*up.length)];
+  }
+  return cards;
+}
+function rollOne(pool){
+  const order=['UR','SSR','SR','R'];
+  let roll=Math.random()*100, rar='R', acc=0;
+  for(const [r,p] of RARITY_ODDS){ acc+=p; if(roll<acc){ rar=r; break; } }
+  let idx=order.indexOf(rar);
+  while(idx<order.length){   // 该稀有度卡池为空时向下取
+    const cand=pool.filter(c=>c.rarity===order[idx]);
+    if(cand.length) return cand[Math.floor(Math.random()*cand.length)];
+    idx++;
+  }
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function showPackOpen(title, cards){
+  document.getElementById('packopen-title').textContent = title;
+  const grid=document.getElementById('packopen-grid');
+  grid.innerHTML='';
+  cards.forEach((c,i)=>{
+    const w=document.createElement('div'); w.className='poc'; w.style.animationDelay=(i*0.12)+'s';
+    const cd=document.createElement('div'); cd.className='card t-'+c.type;
+    cd.style.borderColor = rarColor(c.rarity);
+    cd.innerHTML=cardFace(null,c,true);
+    cd.onclick=()=>showDetail(c);
+    w.appendChild(cd); grid.appendChild(w);
+  });
+  show('packopen-overlay');
+}
+
+/* ================= 图鉴 ================= */
+function openGallery(){
+  fillPackSelect(document.getElementById('gal-pack'));
+  renderGallery();
+  show('gallery-overlay');
+}
+function renderGallery(){
+  const fp=document.getElementById('gal-pack').value, fr=document.getElementById('gal-rar').value, ft=document.getElementById('gal-type').value;
+  const grid=document.getElementById('gallery-grid');
+  grid.innerHTML='';
+  let shown=0;
+  const keys=Object.keys(CARD_DB).filter(k=>{
+    const c=CARD_DB[k];
+    if(fp && c.pack!==fp) return false;
+    if(fr && c.rarity!==fr) return false;
+    if(ft && c.type!==ft) return false;
+    return true;
+  });
+  keys.forEach(k=>{
+    const cnt = PROFILE.collection[k]||0;
+    if(cnt<=0) return;   // 图鉴只展示已有卡牌
+    shown++;
+    const c=CARD_DB[k];
+    const w=document.createElement('div'); w.className='gcard';
+    const cd=document.createElement('div'); cd.className='card t-'+c.type;
+    cd.innerHTML=cardFace(null,c,true);
+    cd.onclick=()=>showDetail(c);
+    w.appendChild(cd);
+    const badge=document.createElement('div'); badge.className='cnt'; badge.textContent='×'+cnt;
+    w.appendChild(badge);
+    grid.appendChild(w);
+  });
+  document.getElementById('gal-count').textContent = `已收集 ${Object.keys(PROFILE.collection).length} / ${Object.keys(CARD_DB).length} 种`;
+  if(!shown) grid.innerHTML='<div style="color:var(--dim);padding:30px">该筛选下暂无已拥有的卡牌，去开包吧！</div>';
+}
+
+/* ================= 机制 ================= */
+function openMech(){
+  const list=document.getElementById('mech-list');
+  list.innerHTML='';
+  MECH_GLOSSARY.forEach(([k,d])=>{
+    const div=document.createElement('div'); div.className='mech-item';
+    div.innerHTML=`<b>${k}</b><span>${d}</span>`;
+    list.appendChild(div);
+  });
+  show('mech-overlay');
+}
+
+/* ================= 设计卡包 ================= */
+let DB_DECK = [];   // 编辑中的卡包（key 数组）
+function deckErrors(keys){
+  const errs=[];
+  if(keys.length<10) errs.push('至少需要 10 张牌（当前 '+keys.length+'）');
+  if(keys.length>30) errs.push('最多 30 张牌（当前 '+keys.length+'）');
+  const heroes=keys.filter(k=>CARD_DB[k]&&CARD_DB[k].type==='英雄');
+  if(heroes.length<1) errs.push('至少需要 1 张英雄卡');
+  if(heroes.length>3) errs.push('英雄卡最多 3 张（当前 '+heroes.length+'）');
+  if(new Set(heroes).size!==heroes.length) errs.push('同名英雄卡不可重复');
+  const cnt={}; keys.forEach(k=>cnt[k]=(cnt[k]||0)+1);
+  for(const k in cnt) if(cnt[k]>(PROFILE.collection[k]||0)){ errs.push('「'+CARD_DB[k].name+'」超出拥有数量'); break; }
+  return errs;
+}
+function openDeckbuild(){
+  DB_DECK = PROFILE.deck.filter(k=>CARD_DB[k]);
+  fillPackSelect(document.getElementById('db-pack'));
+  renderDeckbuild();
+  show('deckbuild-overlay');
+}
+function renderDeckbuild(){
+  const fp=document.getElementById('db-pack').value, ft=document.getElementById('db-type').value;
+  const col=document.getElementById('db-collection');
+  col.innerHTML='';
+  const inDeck={}; DB_DECK.forEach(k=>inDeck[k]=(inDeck[k]||0)+1);
+  Object.keys(PROFILE.collection).filter(k=>{
+    const c=CARD_DB[k]; if(!c) return false;
+    if(fp && c.pack!==fp) return false;
+    if(ft && c.type!==ft) return false;
+    return true;
+  }).sort((a,b)=>CARD_DB[a].cost-CARD_DB[b].cost).forEach(k=>{
+    const c=CARD_DB[k];
+    const owned=PROFILE.collection[k], used=inDeck[k]||0;
+    const row=document.createElement('div'); row.className='db-row'+(used>=owned?' dis':'');
+    row.innerHTML=`<span class="rcost">${c.cost}</span><span class="rname" style="color:${rarColor(c.rarity)}">${c.name}</span><span class="rtype">${c.type}</span><span class="rown">${used}/${owned}</span>`;
+    row.onclick=()=>{
+      if((inDeck[k]||0)>=PROFILE.collection[k]){ hint('拥有数量不足'); return; }
+      DB_DECK.push(k); renderDeckbuild();
+    };
+    row.oncontextmenu=(ev)=>{ev.preventDefault();showDetail(c);};
+    col.appendChild(row);
+  });
+  if(!col.children.length) col.innerHTML='<div style="color:var(--dim);padding:20px">收藏为空，先去开包吧！</div>';
+  const dk=document.getElementById('db-deck');
+  dk.innerHTML='';
+  const cnt={}; DB_DECK.forEach(k=>cnt[k]=(cnt[k]||0)+1);
+  Object.keys(cnt).sort((a,b)=>CARD_DB[a].cost-CARD_DB[b].cost).forEach(k=>{
+    const c=CARD_DB[k];
+    const row=document.createElement('div'); row.className='db-row';
+    row.innerHTML=`<span class="rcost">${c.cost}</span><span class="rname" style="color:${rarColor(c.rarity)}">${c.name}</span><span class="rtype">${c.type}</span><span class="rown">×${cnt[k]}</span>`;
+    row.onclick=()=>{ DB_DECK.splice(DB_DECK.indexOf(k),1); renderDeckbuild(); };
+    row.oncontextmenu=(ev)=>{ev.preventDefault();showDetail(c);};
+    dk.appendChild(row);
+  });
+  const errs=deckErrors(DB_DECK);
+  const st=document.getElementById('db-status');
+  const heroCnt=DB_DECK.filter(k=>CARD_DB[k].type==='英雄').length;
+  st.textContent = errs.length ? errs[0] : `✓ 卡包就绪：${DB_DECK.length} 张 · 英雄 ${heroCnt} 张`;
+  st.className = errs.length ? '' : 'ok';
+}
+function saveDeck(){
+  const errs=deckErrors(DB_DECK);
+  if(errs.length){ hint('无法保存：'+errs[0]); return; }
+  PROFILE.deck = DB_DECK.slice();
+  saveProfile();
+  hint('卡包已保存（'+DB_DECK.length+' 张）');
+  hide('deckbuild-overlay');
+}
+
+/* ================= 模拟对局（赛前确认） ================= */
+function openPregame(){
+  const info=document.getElementById('pregame-deck-info');
+  const errs=deckErrors(PROFILE.deck);
+  const heroCnt=PROFILE.deck.filter(k=>CARD_DB[k]&&CARD_DB[k].type==='英雄').length;
+  if(errs.length){
+    info.innerHTML=`<span style="color:var(--red)">卡包未就绪：${errs[0]}</span><br><span style="color:var(--dim);font-size:13px">请先在「我的卡包 → 设计卡包」中完成组卡</span>`;
+    document.getElementById('start-btn').disabled=true;
+  }else{
+    info.innerHTML=`当前卡包：<b style="color:var(--gold)">${PROFILE.deck.length} 张</b>（英雄 ${heroCnt} 张）<br><span style="color:var(--dim);font-size:13px">胜利 +60 金币 · 三连胜起 ×1.2 递增</span>`;
+    document.getElementById('start-btn').disabled=false;
+  }
+  showScreen('pregame-screen');
+}
+
+/* ================= 新手教程 ================= */
+const DUMMY_CARD = {type:'部队',name:'训练木桩',attr:'无',range:'近',cost:0,atk:1,hp:5,move:0,dist:1,effect:'训练用木桩，不会移动。',pack:'教程'};
+const TUT_MILITIA = {type:'部队',name:'民兵',attr:'无',range:'近',cost:2,atk:2,hp:2,move:2,dist:1,effect:'教程用民兵，移动力为2，同一回合可以移动后再攻击。',pack:'教程'};
+const TUT = [
+  {t:'欢迎来到「回响战线」！<br>棋盘共<b>五条战线</b>：双方后场、双方二线与中央前线。你的<b>核心🏛️</b>位于我方后场正中央，不可移动——摧毁敌方核心即获胜，己方核心被毁则失败。'},
+  {t:'<b>【元素克制】</b>卡牌拥有金、木、水、火、土、光、暗、无八种属性。<br>克制循环：<b>金→木→土→水→火→金</b>；<b>光与暗互相克制</b>。<br>攻击被你克制的属性时，<b>伤害 +2</b>；「无」属性不参与克制，既无加成也不受加成。'},
+  {t:'<b>【出牌】</b>屏幕下方是你的手牌，左上角蓝色数字是部署消耗的<b>共鸣点(RP)</b>，每回合 RP 上限 +1 并补满。<br>单位部署在<b>己方后场</b>（核心两旁的空位）。<b>左键点击</b>手牌「民兵」将其选中，再点击<b>我方后场</b>的绿色高亮格部署。<br>（右键点击任意卡牌可查看详细信息）', gate:'deploy'},
+  {t:'刚部署的单位处于 💤 状态，<b>部署回合不能移动和攻击</b>。<br>点击右下角「结束回合」。', gate:'endTurn'},
+  {t:'<b>【移动】</b>点击「民兵」，绿色高亮格会显示所有可移动位置——前后移动时<b>可以斜向走</b>到相邻列。<br>把民兵一路推进到<b>前线</b>吧（他移动力为 2，一回合可走两步）。移动消耗移动力；移动后仍可攻击，攻击后不可再移动。', gate:'move'},
+  {t:'<b>【攻击与血量】</b>敌方二线出现了一个「训练木桩」（1攻/5血）。点击「民兵」，再点击<b>红色高亮</b>的木桩发起攻击。<br><b>近战互击</b>：民兵造成 2 点伤害，同时会受到木桩 1 点反击——注意观察双方<b>血量</b>的变化！', gate:'attack',
+   setup(){ spawnDummy(); }},
+  {t:'<b>【攻击距离】</b>给你一张「猎人」（远程，攻击距离2）。<br>把他部署到后场，下回合前进到<b>我方二线</b>后发起攻击——远程单位在二线就能直接攻击敌方二线，而且<b>远程攻击近战单位不会受到反击</b>！', gate:'rangedAttack',
+   setup(){ giveCard('猎人'); }},
+  {t:'<b>【摧毁核心】</b>最后一步：攻击敌方核心🏛️！<br>远程单位站在<b>前线</b>即可攻击敌方后场核心（距离2）；近战单位则需突入<b>敌方二线</b>（距离1）。<br>把敌方核心生命值打到 0！（教程中敌方核心已削弱至 6 点）', gate:'win',
+   setup(){ S.sides.enemy.core = 6; }},
+  {t:'🎉 <b>教程完成！</b><br>你已经掌握了出牌、移动、攻击、血量、攻击距离与核心摧毁。回到主菜单后，记得先去「我的卡包」领取新人福利、设计你的第一副卡包！', end:true}
+];
+function startTutorial(){
+  S = {
+    ver:SAVE_VER, round:1, active:'player', over:false, sel:null, busy:false, tut:{step:0}, log:[],
+    board: emptyBoard(),
+    sides: {
+      player:{name:'我方', pack:'通用卡包（80张）', deck:buildAIDeck('通用卡包（80张）').slice(0,20), hand:[], discard:[], core:CORE_HP, rpCap:1, rp:0, firstTurnDone:false},
+      enemy:{name:'敌方', pack:'教程', deck:[], hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:true}
+    }
+  };
+  S.sides.player.hand.push({...TUT_MILITIA});
+  showScreen(null);
+  document.getElementById('game').style.display='grid';
+  document.getElementById('log').innerHTML='';
+  log('系统','欢迎来到新手教程','sys');
+  document.getElementById('tut-bar').style.display='block';
+  renderTut();
+  startTurn('player');
+}
+function renderTut(){
+  const st = TUT[S.tut.step];
+  document.getElementById('tut-step').textContent = `教程 ${S.tut.step+1} / ${TUT.length}`;
+  document.getElementById('tut-text').innerHTML = st.t;
+  document.getElementById('tut-next').style.display = st.gate ? 'none' : '';
+  document.getElementById('tut-next').textContent = st.end ? '完成 ✓' : '下一步 →';
+}
+function tutNext(){
+  const st = TUT[S.tut.step];
+  if(st.end){ quitTutorial(); return; }
+  if(st.gate) return;
+  S.tut.step++;
+  const ns = TUT[S.tut.step];
+  if(ns.setup) ns.setup();
+  renderTut(); render();
+}
+function tutNotify(event, u){
+  if(!S.tut || S.tut.step>=TUT.length) return;
+  const st = TUT[S.tut.step];
+  if(st.gate==='win'){
+    if(event==='win'){
+      S.tut.step = TUT.length-1;
+      renderTut();
+      log('系统','🎉 敌方核心被摧毁，教程完成！','sys');
+    }
+    return;
+  }
+  if(st.gate===event){
+    S.tut.step++;
+    const ns = TUT[S.tut.step];
+    if(ns && ns.setup) setTimeout(()=>{ ns.setup(); renderTut(); render(); }, 400);
+    else renderTut();
+    if(!ns) quitTutorial();
+  }
+}
+function spawnDummy(){
+  // 木桩放在敌方二线，与我方最靠前单位同列
+  let col = 2;
+  outer: for(const row of ['front','playerBack','playerBase']) for(let i=0;i<COLS;i++)
+    if(S.board[row][i] && S.board[row][i].owner==='player'){ col=i; break outer; }
+  if(col===CORE_COL) col=2;
+  S.board.enemyBack[col] = mkUnit({...DUMMY_CARD}, 'enemy');
+  log('系统','敌方二线出现了「训练木桩」','sys');
+}
+function giveCard(name){
+  const g = CARD_DATA['通用卡包（80张）'];
+  const c = g.find(c=>c.name===name);
+  if(c) S.sides.player.hand.push({...c, pack:'教程'});
+  log('系统','获得手牌「'+name+'」','sys');
+}
+function quitTutorial(){
+  document.getElementById('tut-bar').style.display='none';
+  S = null;
+  backToMenu();
+}
+
+/* ================= 界面导航 ================= */
+function showScreen(id){
+  ['menu-screen','pregame-screen','online-screen','shop-screen'].forEach(s=>document.getElementById(s).style.display = s===id?'flex':'none');
+  if(id==='menu-screen') refreshMenuButtons();
+}
+function backToMenu(){
+  if(NET.mode) leaveRoomSilent();
+  CTRL='player';
+  hide('gameover-overlay'); hide('ingame-menu'); hide('dice-overlay');
+  document.getElementById('game').style.display='none';
+  document.getElementById('tut-bar').style.display='none';
+  showScreen('menu-screen');
+}
+function refreshMenuButtons(){
+  document.getElementById('btn-continue').disabled = !localStorage.getItem(SAVE_AUTO);
+}
+function openIngameMenu(){
+  document.getElementById('btn-save-ingame').style.display = (S.tut||S.online) ? 'none' : '';
+  show('ingame-menu');
+}
+
+/* ================= 工具 ================= */
+function log(tag,msg,cls){
+  if(S){ S.log=S.log||[]; S.log.push([tag,msg,cls||'']); if(S.log.length>300) S.log.shift(); }
+  const el=document.getElementById('log');
+  const d=document.createElement('div');
+  if(cls) d.className=cls;
+  d.textContent=(tag?`[${tag}] `:'')+msg;
+  el.appendChild(d); el.scrollTop=el.scrollHeight;
+}
+function rebuildLog(){
+  const el=document.getElementById('log'); el.innerHTML='';
+  ((S&&S.log)||[]).forEach(([tag,msg,cls])=>{
+    const d=document.createElement('div');
+    if(cls) d.className=cls;
+    d.textContent=(tag?`[${tag}] `:'')+msg;
+    el.appendChild(d);
+  });
+  el.scrollTop=el.scrollHeight;
+}
+function show(id){ document.getElementById(id).classList.add('show'); }
+function hide(id){ document.getElementById(id).classList.remove('show'); }
+function phaseTip(t){
+  const el=document.getElementById('phase-tip'); el.textContent=t; el.style.opacity=1;
+  setTimeout(()=>el.style.opacity=0,1100);
+}
+let hintTimer=null;
+function hint(t){
+  const el=document.getElementById('hint'); el.textContent=t; el.style.opacity=1;
+  clearTimeout(hintTimer); hintTimer=setTimeout(()=>el.style.opacity=0,1800);
+  // 联机：把操作反馈转发给正在远程出招的对手
+  if(NET.mode==='host' && NET.actPeer){ try{ NET.sendMsg({kind:'hint',text:t}, NET.actPeer); }catch(e){} }
+}
+
+/* ================= 事件绑定 ================= */
+(function(){
+  document.getElementById('btn-tutorial').onclick = startTutorial;
+  document.getElementById('btn-sim').onclick = openPregame;
+  document.getElementById('btn-online').onclick = ()=>{ resetOnlineUI(); setOnlineStatus(''); showScreen('online-screen'); };
+  document.getElementById('btn-create-room').onclick = createRoom;
+  document.getElementById('btn-join-room').onclick = joinRoomByCode;
+  document.getElementById('btn-online-back').onclick = ()=>{ leaveLobby(); showScreen('menu-screen'); };
+  document.getElementById('code-input').addEventListener('keydown', e=>{ if(e.key==='Enter') joinRoomByCode(); });
+  document.getElementById('btn-shop').onclick = openShop;
+  document.getElementById('btn-savelist').onclick = openSaveList;
+  document.getElementById('btn-continue').onclick = continueGame;
+  document.getElementById('btn-settings').onclick = ()=>{
+    document.getElementById('set-speed').value = String(SETTINGS.aiDelay);
+    show('settings-overlay');
+  };
+  document.getElementById('set-speed').onchange = (e)=>{ SETTINGS.aiDelay = +e.target.value; saveSettings(); };
+  document.getElementById('btn-clear-save').onclick = ()=>{
+    localStorage.removeItem(SAVE_AUTO); localStorage.removeItem(SAVES_KEY); localStorage.removeItem(PROFILE_KEY);
+    PROFILE = loadProfile();
+    const b=document.getElementById('btn-clear-save'); b.textContent='已清除 ✓'; setTimeout(()=>b.textContent='清除所有存档与收藏',1200);
+  };
+  document.getElementById('btn-save-new').onclick = ()=>{
+    saveToSlot(); renderSaveList(); hint('已保存到存档列表');
+  };
+  document.getElementById('btn-save-ingame').onclick = ()=>{
+    if(S && !S.tut){ saveToSlot(); hide('ingame-menu'); log('系统','对局已保存','sys'); }
+  };
+  document.getElementById('btn-again').onclick = ()=>{
+    hide('gameover-overlay');
+    if(S && !S.tut && !deckErrors(PROFILE.deck).length) newGame(); else backToMenu();
+  };
+  document.getElementById('start-btn').onclick = ()=>{ newGame(); };
+  document.getElementById('btn-goto-deck').onclick = ()=>{ openShop(); openDeckbuild(); };
+  refreshMenuButtons();
+})();
+</script>
+</body>
+</html>
