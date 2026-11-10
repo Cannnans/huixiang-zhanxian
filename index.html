@@ -126,7 +126,7 @@ button{font-family:inherit;cursor:pointer}
 #detail-box td:first-child{color:var(--dim);width:76px;background:rgba(0,0,0,.2)}
 #detail-box .eff{font-size:13.5px;line-height:1.8;background:rgba(0,0,0,.25);border-radius:8px;padding:10px 12px;color:#cfd8ea;white-space:pre-line}
 .overlay .x{position:absolute;top:8px;right:12px;font-size:20px;color:var(--dim);cursor:pointer;background:none;border:none}
-.dialog-box{text-align:center;background:var(--panel2);border:2px solid var(--gold);border-radius:14px;padding:30px 46px;display:flex;flex-direction:column;gap:12px;min-width:320px}
+.dialog-box{text-align:center;background:var(--panel2);border:2px solid var(--gold);border-radius:14px;padding:30px 46px;display:flex;flex-direction:column;gap:12px;min-width:320px;position:relative}
 .dialog-box h2{color:var(--gold);letter-spacing:4px;margin-bottom:4px}
 #dice-vals{display:flex;gap:40px;justify-content:center;font-size:15px;margin-bottom:6px}
 #dice-vals b{font-size:44px;display:block;color:#fff}
@@ -215,6 +215,17 @@ button{font-family:inherit;cursor:pointer}
 #online-status{color:var(--dim);font-size:14px;min-height:20px;text-align:center}
 .card .c-kw span.fx{color:#f2b08a;border-color:#8a5a3a}
 
+/* ---------- 账号 ---------- */
+#acct-box{position:absolute;top:14px;right:18px;display:flex;align-items:center;gap:8px;z-index:60}
+#acct-box #acct-label{font-size:14px;color:var(--dim)}
+#acct-box button{padding:7px 14px;font-size:13px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--txt)}
+#acct-box button:hover{border-color:var(--gold);color:var(--gold)}
+.auth-input{width:260px;padding:10px 14px;font-size:15px;background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:8px;outline:none;text-align:center}
+.auth-input:focus{border-color:var(--gold)}
+#detail-overlay{z-index:130}
+.mini-btn{padding:4px 12px;font-size:12.5px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt)}
+.mini-btn:hover{border-color:var(--gold);color:var(--gold)}
+
 /* ---------- 存档列表 ---------- */
 #savelist-box{background:var(--panel2);border:2px solid var(--gold);border-radius:14px;padding:24px 28px;min-width:440px;max-width:92vw;display:flex;flex-direction:column;gap:10px;max-height:80vh}
 #savelist-box h2{color:var(--gold);letter-spacing:4px;text-align:center}
@@ -232,6 +243,11 @@ button{font-family:inherit;cursor:pointer}
 
 <!-- 主菜单 -->
 <div class="screen" id="menu-screen">
+  <div id="acct-box">
+    <span id="acct-label">游客</span>
+    <button id="acct-btn">登录 / 注册</button>
+    <button id="acct-out" style="display:none">登出</button>
+  </div>
   <h1>回 响 战 线</h1>
   <div class="sub">五 条 战 线 · 共 鸣 对 决</div>
   <button class="menu-btn" id="btn-tutorial">新 手 教 程</button>
@@ -351,8 +367,21 @@ button{font-family:inherit;cursor:pointer}
         <option value="1000">慢</option>
       </select>
     </div>
-    <button class="btn ghost" id="btn-clear-save">清除所有存档与收藏</button>
+    <button class="btn ghost" id="btn-clear-save">清除当前账号的存档与收藏</button>
     <button class="btn" onclick="hide('settings-overlay')">完 成</button>
+  </div>
+</div>
+<!-- 账号登录/注册 -->
+<div class="overlay" id="auth-overlay">
+  <div class="dialog-box" style="min-width:380px">
+    <button class="x" onclick="hide('auth-overlay')">✕</button>
+    <h2>账 号</h2>
+    <input class="auth-input" id="auth-name" placeholder="账号（6~14 位）" maxlength="14" autocomplete="off">
+    <input class="auth-input" id="auth-pass" type="password" placeholder="密码（6~14 位）" maxlength="14">
+    <button class="btn" onclick="doLogin()">登 录</button>
+    <button class="btn ghost" onclick="doRegister()">注册新账号</button>
+    <button class="btn ghost" onclick="doGuest()">游客进入</button>
+    <div style="font-size:12px;color:var(--dim)">账号与存档数据仅保存在本机浏览器中</div>
   </div>
 </div>
 <!-- 存档列表 -->
@@ -400,10 +429,14 @@ button{font-family:inherit;cursor:pointer}
     <button class="x" onclick="hide('deckbuild-overlay')">✕</button>
     <div class="wide-head">
       <h2>设 计 卡 包</h2>
+      <select class="filter-sel" id="db-deck-sel" onchange="switchDeck()"></select>
+      <button class="mini-btn" onclick="createDeck()">＋ 新建卡包</button>
+      <button class="mini-btn" onclick="deleteDeck()">删除</button>
       <select class="filter-sel" id="db-pack" onchange="renderDeckbuild()"><option value="">全部阵营</option></select>
       <select class="filter-sel" id="db-type" onchange="renderDeckbuild()"><option value="">全部类型</option><option>英雄</option><option>部队</option><option>装备</option><option>技能</option><option>建筑</option></select>
-      <span style="margin-left:auto;color:var(--dim);font-size:12px">规则：10~30 张 · 英雄 1~3 张 · 同名英雄限 1 · 不超过拥有数量</span>
+      <span style="margin-left:auto;color:var(--dim);font-size:12px;margin-right:26px">规则：10~30 张 · 英雄 1~3 张 · 同名英雄限 1 · 不超过拥有数量</span>
     </div>
+    <div style="font-size:12.5px;color:var(--dim);margin:-4px 0 8px">提示：右键查看卡牌具体效果；左键点击加入 / 移出卡包</div>
     <div class="db-cols">
       <div class="db-col"><h3>我的收藏（点击加入）</h3><div class="db-list" id="db-collection"></div></div>
       <div class="db-col"><h3>当前卡包（点击移除）</h3><div class="db-list" id="db-deck"></div></div>
@@ -489,6 +522,52 @@ const MECH_GLOSSARY = [
 
 let S = null;
 let SETTINGS = loadSettings();
+
+/* ================= 账号系统（本机账号 · 存档隔离） ================= */
+let ACCT = '';   // 当前账号名；空字符串 = 游客
+try{ ACCT = localStorage.getItem('hx_current')||''; }catch(e){}
+const pkey = base => ACCT ? base+'@'+ACCT : base;   // 存档键按账号隔离，游客用默认键
+function getAccounts(){ try{ return JSON.parse(localStorage.getItem('hx_accounts')||'{}'); }catch(e){ return {}; } }
+function saveAccounts(a){ try{ localStorage.setItem('hx_accounts', JSON.stringify(a)); }catch(e){} }
+function hashPw(s){ let h=5381; for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))>>>0; return 'h'+h.toString(36)+'_'+s.length; }
+const validAcctName = n => /^[\w一-龥]{6,14}$/.test(n);
+const validAcctPass = p => /^[\x21-\x7e]{6,14}$/.test(p);
+function switchAccount(name){
+  ACCT = name||'';
+  try{ localStorage.setItem('hx_current', ACCT); }catch(e){}
+  PROFILE = loadProfile();
+  refreshAcctUI(); refreshMenuButtons();
+  hide('auth-overlay');
+}
+function doRegister(){
+  const n=document.getElementById('auth-name').value.trim(), p=document.getElementById('auth-pass').value;
+  if(!validAcctName(n)) return hint('账号需为 6~14 位（字母/数字/下划线/中文）');
+  if(!validAcctPass(p)) return hint('密码需为 6~14 位可见字符（字母/数字/符号）');
+  const accs=getAccounts();
+  if(accs[n]) return hint('账号「'+n+'」已存在，请直接登录');
+  accs[n]={pw:hashPw(p), created:new Date().toLocaleString()};
+  saveAccounts(accs);
+  switchAccount(n);
+  hint('注册成功，欢迎「'+n+'」！记得去我的卡包领取新人福利');
+}
+function doLogin(){
+  const n=document.getElementById('auth-name').value.trim(), p=document.getElementById('auth-pass').value;
+  if(!validAcctName(n)) return hint('账号需为 6~14 位');
+  const accs=getAccounts();
+  if(!accs[n]) return hint('账号不存在，请先注册');
+  if(accs[n].pw!==hashPw(p)) return hint('密码错误');
+  switchAccount(n);
+  hint('欢迎回来，'+n+'！');
+}
+function doGuest(){ switchAccount(''); hint('已进入游客模式，数据保存在本机'); }
+function refreshAcctUI(){
+  const label=document.getElementById('acct-label');
+  const btn=document.getElementById('acct-btn');
+  const out=document.getElementById('acct-out');
+  if(ACCT){ label.textContent='👤 '+ACCT; label.style.color='var(--gold)'; btn.textContent='切换账号'; out.style.display=''; }
+  else { label.textContent='游客'; label.style.color=''; btn.textContent='登录 / 注册'; out.style.display='none'; }
+}
+
 let PROFILE = loadProfile();
 let CTRL = 'player';   // 本端操控的一方：单机/房主为 player，联机加入方为 enemy
 
@@ -513,7 +592,7 @@ function leaveRoomSilent(){
 }
 function leaveLobby(){ leaveRoomSilent(); resetOnlineUI(); setOnlineStatus(''); }
 async function createRoom(){
-  const errs = deckErrors(PROFILE.deck);
+  const errs = deckErrors(activeDeckKeys());
   if(errs.length){ hint('卡包未就绪：'+errs[0]+'，请先设计卡包'); return; }
   setOnlineStatus('正在连接联机网络…');
   try{ await netLoad(); }catch(e){ setOnlineStatus('联机模块加载失败，请检查网络后重试'); return; }
@@ -525,7 +604,7 @@ async function createRoom(){
   setOnlineStatus('房间已创建，等待对手加入…');
 }
 async function joinRoomByCode(){
-  const errs = deckErrors(PROFILE.deck);
+  const errs = deckErrors(activeDeckKeys());
   if(errs.length){ hint('卡包未就绪：'+errs[0]+'，请先设计卡包'); return; }
   const code = document.getElementById('code-input').value.trim().toUpperCase();
   if(code.length!==6){ hint('请输入 6 位邀请码'); return; }
@@ -546,7 +625,7 @@ function setupRoom(code){
       if(NET.peer && NET.peer!==id){ try{NET.sendMsg({kind:'full'}, id);}catch(e){} return; }
       setOnlineStatus('对手已连接，正在接收卡包…');
     } else if(NET.mode==='guest'){
-      try{ NET.sendHello({deck:PROFILE.deck}, id); }catch(e){}
+      try{ NET.sendHello({deck:activeDeckKeys()}, id); }catch(e){}
       setOnlineStatus('已连接房主，等待对局开始…');
     }
   });
@@ -605,7 +684,7 @@ function receiveState(data){
 }
 function startOnlineGame(guestKeys){
   CTRL='player';
-  const playerDeck=shuffle(PROFILE.deck.map(k=>({...CARD_DB[k]})));
+  const playerDeck=shuffle(activeDeckKeys().map(k=>({...CARD_DB[k]})));
   const enemyDeck=shuffle(guestKeys.map(k=>({...CARD_DB[k]})));
   S = {
     ver:SAVE_VER, round:1, active:'player', over:false, sel:null, busy:false, tut:null, online:true, log:[],
@@ -671,7 +750,7 @@ function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.rando
 function emptyBoard(){ const b={}; ROWS.forEach(r=>b[r]=Array(COLS).fill(null)); return b; }
 
 function newGame(){
-  const errs = deckErrors(PROFILE.deck);
+  const errs = deckErrors(activeDeckKeys());
   if(errs.length){ hint('卡包未就绪：'+errs[0]+'，请先设计卡包'); return; }
   const aiPack = PACK_KEYS[Math.floor(Math.random()*PACK_KEYS.length)];
   const playerDeck = shuffle(PROFILE.deck.map(k=>({...CARD_DB[k]})));
@@ -1393,10 +1472,10 @@ document.getElementById('detail-overlay').addEventListener('click',e=>{ if(e.tar
 
 /* ================= 存档列表 / 继续游戏 ================= */
 function saveGame(key){
-  try{ localStorage.setItem(key, JSON.stringify({...S, sel:null})); }catch(e){}
+  try{ localStorage.setItem(pkey(key), JSON.stringify({...S, sel:null})); }catch(e){}
 }
-function getSaves(){ try{ return JSON.parse(localStorage.getItem(SAVES_KEY)||'[]'); }catch(e){ return []; } }
-function setSaves(list){ try{ localStorage.setItem(SAVES_KEY, JSON.stringify(list)); }catch(e){} }
+function getSaves(){ try{ return JSON.parse(localStorage.getItem(pkey(SAVES_KEY))||'[]'); }catch(e){ return []; } }
+function setSaves(list){ try{ localStorage.setItem(pkey(SAVES_KEY), JSON.stringify(list)); }catch(e){} }
 function saveToSlot(){
   if(!S || S.over || S.tut || S.online) return;
   const list = getSaves();
@@ -1442,7 +1521,7 @@ function loadState(data){
   }catch(e){ return false; }
 }
 function continueGame(){
-  const raw = localStorage.getItem(SAVE_AUTO);
+  const raw = localStorage.getItem(pkey(SAVE_AUTO));
   if(!raw){ hint('没有可继续的对局'); return; }
   try{ loadState(JSON.parse(raw)); }catch(e){ hint('存档损坏'); }
 }
@@ -1454,10 +1533,22 @@ function saveSettings(){ try{ localStorage.setItem(SET_KEY, JSON.stringify(SETTI
 
 /* ================= 我的卡包：金币 / 收藏 / 开包 ================= */
 function loadProfile(){
-  try{ return Object.assign({gold:0,streak:0,freeClaimed:false,collection:{},deck:[]}, JSON.parse(localStorage.getItem(PROFILE_KEY)||'{}')); }
-  catch(e){ return {gold:0,streak:0,freeClaimed:false,collection:{},deck:[]}; }
+  let p;
+  try{ p = Object.assign({gold:0,streak:0,freeClaimed:false,collection:{},decks:[],activeDeck:null}, JSON.parse(localStorage.getItem(pkey(PROFILE_KEY))||'{}')); }
+  catch(e){ p = {gold:0,streak:0,freeClaimed:false,collection:{},decks:[],activeDeck:null}; }
+  if(!Array.isArray(p.decks)) p.decks=[];
+  // 旧版单卡包数据迁移为多卡包
+  if(Array.isArray(p.deck)){
+    if(p.deck.length && !p.decks.length){
+      p.decks.push({id:Date.now()+Math.floor(Math.random()*1000), name:'我的卡包', keys:p.deck.filter(k=>CARD_DB[k])});
+      p.activeDeck = p.decks[0].id;
+    }
+    delete p.deck;
+  }
+  if(!p.decks.some(d=>d.id===p.activeDeck)) p.activeDeck = p.decks.length ? p.decks[0].id : null;
+  return p;
 }
-function saveProfile(){ try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(PROFILE)); }catch(e){} }
+function saveProfile(){ try{ localStorage.setItem(pkey(PROFILE_KEY), JSON.stringify(PROFILE)); }catch(e){} }
 function openShop(){
   document.getElementById('gold-num').textContent = '💰 '+PROFILE.gold;
   document.getElementById('free-claim').style.display = PROFILE.freeClaimed ? 'none' : 'block';
@@ -1580,8 +1671,18 @@ function openMech(){
   show('mech-overlay');
 }
 
-/* ================= 设计卡包 ================= */
+/* ================= 设计卡包（多卡包管理） ================= */
 let DB_DECK = [];   // 编辑中的卡包（key 数组）
+function activeDeck(){ return PROFILE.decks.find(d=>d.id===PROFILE.activeDeck) || PROFILE.decks[0] || null; }
+function activeDeckKeys(){ const d=activeDeck(); return d ? d.keys.filter(k=>CARD_DB[k]) : []; }
+const newDeckId = () => Date.now()*1000 + Math.floor(Math.random()*1000);
+function ensureDeck(){
+  if(!PROFILE.decks.length){
+    PROFILE.decks.push({id:newDeckId(), name:'我的卡包', keys:[]});
+    PROFILE.activeDeck=PROFILE.decks[0].id;
+    saveProfile();
+  }
+}
 function deckErrors(keys){
   const errs=[];
   if(keys.length<10) errs.push('至少需要 10 张牌（当前 '+keys.length+'）');
@@ -1594,11 +1695,46 @@ function deckErrors(keys){
   for(const k in cnt) if(cnt[k]>(PROFILE.collection[k]||0)){ errs.push('「'+CARD_DB[k].name+'」超出拥有数量'); break; }
   return errs;
 }
+function fillDeckSelect(){
+  const sel=document.getElementById('db-deck-sel'); sel.innerHTML='';
+  PROFILE.decks.forEach(d=>{
+    const o=document.createElement('option'); o.value=d.id; o.textContent=d.name+'（'+d.keys.length+'张）'; sel.appendChild(o);
+  });
+  sel.value=String(PROFILE.activeDeck);
+}
 function openDeckbuild(){
-  DB_DECK = PROFILE.deck.filter(k=>CARD_DB[k]);
+  ensureDeck();
+  DB_DECK = activeDeckKeys();
   fillPackSelect(document.getElementById('db-pack'));
+  fillDeckSelect();
   renderDeckbuild();
   show('deckbuild-overlay');
+}
+function switchDeck(){
+  const cur=activeDeck(); if(cur) cur.keys=DB_DECK.slice();   // 暂存当前编辑内容
+  PROFILE.activeDeck=+document.getElementById('db-deck-sel').value;
+  DB_DECK=activeDeckKeys();
+  renderDeckbuild();
+}
+function createDeck(){
+  const name=(prompt('给新卡包起个名字：','卡包 '+(PROFILE.decks.length+1))||'').trim();
+  if(!name) return;
+  const cur=activeDeck(); if(cur) cur.keys=DB_DECK.slice();
+  const d={id:newDeckId(), name:name.slice(0,12), keys:[]};
+  PROFILE.decks.push(d); PROFILE.activeDeck=d.id; DB_DECK=[];
+  saveProfile();
+  fillDeckSelect(); renderDeckbuild();
+  hint('已创建卡包「'+d.name+'」，从左侧收藏点击加入卡牌');
+}
+function deleteDeck(){
+  if(PROFILE.decks.length<=1){ hint('至少保留一个卡包'); return; }
+  const d=activeDeck();
+  if(!confirm('删除卡包「'+d.name+'」？（卡牌仍保留在收藏中）')) return;
+  PROFILE.decks=PROFILE.decks.filter(x=>x.id!==d.id);
+  PROFILE.activeDeck=PROFILE.decks[0].id;
+  DB_DECK=activeDeckKeys();
+  saveProfile();
+  fillDeckSelect(); renderDeckbuild();
 }
 function renderDeckbuild(){
   const fp=document.getElementById('db-pack').value, ft=document.getElementById('db-type').value;
@@ -1643,22 +1779,25 @@ function renderDeckbuild(){
 function saveDeck(){
   const errs=deckErrors(DB_DECK);
   if(errs.length){ hint('无法保存：'+errs[0]); return; }
-  PROFILE.deck = DB_DECK.slice();
+  const d=activeDeck();
+  d.keys=DB_DECK.slice();
   saveProfile();
-  hint('卡包已保存（'+DB_DECK.length+' 张）');
+  hint('卡包「'+d.name+'」已保存（'+DB_DECK.length+' 张）');
   hide('deckbuild-overlay');
 }
 
 /* ================= 模拟对局（赛前确认） ================= */
 function openPregame(){
   const info=document.getElementById('pregame-deck-info');
-  const errs=deckErrors(PROFILE.deck);
-  const heroCnt=PROFILE.deck.filter(k=>CARD_DB[k]&&CARD_DB[k].type==='英雄').length;
+  const keys=activeDeckKeys();
+  const errs=deckErrors(keys);
+  const heroCnt=keys.filter(k=>CARD_DB[k].type==='英雄').length;
+  const dname=(activeDeck()||{}).name||'（未命名）';
   if(errs.length){
-    info.innerHTML=`<span style="color:var(--red)">卡包未就绪：${errs[0]}</span><br><span style="color:var(--dim);font-size:13px">请先在「我的卡包 → 设计卡包」中完成组卡</span>`;
+    info.innerHTML=`<span style="color:var(--red)">卡包「${dname}」未就绪：${errs[0]}</span><br><span style="color:var(--dim);font-size:13px">请先在「我的卡包 → 设计卡包」中完成组卡</span>`;
     document.getElementById('start-btn').disabled=true;
   }else{
-    info.innerHTML=`当前卡包：<b style="color:var(--gold)">${PROFILE.deck.length} 张</b>（英雄 ${heroCnt} 张）<br><span style="color:var(--dim);font-size:13px">胜利 +60 金币 · 三连胜起 ×1.2 递增</span>`;
+    info.innerHTML=`当前卡包：<b style="color:var(--gold)">${dname} · ${keys.length} 张</b>（英雄 ${heroCnt} 张）<br><span style="color:var(--dim);font-size:13px">胜利 +60 金币 · 三连胜起 ×1.2 递增</span>`;
     document.getElementById('start-btn').disabled=false;
   }
   showScreen('pregame-screen');
@@ -1769,7 +1908,7 @@ function backToMenu(){
   showScreen('menu-screen');
 }
 function refreshMenuButtons(){
-  document.getElementById('btn-continue').disabled = !localStorage.getItem(SAVE_AUTO);
+  document.getElementById('btn-continue').disabled = !localStorage.getItem(pkey(SAVE_AUTO));
 }
 function openIngameMenu(){
   document.getElementById('btn-save-ingame').style.display = (S.tut||S.online) ? 'none' : '';
@@ -1827,9 +1966,10 @@ function hint(t){
   };
   document.getElementById('set-speed').onchange = (e)=>{ SETTINGS.aiDelay = +e.target.value; saveSettings(); };
   document.getElementById('btn-clear-save').onclick = ()=>{
-    localStorage.removeItem(SAVE_AUTO); localStorage.removeItem(SAVES_KEY); localStorage.removeItem(PROFILE_KEY);
+    localStorage.removeItem(pkey(SAVE_AUTO)); localStorage.removeItem(pkey(SAVES_KEY)); localStorage.removeItem(pkey(PROFILE_KEY));
     PROFILE = loadProfile();
-    const b=document.getElementById('btn-clear-save'); b.textContent='已清除 ✓'; setTimeout(()=>b.textContent='清除所有存档与收藏',1200);
+    refreshMenuButtons();
+    const b=document.getElementById('btn-clear-save'); b.textContent='已清除 ✓'; setTimeout(()=>b.textContent='清除当前账号的存档与收藏',1200);
   };
   document.getElementById('btn-save-new').onclick = ()=>{
     saveToSlot(); renderSaveList(); hint('已保存到存档列表');
@@ -1839,9 +1979,12 @@ function hint(t){
   };
   document.getElementById('btn-again').onclick = ()=>{
     hide('gameover-overlay');
-    if(S && !S.tut && !deckErrors(PROFILE.deck).length) newGame(); else backToMenu();
+    if(S && !S.tut && !deckErrors(activeDeckKeys()).length) newGame(); else backToMenu();
   };
   document.getElementById('start-btn').onclick = ()=>{ newGame(); };
+  document.getElementById('acct-btn').onclick = ()=>{ document.getElementById('auth-name').value=''; document.getElementById('auth-pass').value=''; show('auth-overlay'); };
+  document.getElementById('acct-out').onclick = ()=>{ switchAccount(''); hint('已登出，当前为游客模式'); };
+  refreshAcctUI();
   document.getElementById('btn-goto-deck').onclick = ()=>{ openShop(); openDeckbuild(); };
   refreshMenuButtons();
 })();
