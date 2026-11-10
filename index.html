@@ -158,7 +158,7 @@ button{font-family:inherit;cursor:pointer}
 #tut-quit{background:transparent;color:var(--dim);border:1px solid var(--line)!important}
 #tut-step{font-size:11px;color:var(--dim);margin-bottom:4px;letter-spacing:2px}
 
-/* ---------- 我的卡包 / 商店 ---------- */
+/* ---------- 我的卡组 / 商店 ---------- */
 #shop-screen{justify-content:flex-start;padding:0}
 .shop-head{width:100%;display:flex;align-items:center;gap:10px;padding:12px 18px;background:rgba(26,33,48,.85);border-bottom:1px solid var(--line)}
 .shop-head .gold{margin-left:auto;font-size:18px;color:var(--gold);font-weight:700}
@@ -197,7 +197,7 @@ button{font-family:inherit;cursor:pointer}
 .mech-item b{color:var(--gold);font-size:15px;margin-right:8px}
 .mech-item span{font-size:13.5px;color:#cfd8ea;line-height:1.7}
 
-/* ---------- 设计卡包 ---------- */
+/* ---------- 设计卡组 ---------- */
 #deckbuild-box{background:var(--panel2);border:2px solid var(--line);border-radius:14px;width:min(1100px,96vw);height:min(660px,92vh);display:flex;flex-direction:column;position:relative;padding:14px 18px}
 .db-cols{flex:1;display:grid;grid-template-columns:1.4fr 1fr;gap:14px;min-height:0}
 .db-col{display:flex;flex-direction:column;min-height:0}
@@ -329,7 +329,7 @@ button{font-family:inherit;cursor:pointer}
   <button class="menu-btn" id="btn-tutorial">新 手 教 程</button>
   <button class="menu-btn primary" id="btn-sim">模 拟 对 局</button>
   <button class="menu-btn" id="btn-online">联 机 对 战</button>
-  <button class="menu-btn" id="btn-shop">我 的 卡 包</button>
+  <button class="menu-btn" id="btn-shop">卡 包 商 店</button>
   <button class="menu-btn" id="btn-savelist">存 档 列 表</button>
   <button class="menu-btn" id="btn-continue">继 续 游 戏</button>
   <button class="menu-btn" id="btn-settings">设 置</button>
@@ -342,7 +342,7 @@ button{font-family:inherit;cursor:pointer}
   <div class="dialog-box" style="border-color:var(--line);min-width:380px">
     <div id="pregame-deck-info" style="font-size:15px;line-height:2"></div>
     <button class="menu-btn primary" id="start-btn" style="width:220px">开 始 对 决</button>
-    <button class="menu-btn small" id="btn-goto-deck">设计卡包</button>
+    <button class="menu-btn small" id="btn-goto-deck">设计卡组</button>
   </div>
   <button class="menu-btn small" onclick="showScreen('menu-screen')">返 回</button>
 </div>
@@ -367,7 +367,7 @@ button{font-family:inherit;cursor:pointer}
   <button class="menu-btn small" id="btn-online-back">返 回</button>
 </div>
 
-<!-- 我的卡包（商店） -->
+<!-- 我的卡组（商店） -->
 <div class="screen" id="shop-screen" style="display:none">
   <div class="shop-head">
     <button class="menu-btn small" onclick="showScreen('menu-screen')">← 返回</button>
@@ -379,7 +379,7 @@ button{font-family:inherit;cursor:pointer}
     <div id="free-claim" onclick="claimFreePacks()">🎁 新牌手福利：点击领取 3 个免费通用卡包！</div>
     <div class="shop-grid" id="shop-grid"></div>
   </div>
-  <button id="btn-deckbuild" onclick="openDeckbuild()">🛠 设计卡包</button>
+  <button id="btn-deckbuild" onclick="openDeckbuild()">🛠 设计卡组</button>
 </div>
 
 <!-- 对局 -->
@@ -499,12 +499,12 @@ button{font-family:inherit;cursor:pointer}
     <div id="mech-list"></div>
   </div>
 </div>
-<!-- 设计卡包 -->
+<!-- 设计卡组 -->
 <div class="overlay" id="deckbuild-overlay">
   <div id="deckbuild-box">
     <button class="x" onclick="hide('deckbuild-overlay')">✕</button>
     <div class="wide-head">
-      <h2>设 计 卡 包</h2>
+      <h2>设 计 卡 组</h2>
       <select class="filter-sel" id="db-deck-sel" onchange="switchDeck()"></select>
       <button class="mini-btn" onclick="createDeck()">＋ 新建卡包</button>
       <button class="mini-btn" onclick="deleteDeck()">删除</button>
@@ -528,7 +528,7 @@ button{font-family:inherit;cursor:pointer}
 <div id="hint"></div>
 
 <script>
-const CARD_DATA = {"通用卡包（80张）":[{"type":"英雄","name":"民兵队长","rarity":"R","attr":"无","range":"近","cost":7,"atk":4,"hp":5,"move":1,"dist":1,"effect":"【士气鼓舞】，（主动，消耗2RP）指定一个相邻友方部队本回合+1攻击。"},{"type":"英雄","name":"流浪剑客","rarity":"R","attr":"无","range":"近","cost":6,"atk":5,"hp":4,"move":2,"dist":1,"effect":"【匹夫之勇】：回合开始时，可选择+2攻击，-2生命或-2攻击，+2生命。"},{"type":"英雄","name":"村庄长老","rarity":"SR","attr":"无","range":"近","cost":5,"atk":2,"hp":4,"move":1,"dist":1,"effect":"【经验之谈】：你的回合结束时，指定一个相邻的友方单位+1生命。"},{"type":"英雄","name":"采石场工头","rarity":"R","attr":"土","range":"近","cost":6,"atk":3,"hp":6,"move":1,"dist":1,"effect":"【督促干活】：本单位在场时，你所有的土属性单位+1生命。"},{"type":"英雄","name":"见习法师","rarity":"SR","attr":"无","range":"远","cost":5,"atk":1,"hp":3,"move":1,"dist":2,"effect":"【不稳定的飞弹】，（主动，消耗2RP）指定一个敌方单位造成1~3点随机伤害。"},{"type":"英雄","name":"草药医生","rarity":"SR","attr":"木","range":"近","cost":5,"atk":2,"hp":4,"move":1,"dist":1,"effect":"【膏药】，（主动，消耗1RP）指定一个友方单位+1生命。每回合限一次。"},{"type":"英雄","name":"邋遢盗贼","rarity":"SR","attr":"无","range":"近","cost":4,"atk":3,"hp":3,"move":2,"dist":1,"effect":"【顺手牵羊】：本单位攻击核心时，对其造成1点额外伤害。闪击"},{"type":"英雄","name":"固执盾卫","rarity":"R","attr":"土","range":"近","cost":7,"atk":2,"hp":7,"move":1,"dist":1,"effect":"【坚守】：本单位无法后退。守卫。"},{"type":"英雄","name":"狂热信徒","rarity":"R","attr":"光","range":"近","cost":6,"atk":4,"hp":4,"move":1,"dist":1,"effect":"【盲信】：本单位无法攻击光属性单位。"},{"type":"英雄","name":"笨拙发明家","rarity":"SR","attr":"无","range":"近","cost":8,"atk":3,"hp":5,"move":1,"dist":1,"effect":"【蹩脚造物】：入场时，将一张随机通用卡包装备加入手牌。"},{"type":"部队","name":"民兵","rarity":"R","attr":"无","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"持矛民兵","rarity":"R","attr":"无","range":"近","cost":3,"atk":2,"hp":3,"move":1,"dist":1,"effect":"守卫"},{"type":"部队","name":"农夫","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"樵夫","rarity":"R","attr":"木","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"猎人","rarity":"R","attr":"无","range":"远","cost":3,"atk":3,"hp":2,"move":1,"dist":2,"effect":"无"},{"type":"部队","name":"石匠","rarity":"R","attr":"土","range":"近","cost":2,"atk":1,"hp":3,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"学徒","rarity":"R","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":2,"dist":1,"effect":"无"},{"type":"部队","name":"哨兵","rarity":"SR","attr":"无","range":"近","cost":3,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【眺望】：入场时，抽一张牌。"},{"type":"部队","name":"流浪狗","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":2,"dist":1,"effect":"闪击"},{"type":"部队","name":"街头混混","rarity":"R","attr":"无","range":"近","cost":2,"atk":2,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"笨重傀儡","rarity":"R","attr":"土","range":"近","cost":5,"atk":4,"hp":4,"move":1,"dist":1,"effect":"守卫"},{"type":"部队","name":"蹩脚弓手","rarity":"SR","attr":"无","range":"远","cost":3,"atk":2,"hp":1,"move":1,"dist":2,"effect":"【流矢】：攻击时有50%几率对随机目标额外造成1点伤害。"},{"type":"部队","name":"胆小鬼","rarity":"R","attr":"无","range":"远","cost":1,"atk":1,"hp":1,"move":1,"dist":2,"effect":"本单位仅可攻击非相邻战线的敌方单位"},{"type":"部队","name":"临时工","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【磨洋工】：本单位被摧毁后返还1RP。"},{"type":"部队","name":"酒鬼","rarity":"SR","attr":"无","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"【酗酒】：你的回合开始时，有50%几率+1攻击。"},{"type":"部队","name":"传令兵","rarity":"R","attr":"无","range":"近","cost":2,"atk":0,"hp":2,"move":2,"dist":1,"effect":"【送信】：入场时，抽一张牌。"},{"type":"部队","name":"疯癫预言者","rarity":"SR","attr":"无","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"【胡言乱语】：入场时，双方玩家各随机丢弃一张手牌。"},{"type":"部队","name":"老马","rarity":"R","attr":"无","range":"近","cost":2,"atk":1,"hp":3,"move":2,"dist":1,"effect":"闪击"},{"type":"部队","name":"见习水手","rarity":"R","attr":"水","range":"近","cost":3,"atk":2,"hp":3,"move":2,"dist":1,"effect":"无"},{"type":"部队","name":"矿工","rarity":"R","attr":"土","range":"近","cost":3,"atk":2,"hp":4,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"乌鸦","rarity":"SR","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":2,"dist":1,"effect":"【呱噪】：本单位被摧毁时，对手卡组洗入一张乌鸦。"},{"type":"部队","name":"迷路小孩","rarity":"SR","attr":"无","range":"近","cost":1,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【哭喊】：本单位被攻击时，攻击者本回合无法再次攻击。"},{"type":"部队","name":"稻草人","rarity":"R","attr":"无","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"守卫、【稻草人】：相邻战线有敌方单位时无法移动。"},{"type":"部队","name":"病弱的村民","rarity":"SR","attr":"无","range":"近","cost":1,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【传染】：本单位被摧毁时，对本战线所有单位和造成攻击单位造成1点伤害。"},{"type":"部队","name":"笨拙学徒","rarity":"R","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":2,"dist":1,"effect":"【打翻试剂】：入场时，指定一个随机单位造成1点伤害。"},{"type":"部队","name":"失眠守卫","rarity":"R","attr":"无","range":"近","cost":3,"atk":2,"hp":4,"move":1,"dist":1,"effect":"【疲惫】：无法获得闪击、连击。"},{"type":"部队","name":"贪吃鼠","rarity":"SR","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":2,"dist":1,"effect":"【偷吃粮草】：本单位首次攻击时，获得1点RP。"},{"type":"部队","name":"破旧扫帚","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"话痨鹦鹉","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【学舌】：入场时，+1点攻击力或生命值。"},{"type":"部队","name":"锈蚀铠甲","rarity":"R","attr":"无","range":"近","cost":2,"atk":0,"hp":3,"move":0,"dist":1,"effect":"守卫"},{"type":"部队","name":"笨重石像","rarity":"SR","attr":"土","range":"近","cost":3,"atk":0,"hp":5,"move":0,"dist":1,"effect":"守卫"},{"type":"部队","name":"闪烁的萤火虫","rarity":"SR","attr":"光","range":"近","cost":1,"atk":1,"hp":1,"move":2,"dist":1,"effect":"【微光】：本单位仅在该战线无其他友方单位时可被攻击。"},{"type":"部队","name":"湿滑苔藓","rarity":"SR","attr":"水","range":"近","cost":2,"atk":0,"hp":2,"move":0,"dist":1,"effect":"【滑腻】：进入本单位相邻战线的单位本回合移动力-1。"},{"type":"部队","name":"不安的幽灵","rarity":"SR","attr":"暗","range":"近","cost":3,"atk":2,"hp":1,"move":2,"dist":1,"effect":"【无形】：只被光属性单位攻击。"},{"type":"部队","name":"迷途蝴蝶","rarity":"R","attr":"无","range":"近","cost":0,"atk":0,"hp":1,"move":2,"dist":1,"effect":"无"},{"type":"部队","name":"陶罐","rarity":"R","attr":"土","range":"近","cost":1,"atk":0,"hp":1,"move":0,"dist":1,"effect":"【易碎】：被摧毁时，对攻击者造成1点伤害。"},{"type":"部队","name":"野猪","rarity":"R","attr":"无","range":"近","cost":3,"atk":3,"hp":2,"move":1,"dist":1,"effect":"【冲撞】：入场回合必须移动，否则将在结束回合摧毁。"},{"type":"部队","name":"瘦弱豺狼","rarity":"SR","attr":"无","range":"近","cost":2,"atk":2,"hp":1,"move":2,"dist":1,"effect":"闪击、【食腐】：本单位攻击受伤单位时，额外造成1点伤害。"},{"type":"部队","name":"地痞","rarity":"R","attr":"无","range":"近","cost":3,"atk":3,"hp":2,"move":1,"dist":1,"effect":"【勒索】：消灭本单位的单位操控者失去1点RP。"},{"type":"部队","name":"失眠的猫头鹰","rarity":"SR","attr":"无","range":"远","cost":2,"atk":2,"hp":2,"move":1,"dist":2,"effect":"【夜啼】：你的回合结束时，有50%几率使一个随机敌方单位本回合无法攻击。"},{"type":"装备","name":"生锈的剑","rarity":"R","attr":"金","cost":2,"effect":"装备单位+1攻击。"},{"type":"装备","name":"木盾","rarity":"R","attr":"木","cost":2,"effect":"装备单位+1生命。"},{"type":"装备","name":"破皮甲","rarity":"R","attr":"无","cost":3,"effect":"装备单位+2生命。"},{"type":"装备","name":"弹弓","rarity":"R","attr":"无","cost":2,"effect":"装备单位+1攻击，且攻击距离+1（距离≤2）。"},{"type":"装备","name":"磨刀石","rarity":"R","attr":"金","cost":1,"effect":"装备单位本回合攻击+1。（回合结束时破坏）"},{"type":"装备","name":"厚书本","rarity":"R","attr":"无","cost":3,"effect":"装备单位+2生命。"},{"type":"装备","name":"褪色披风","rarity":"SR","attr":"无","cost":1,"effect":"装备单位获得伪装。（仅在其未移动时生效）"},{"type":"装备","name":"不稳定的法杖","rarity":"R","attr":"无","cost":4,"effect":"装备单位+2攻击。此单位攻击时，有25%几率对自己造成2点伤害。"},{"type":"装备","name":"重枷锁","rarity":"R","attr":"土","cost":2,"effect":"装备单位+3生命，-1移动力。"},{"type":"装备","name":"漏水的桶","rarity":"SR","attr":"水","cost":3,"effect":"装备单位获得：“你的回合结束时，为此单位+1生命”。本效果在提供3点生命后摧毁。"},{"type":"技能","name":"头球","rarity":"R","attr":"无","cost":2,"effect":"指定一个敌方单位造成1点伤害。"},{"type":"技能","name":"呐喊","rarity":"R","attr":"无","cost":1,"effect":"指定一个友方单位本回合+1攻击。"},{"type":"技能","name":"简易包扎","rarity":"R","attr":"无","cost":2,"effect":"指定一个友方单位+2生命。"},{"type":"技能","name":"绊脚索","rarity":"R","attr":"无","cost":3,"effect":"指定一个敌方单位本回合-2移动力。"},{"type":"技能","name":"烟雾弹","rarity":"SR","attr":"无","cost":3,"effect":"指定一个友方单位获得伪装，直到其下次行动。"},{"type":"技能","name":"虚张声势","rarity":"SR","attr":"无","cost":2,"effect":"本回合内，一个友方单位获得+2攻击，但下回合其-2攻击。"},{"type":"技能","name":"征用粮草","rarity":"SR","attr":"无","cost":1,"effect":"你获得2点RP。下回合你的-1RP上限。"},{"type":"技能","name":"天气不佳","rarity":"SSR","attr":"无","cost":5,"effect":"所有敌方单位-1移动力，-1攻击，至下一个己方回合恢复。"},{"type":"技能","name":"计算失误","rarity":"R","attr":"无","cost":0,"effect":"抽一张牌，然后随机丢弃一张手牌。"},{"type":"技能","name":"临阵磨枪","rarity":"SR","attr":"无","cost":3,"effect":"本回合内，你所有单位获得+1攻击。回合结束时，所有友方单位受到1点伤害。"},{"type":"建筑","name":"简陋工事","rarity":"SR","attr":"土","cost":4,"hp":3,"effect":"【沙包墙】：此战线上的友方单位获得+1防御。"},{"type":"建筑","name":"瞭望塔","rarity":"R","attr":"无","cost":3,"hp":2,"effect":"【登高望远】：入场时，抽一张牌。"},{"type":"建筑","name":"篝火","rarity":"SR","attr":"火","cost":2,"hp":2,"effect":"【取暖】：你的回合结束时，指定此战线的一个友方单位+1生命。"},{"type":"建筑","name":"捕兽陷阱","rarity":"R","attr":"无","cost":3,"hp":1,"effect":"【机关】：当一个敌方单位移动至此战线时，对其造成2点伤害，然后本单位摧毁。"},{"type":"建筑","name":"摇摇欲坠的棚屋","rarity":"SR","attr":"无","cost":2,"hp":1,"effect":"【避风】：你的回合结束时，你获得1点RP上限。本单位在你获得2点RP上限后摧毁。"},{"type":"建筑","name":"杂乱的书桌","rarity":"R","attr":"无","cost":3,"hp":2,"effect":"【翻找】，（主动，消耗1RP）从你的牌库顶翻三张牌，将一张技能卡加入手牌，其余置入墓地。"},{"type":"建筑","name":"小药圃","rarity":"SR","attr":"木","cost":3,"hp":2,"effect":"【采收】：你的回合结束时，指定一个友方单位+1生命。"},{"type":"建筑","name":"破旧锻炉","rarity":"SR","attr":"火","cost":5,"hp":3,"effect":"【打铁】，（主动，消耗3RP）指定一个友方单位永久获得+1攻击。每回合限一次。"},{"type":"建筑","name":"蜂箱","rarity":"R","attr":"木","cost":4,"hp":1,"effect":"【蜂群】：本单位被破坏时，对所在战线所有单位造成1点伤害。"},{"type":"建筑","name":"告示牌","rarity":"SR","attr":"无","cost":1,"hp":1,"effect":"【谣言】：入场时，双方玩家各抽一张牌。"}],"古罗马文明卡包（80张）":[{"type":"英雄","name":"罗慕路斯","rarity":"SSR","attr":"火","range":"近","cost":7,"atk":4,"hp":6,"move":1,"dist":1,"effect":"【建城者】：入场时，召唤2个罗马新兵在本单位相邻站位。\n【掠夺萨宾妇女】：（主动，消耗2RP）获得对手一个指定非英雄衍生物部队的控制权，直到本单位离场。同一时间限控制一张卡。"},{"type":"英雄","name":"尤利乌斯·凯撒","rarity":"UR","attr":"金","range":"近","cost":10,"atk":6,"hp":8,"move":2,"dist":1,"effect":"【高卢征服】：(主动，消耗4RP)指定一个战线，该战线友方罗马军团部队本回合+2攻击并获得闪击。每三回合限一次。\n【跨越卢比孔】：(被动)核心耐久<10时，本单位获得+2攻击和连击。"},{"type":"英雄","name":"斯巴达克斯","rarity":"SR","attr":"火","range":"近","cost":9,"atk":5,"hp":6,"move":2,"dist":1,"effect":"【角斗士起义】：入场时，召唤2个角斗士在本单位相邻站位。\n【不屈意志】：(被动)复生。"},{"type":"英雄","name":"大西庇阿·非洲努斯","rarity":"SSR","attr":"光","range":"近","cost":9,"atk":4,"hp":7,"move":2,"dist":1,"effect":"【扎马之战】：入场时，选择一条战线，该战线所有敌方单位获得削弱直至下回合结束。\n【战略大师】：（被动）你所有罗马军团部队的+1移动力。"},{"type":"英雄","name":"图拉真","rarity":"UR","attr":"土","range":"近","cost":11,"atk":5,"hp":9,"move":1,"dist":1,"effect":"【帝国极壁】：本单位所在战线可部署建筑。\n【达契亚征服】：本单位每摧毁一个敌方单位，为你的核心恢复1点耐久。"},{"type":"英雄","name":"格拉古兄弟","rarity":"SR","attr":"水","range":"近","cost":6,"atk":3,"hp":5,"move":2,"dist":1,"effect":"(入场时选择模式)【土地改革】：(提比略)你的回合结束时，所有友方罗马农兵获得+1攻击，+1生命。\n【谷物法】：(盖乌斯)你的回合结束时，抽一张卡并降低1点该被抽卡的RP消耗。"},{"type":"英雄","name":"卢克蕾提亚","rarity":"SR","attr":"暗","range":"远","cost":6,"atk":2,"hp":4,"move":1,"dist":2,"effect":"【高贵之殇】：(被动)本单位被敌方攻击摧毁时，所有友方单位下回合获得连击和+2攻击。"},{"type":"英雄","name":"马克里努斯","rarity":"SR","attr":"无","range":"近","cost":7,"atk":4,"hp":6,"move":2,"dist":1,"effect":"【昙花一现】：入场时，额外获得2点RP上限。三回合后，自动摧毁此卡。"},{"type":"英雄","name":"圣乔治","rarity":"SSR","attr":"光","range":"远","cost":10,"atk":6,"hp":4,"move":1,"dist":2,"effect":"【屠龙者】：攻击英雄卡时，攻击力翻倍。\n【神圣庇护】：相邻的友方光属性单位获得+1防御。"},{"type":"英雄","name":"狄奥多西一世","rarity":"SSR","attr":"光","range":"远","cost":10,"atk":4,"hp":8,"move":1,"dist":2,"effect":"【国教诏令】：入场时，你场上所有光属性单位的+1生命。\n【帝国分裂】：（遗语）在你的下个准备阶段，召唤一个西罗马核心(10耐久，建筑)在我方二线，代替你原本的核心。"},{"type":"部队","name":"罗马新兵","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"罗马农兵","rarity":"R","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"动员"},{"type":"部队","name":"罗马青年军","rarity":"SR","attr":"金","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"罗马军团、动员"},{"type":"部队","name":"征召投石兵","rarity":"R","attr":"无","range":"远","cost":2,"atk":2,"hp":1,"move":1,"dist":2,"effect":"无"},{"type":"部队","name":"罗马探路者","rarity":"SR","attr":"无","range":"近","cost":2,"atk":2,"hp":1,"move":1,"dist":1,"effect":"进入前线后，获得伪装"},{"type":"部队","name":"罗马哨兵","rarity":"R","attr":"无","range":"远","cost":2,"atk":1,"hp":2,"move":2,"dist":2,"effect":"预警"},{"type":"部队","name":"奴隶矿工","rarity":"R","attr":"土","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"罗马军乐手","rarity":"SR","attr":"无","range":"近","cost":2,"atk":0,"hp":2,"move":2,"dist":1,"effect":"【士气号角】：回合开始时，相邻友方单位+1移动力。"},{"type":"部队","name":"罗马书记官","rarity":"SR","attr":"无","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【记录】：入场时，抽一张卡。"},{"type":"部队","name":"维斯塔贞女","rarity":"SSR","attr":"光","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"【圣火守护】：相邻友方单位不受属性相克加成影响。"},{"type":"部队","name":"罗马重步兵","rarity":"R","attr":"土","range":"近","cost":4,"atk":3,"hp":4,"move":1,"dist":1,"effect":"罗马军团、守卫、重甲（1）"},{"type":"部队","name":"百夫长","rarity":"SR","attr":"金","range":"近","cost":4,"atk":3,"hp":3,"move":1,"dist":1,"effect":"罗马军团、【鼓舞】：相邻友方部队+1攻击。"},{"type":"部队","name":"角斗士","rarity":"R","attr":"火","range":"近","cost":4,"atk":3,"hp":2,"move":2,"dist":1,"effect":"连击"},{"type":"部队","name":"罗马工程师","rarity":"SR","attr":"土","range":"近","cost":3,"atk":1,"hp":3,"move":2,"dist":1,"effect":"【快速修筑】：入场时，指定一个友方建筑+2耐久。"},{"type":"部队","name":"辅助骑兵","rarity":"R","attr":"火","range":"近","cost":4,"atk":3,"hp":2,"move":2,"dist":1,"effect":"游击"},{"type":"部队","name":"同盟军标枪兵","rarity":"SR","attr":"无","range":"远","cost":3,"atk":2,"hp":2,"move":1,"dist":2,"effect":"【标枪投掷】，（主动，消耗1RP）指定一名敌方单位造成1点伤害并使其获得削弱。"},{"type":"部队","name":"罗马弩炮","rarity":"SR","attr":"金","range":"远","cost":6,"atk":3,"hp":2,"move":1,"dist":2,"effect":"打击、畏惧"},{"type":"部队","name":"罗马禁卫军","rarity":"UR","attr":"暗","range":"近","cost":6,"atk":4,"hp":5,"move":1,"dist":1,"effect":"【帝国之刃】：入场时，可消灭一个指定友方单位，若如此做，获得+2攻击+2生命和闪击。重甲（1）"},{"type":"部队","name":"堕落的百夫长","rarity":"SSR","attr":"暗","range":"近","cost":5,"atk":4,"hp":4,"move":1,"dist":1,"effect":"【克扣军饷】：你的回合开始时，你抽一张牌，相邻友方单位-1生命。"},{"type":"部队","name":"日耳曼佣兵","rarity":"SR","attr":"木","range":"近","cost":5,"atk":5,"hp":3,"move":1,"dist":1,"effect":"【狂暴】：攻击后，若目标未被消灭，则对自身造成2点伤害。"},{"type":"部队","name":"乌鸦战船","rarity":"SR","attr":"水","range":"近","cost":4,"atk":3,"hp":3,"move":2,"dist":1,"effect":"【跳帮】：每击杀一名敌方单位，可选择获得+1攻击或+1生命。"},{"type":"部队","name":"伊特鲁里亚祭司","rarity":"SR","attr":"暗","range":"近","cost":4,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【肝卜术】，（主动，消耗1RP）窥视对手的一张手牌。"},{"type":"部队","name":"罗马间谍","rarity":"SR","attr":"暗","range":"近","cost":3,"atk":2,"hp":1,"move":1,"dist":1,"effect":"【情报】：入场时，查看对手一张手牌。伪装。"},{"type":"部队","name":"高卢驻屯长","rarity":"SR","attr":"木","range":"近","cost":4,"atk":3,"hp":3,"move":2,"dist":1,"effect":"【驻屯】：未移动时，获得+2攻击。"},{"type":"部队","name":"努米底亚标枪骑兵","rarity":"R","attr":"火","range":"远","cost":4,"atk":3,"hp":1,"move":2,"dist":2,"effect":"游击、打击"},{"type":"部队","name":"城墙巡逻队","rarity":"R","attr":"土","range":"远","cost":3,"atk":2,"hp":3,"move":1,"dist":2,"effect":"警戒"},{"type":"部队","name":"宫廷宦官","rarity":"SR","attr":"暗","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【谗言】，（主动，消耗2RP）指定一个敌方单位本回合-2攻击。"},{"type":"部队","name":"贝尔萨轻骑兵","rarity":"R","attr":"火","range":"近","cost":5,"atk":3,"hp":2,"move":2,"dist":1,"effect":"游击"},{"type":"部队","name":"伏尔甘神柱","rarity":"UR","attr":"火","range":"远","cost":6,"atk":5,"hp":2,"move":0,"dist":2,"effect":"燃烧、【献祭】：本单位每消灭一个敌方单位，便获得+1攻击。"},{"type":"部队","name":"军团士兵","rarity":"SR","attr":"金","range":"近","cost":5,"atk":4,"hp":4,"move":1,"dist":1,"effect":"罗马军团、重甲（2）、【军阵】：每与一个友方罗马军团单位相邻，则获得+1生命，+1攻击。"},{"type":"部队","name":"罗马执政官","rarity":"SR","attr":"光","range":"近","cost":7,"atk":3,"hp":3,"move":1,"dist":1,"effect":"【政令】：你的回合开始时，同一战线友方单位本回合+1移动力。"},{"type":"部队","name":"达尔马提亚重骑兵","rarity":"SR","attr":"火","range":"近","cost":6,"atk":5,"hp":3,"move":2,"dist":1,"effect":"重甲（1）、【重装冲锋】：本单位移动至前线的第一个回合，+3攻击，回合结束后复原。"},{"type":"部队","name":"五列桨帆船","rarity":"SR","attr":"土","range":"近","cost":7,"atk":5,"hp":6,"move":1,"dist":1,"effect":"重甲（1）、削弱"},{"type":"部队","name":"布匿战争老兵","rarity":"SSR","attr":"金","range":"近","cost":4,"atk":3,"hp":4,"move":1,"dist":1,"effect":"罗马军团、【汉尼拔之惧】：与英雄卡相邻时，获得+2攻击，+1生命。"},{"type":"部队","name":"老兵殖民者","rarity":"SR","attr":"光","range":"近","cost":4,"atk":2,"hp":2,"move":1,"dist":1,"effect":"【屯田】：你的回合结束时，若本单位未移动，则你摸一张牌。"},{"type":"部队","name":"祭司团成员","rarity":"SR","attr":"光","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"【占卜】：（主动，消耗1RP）查看牌库顶三张牌，将其中一张加入手牌，其余洗回牌库。"},{"type":"部队","name":"罗马消防队","rarity":"SR","attr":"水","range":"近","cost":3,"atk":1,"hp":4,"move":1,"dist":1,"effect":"【灭火】：部署时移除一个指定友方单位的燃烧效果并为其+2生命。"},{"type":"部队","name":"日耳曼尼亚辅兵","rarity":"R","attr":"木","range":"近","cost":4,"atk":4,"hp":3,"move":1,"dist":1,"effect":"【蛮族血性】：攻击后，若自身生命≤2，则获得+2攻击。"},{"type":"部队","name":"罗马执旗手","rarity":"SR","attr":"木","range":"近","cost":4,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【军旗】：同一战线友方罗马军团获得+1攻击。"},{"type":"部队","name":"罗马伤病员","rarity":"R","attr":"无","range":"近","cost":1,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【伤兵营】：本单位被摧毁时，你获得1点RP。"},{"type":"装备","name":"罗马短剑","rarity":"R","attr":"金","cost":3,"effect":"装备单位+2攻击，并获得打击。"},{"type":"装备","name":"罗马大盾","rarity":"R","attr":"土","cost":4,"effect":"装备单位+3生命，并获得守卫。"},{"type":"装备","name":"军团鹰旗","rarity":"SR","attr":"光","cost":5,"effect":"装备单位+1攻击+1生命。【军团象征】：与本单位同一战线的所有友方罗马军团+1攻击。"},{"type":"装备","name":"凯旋盔甲","rarity":"SR","attr":"光","cost":5,"effect":"装备单位+1攻击+2生命，并在装备单位消灭一个敌方单位后，你+1RP。"},{"type":"装备","name":"密特拉神像","rarity":"SR","attr":"光","cost":5,"effect":"装备单位+1攻击+1生命。【太阳神的祝福】：你的回合开始时，装备单位+1生命。"},{"type":"装备","name":"法西斯卡","rarity":"SR","attr":"火","cost":5,"effect":"装备单位获得【飞斧】：装备单位+2攻击，距离+1（距离≤2）。"},{"type":"装备","name":"喀戎的教诲","rarity":"SR","attr":"无","cost":6,"effect":"装备单位获得+1攻击+2生命和吸血。"},{"type":"装备","name":"尼禄的金琴","rarity":"SSR","attr":"暗","cost":7,"effect":"装备英雄卡获得【纵火者的狂欢】：装备单位攻击时，对目标相邻单位造成1点伤害。装备单位被摧毁时，对所在战线所有单位造成3点伤害。"},{"type":"装备","name":"朱庇特之雷","rarity":"SSR","attr":"光","cost":8,"effect":"装备单位+3攻击。【神怒】：装备单位攻击时，有30%几率对目标造成额外2点光属性伤害。"},{"type":"装备","name":"冥王普鲁托的硬币","rarity":"UR","attr":"暗","cost":3,"effect":"装备单位获得【买路钱】：装备单位被摧毁时，你支付2RP，若如此做，则装备单位复生。若剩余RP不足2RP，不得发动效果。"},{"type":"技能","name":"龟甲阵","rarity":"R","attr":"土","cost":5,"effect":"本回合内，选择一条战线，该战线友方单位获得+1生命，且免疫下一次受到的远程伤害。"},{"type":"技能","name":"投掷标枪","rarity":"R","attr":"金","cost":4,"effect":"对一条战线上的所有敌方单位造成2点伤害，并使其-1移动力。"},{"type":"技能","name":"万神殿的祈祷","rarity":"SR","attr":"光","cost":7,"effect":"复活一个本场对决中被摧毁的友方非英雄单位，并使其本回合获得免疫伤害。"},{"type":"技能","name":"以神之名","rarity":"SR","attr":"光","cost":8,"effect":"本回合内，你所有单位的攻击无视守卫，且造成的伤害视为光属性。"},{"type":"技能","name":"迦太基的诅咒","rarity":"SR","attr":"暗","cost":5,"effect":"选择一个敌方单位，其攻击或生命变为1，持续两回合。"},{"type":"技能","name":"罗马大道急行军","rarity":"SSR","attr":"无","cost":3,"effect":"本回合内，你所有单位+2移动力。"},{"type":"技能","name":"元老院决议","rarity":"SSR","attr":"光","cost":5,"effect":"抽两张牌。你每控制一个英雄或建筑，便额外抽一张。"},{"type":"技能","name":"最终议和","rarity":"UR","attr":"无","cost":10,"effect":"【迦太基必须毁灭】：消灭场上所有单位，并对其所有者的核心造成等同于其费用总和一半（向下取整）的伤害。"},{"type":"技能","name":"神谴","rarity":"UR","attr":"光","cost":8,"effect":"消灭场上所有攻击≥5的单位。"},{"type":"技能","name":"酒神节狂欢","rarity":"SSR","attr":"火","cost":6,"effect":"本回合内，你所有单位获得+2攻击，-1生命，结束阶段时，未发动攻击的的友方单位全部摧毁。"},{"type":"建筑","name":"罗马水道","rarity":"SR","attr":"水","cost":6,"hp":4,"effect":"【清水涌流】：你的回合结束时，为此战线所有友方单位+1生命。"},{"type":"建筑","name":"罗马斗兽场","rarity":"SR","attr":"火","cost":8,"hp":5,"effect":"【血腥娱乐】：（主动：消耗2RP）召唤一个角斗士在相邻站位，每回合限一次。"},{"type":"建筑","name":"图拉真纪功柱","rarity":"SSR","attr":"金","cost":7,"hp":3,"effect":"【战功铭刻】：每有一个友方单位消灭敌方单位，你RP上限+1，每回合限1次。被破坏时移除此建筑提供的RP上限。"},{"type":"建筑","name":"哈德良长城","rarity":"SSR","attr":"土","cost":9,"hp":6,"effect":"【边境屏障】：本建筑相邻战线，敌方单位入场额外消耗1点移动力。本建筑仅可部署于我方二线。\n【烽火台】：本建筑相邻战线，敌方单位进入时，你抽一张卡。"},{"type":"建筑","name":"密特拉地下神庙","rarity":"SSR","attr":"暗","cost":6,"hp":3,"effect":"【秘密祭礼】：你的回合开始时，若本建筑相邻战线无敌方单位，你回复1点核心耐久。"},{"type":"建筑","name":"卡拉卡拉浴场","rarity":"UR","attr":"水","cost":7,"hp":4,"effect":"【休闲社交】：你的结束阶段，所在战线所有友方单位获得净化。"},{"type":"建筑","name":"朱庇特神庙","rarity":"UR","attr":"光","cost":9,"hp":5,"effect":"【神王怒火】：（主动，消耗3RP）对一条战线上所有单位造成3点光属性伤害。每局限一次。\n【神王赐福】：你的回合开始时，为友方随机一名非暗属性单位施加重甲（1）。"},{"type":"建筑","name":"谷神仓廪","rarity":"SSR","attr":"土","cost":5,"hp":3,"effect":"【丰饶】：你的回合结束时，若本建筑未被破坏，你获得1点RP上限。最多提供3点RP上限。"},{"type":"建筑","name":"罗曼军械库","rarity":"SSR","attr":"金","cost":5,"hp":4,"effect":"【装备补给】：你的回合开始时，从卡包中生成一张罗马装备牌至手牌。每回合限一次。"},{"type":"建筑","name":"西塞罗演讲台","rarity":"UR","attr":"光","cost":7,"hp":2,"effect":"【雄辩】：（主动，消耗5RP）选择一条战线，其上所有敌方单位本回合无法攻击。每三回合限一次。\n【号召】：（主动，消耗2RP）召唤一个罗马青年军在本建筑相邻站位。每回合限一次。"}],"古埃及文明卡包（80张）":[{"type":"英雄","name":"纳尔迈","rarity":"SSR","attr":"光","range":"远","cost":9,"atk":5,"hp":6,"move":1,"dist":2,"effect":"【上下埃及之王】：入场时，RP上限+2并抽一张牌。\n【调色板】，（主动，消耗3RP）指定一个友方单位本回合获得连击，但每次攻击后受到1点伤害。"},{"type":"英雄","name":"拉美西斯二世","rarity":"UR","attr":"光","range":"近","cost":11,"atk":5,"hp":9,"move":1,"dist":1,"effect":"【卡迭石之战】：被攻击时，召唤一个埃及战车兵(3/2/3/1)在相邻空位，赋予其守卫并抵挡本次伤害（每三回合限一次）。\n【伟大的建造者】：本单位在场时，尼罗河管家部署消耗-1RP。"},{"type":"英雄","name":"哈特谢普苏特","rarity":"SSR","attr":"水","range":"远","cost":8,"atk":3,"hp":6,"move":1,"dist":2,"effect":"【庞特远征】：你的回合结束时，若本单位未移动，则为随机一个我方建筑+1耐久。\n【女法老的威严】：本单位及相邻友方单位无法成为敌方技能卡目标。"},{"type":"英雄","name":"图特摩斯三世","rarity":"UR","attr":"火","range":"近","cost":10,"atk":6,"hp":7,"move":2,"dist":1,"effect":"【美吉多之战】：闪击。入场时对敌方一名指定单位造成2点伤害。\n【帝国扩张】：本单位消灭一个敌方单位后，你抽一张牌。"},{"type":"英雄","name":"阿赫摩斯一世","rarity":"SSR","attr":"金","range":"近","cost":8,"atk":4,"hp":6,"move":2,"dist":1,"effect":"【驱逐希克索斯】：对暗属性单位造成伤害时，额外造成2点伤害。\n【新时代】：入场时，所有友方埃及单位获得+1攻击，+1生命。"},{"type":"英雄","name":"托勒密一世","rarity":"SSR","attr":"光","range":"近","cost":9,"atk":4,"hp":7,"move":2,"dist":1,"effect":"【继业者】：入场时，复制场上一个非英雄单位的词条（除攻击/生命外），直至离场。\n【亚历山大遗产】：你的手牌每控制一个不同类型的卡牌，RP上限+1。"},{"type":"英雄","name":"拉美西斯三世","rarity":"SSR","attr":"土","range":"近","cost":9,"atk":4,"hp":8,"move":1,"dist":1,"effect":"【海民之战】：守卫。攻击时，对目标的相邻单位造成1点伤害。\n【防御态势】：未移动的回合，获得重甲（1）。"},{"type":"英雄","name":"普萨美提克一世","rarity":"SR","attr":"无","range":"远","cost":7,"atk":3,"hp":5,"move":1,"dist":2,"effect":"【希腊雇佣兵】：入场时，从牌库中随机抽取一张费用≤4的部队卡置入手牌。\n【复兴时代】：本单位在场时，尼罗河管家+1攻击，+1生命。"},{"type":"英雄","name":"斯尼弗鲁","rarity":"SSR","attr":"土","range":"近","cost":8,"atk":3,"hp":7,"move":1,"dist":1,"effect":"【弯曲金字塔】：入场时，选择一个友方建筑卡，其获得“无法被攻击”直到你的下个回合开始。\n【资源征收】：本单位攻击核心时，造成额外2点伤害。"},{"type":"英雄","name":"蝎子王","rarity":"SR","attr":"火","range":"近","cost":7,"atk":4,"hp":4,"move":2,"dist":1,"effect":"【早期征服者】：连击。第二次攻击时伤害不减少。\n【狩猎】：本单位攻击并消灭一个单位后，为其自身+2点生命。"},{"type":"部队","name":"埃及征召兵","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"尼罗河农夫","rarity":"R","attr":"水","range":"近","cost":2,"atk":1,"hp":1,"move":1,"dist":1,"effect":"尼罗河管家、【灌溉】：你的回合结束时，若本单位未移动，你获得1点RP上限。每单位限一次。"},{"type":"部队","name":"埃及弓箭手","rarity":"R","attr":"无","range":"远","cost":3,"atk":2,"hp":2,"move":1,"dist":2,"effect":"【齐射】：其他埃及弓箭手相邻时，攻击+1。"},{"type":"部队","name":"埃及长矛兵","rarity":"R","attr":"土","range":"近","cost":3,"atk":2,"hp":3,"move":1,"dist":1,"effect":"守卫"},{"type":"部队","name":"埃及精锐步兵","rarity":"SR","attr":"金","range":"近","cost":4,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【战斧】：攻击木属性或无属性单位时，攻击+1。"},{"type":"部队","name":"埃及战车兵","rarity":"SR","attr":"火","range":"近","cost":5,"atk":3,"hp":2,"move":2,"dist":1,"effect":"闪击。【蹂躏】：攻击后，使目标单位获得削弱。"},{"type":"部队","name":"努比亚弓箭手","rarity":"R","attr":"火","range":"远","cost":4,"atk":2,"hp":2,"move":1,"dist":2,"effect":"【精准射击】：本单位攻击未被守卫的单位时，造成额外1点伤害。"},{"type":"部队","name":"麦德查人雇佣兵","rarity":"SR","attr":"土","range":"近","cost":5,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【忠诚佣兵】：我方二线无其他单位时，不能部署。入场时和相邻单位获得+1攻击，+1生命。"},{"type":"部队","name":"法老禁卫军","rarity":"SR","attr":"光","range":"近","cost":5,"atk":3,"hp":4,"move":1,"dist":1,"effect":"守卫、重甲（1）。【王室之盾】：为英雄卡守卫时，+2生命。"},{"type":"部队","name":"沙漠侦察兵","rarity":"R","attr":"火","range":"近","cost":3,"atk":2,"hp":1,"move":2,"dist":1,"effect":"伪装。【沙海踪迹】：本单位首次攻击时，造成额外2点伤害。"},{"type":"部队","name":"埃及工兵","rarity":"R","attr":"土","range":"近","cost":3,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【建造者】：入场时，指定一个友方建筑卡+1耐久。"},{"type":"部队","name":"法老执扇官","rarity":"SR","attr":"光","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【宫廷仪仗】：相邻的英雄卡+1攻击，+1生命。"},{"type":"部队","name":"石板书记员","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【记录】：入场时，抽一张牌。"},{"type":"部队","name":"沙漠投石手","rarity":"R","attr":"无","range":"远","cost":2,"atk":2,"hp":1,"move":1,"dist":2,"effect":"无"},{"type":"部队","name":"贝都因骆驼骑兵","rarity":"SR","attr":"火","range":"近","cost":4,"atk":2,"hp":2,"move":2,"dist":1,"effect":"【沙漠适应】：部署时选择+1移动力并获得连击，或+1生命并获得守卫。"},{"type":"部队","name":"苇草陆战队","rarity":"SR","attr":"水","range":"近","cost":4,"atk":2,"hp":2,"move":1,"dist":1,"effect":"【两栖登陆】：进入前线后获得伪装。"},{"type":"部队","name":"法老护卫射手","rarity":"SR","attr":"土","range":"远","cost":6,"atk":4,"hp":3,"move":1,"dist":2,"effect":"燃烧、打击"},{"type":"部队","name":"阿蒙祭司","rarity":"SR","attr":"光","range":"近","cost":3,"atk":1,"hp":1,"move":1,"dist":1,"effect":"尼罗河管家、【祭祀】，（主动，消耗1RP）指定一个友方单位+1生命。每回合限一次。"},{"type":"部队","name":"采石矿工","rarity":"R","attr":"土","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【采石】：本单位被摧毁时，你获得1点RP。"},{"type":"部队","name":"埃及斥候","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【侦查】：入场时，查看敌方随机一张手牌。"},{"type":"部队","name":"方阵长枪兵","rarity":"R","attr":"土","range":"近","cost":4,"atk":2,"hp":4,"move":1,"dist":1,"effect":"【长枪阵列】：同时2个方阵长枪兵相邻时，获得守卫和+1攻击。"},{"type":"部队","name":"镰刃战车","rarity":"SR","attr":"火","range":"近","cost":6,"atk":4,"hp":1,"move":2,"dist":1,"effect":"【轮刃】：攻击时，对目标及其相邻单位造成伤害。"},{"type":"部队","name":"努比亚标枪兵","rarity":"R","attr":"火","range":"远","cost":3,"atk":2,"hp":2,"move":1,"dist":2,"effect":"削弱"},{"type":"部队","name":"三角洲粮官","rarity":"R","attr":"水","range":"近","cost":4,"atk":0,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【分配粮饷】：你的回合结束时，指定此战线两个友方单位+1生命。"},{"type":"部队","name":"绿洲建筑师","rarity":"SR","attr":"土","range":"近","cost":3,"atk":1,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【设计】：入场时，你下一个部署的建筑卡费用-1。"},{"type":"部队","name":"王室信使","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":2,"dist":1,"effect":"尼罗河管家、【疾驰】：部署后可移动。"},{"type":"部队","name":"法老侍从","rarity":"SR","attr":"光","range":"近","cost":4,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【谏言】，（主动，消耗2RP）随机抽一张牌，然后指定一张牌弃置。每回合限一次。"},{"type":"部队","name":"海岸巡逻队","rarity":"SR","attr":"水","range":"近","cost":3,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【警戒】：本单位相邻战线有敌方单位进入时，你抽一张卡。每回合限一次。"},{"type":"部队","name":"沙漠部落战士","rarity":"SR","attr":"火","range":"近","cost":3,"atk":3,"hp":2,"move":2,"dist":1,"effect":"【劫掠】：本单位攻击核心时，你获得1点RP。"},{"type":"部队","name":"埃及战俘","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"【苦力】：本单位被摧毁时，指定一个友方建筑+1耐久。"},{"type":"部队","name":"精锐努比亚矛兵","rarity":"SR","attr":"木","range":"近","cost":4,"atk":3,"hp":3,"move":1,"dist":1,"effect":"【部落战术】：场上存在友方努比亚弓箭手时，获得+1攻击，+1生命。"},{"type":"部队","name":"雇佣希腊方阵兵","rarity":"SSR","attr":"金","range":"近","cost":5,"atk":3,"hp":4,"move":1,"dist":1,"effect":"守卫、重甲（1）。【长枪阵】：攻击本单位的单位受到1点反弹伤害。"},{"type":"部队","name":"法老驯兽师","rarity":"SSR","attr":"火","range":"近","cost":4,"atk":1,"hp":1,"move":1,"dist":1,"effect":"尼罗河管家、【驱使战狮】：入场时，召唤两个战狮(2/1/2/1)在相邻空位。"},{"type":"部队","name":"战狮","rarity":"SR","attr":"火","range":"近","cost":2,"atk":2,"hp":1,"move":2,"dist":1,"effect":"闪击、驱散"},{"type":"部队","name":"运河船夫","rarity":"SR","attr":"水","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【漕运】：本单位在场时，建筑卡的部署消耗-1RP。可叠加。"},{"type":"部队","name":"王室工匠","rarity":"SR","attr":"无","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"尼罗河管家、【雕琢】：入场时，指定一个友方装备卡的使用费用-1（最低为0）。可叠加。"},{"type":"部队","name":"沙漠强盗","rarity":"R","attr":"暗","range":"近","cost":3,"atk":3,"hp":1,"move":1,"dist":1,"effect":"伪装、【伏击】：攻击伪装状态下的单位时，直接将其毁坏且不受伤害。"},{"type":"部队","name":"双轮战车","rarity":"SR","attr":"火","range":"近","cost":4,"atk":3,"hp":1,"move":2,"dist":1,"effect":"游击"},{"type":"部队","name":"尼罗河测量员","rarity":"SR","attr":"土","range":"近","cost":2,"atk":1,"hp":1,"move":1,"dist":1,"effect":"尼罗河管家、【勘测】：入场时，无RP消耗发动指定一个友方建筑主动词条。"},{"type":"部队","name":"庆典舞者","rarity":"SR","attr":"无","range":"近","cost":1,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【鼓舞】：入场时，指定一个友方单位本回合攻击+1。"},{"type":"装备","name":"青铜战斧","rarity":"R","attr":"金","cost":3,"effect":"装备单位+2攻击。"},{"type":"装备","name":"芦苇盾牌","rarity":"R","attr":"水","cost":2,"effect":"装备单位+1生命，并获得守卫。"},{"type":"装备","name":"复合弓","rarity":"R","attr":"火","cost":4,"effect":"装备单位+2攻击，+1距离（距离≤2），获得打击。"},{"type":"装备","name":"金鹰盔甲","rarity":"SR","attr":"光","cost":5,"effect":"装备单位+1/+2。【神圣守护】：装备单位首次被摧毁时，将其移回手牌。"},{"type":"装备","name":"圣甲虫护身符","rarity":"SR","attr":"光","cost":3,"effect":"装备单位获得复生。"},{"type":"装备","name":"法老权杖","rarity":"SSR","attr":"光","cost":6,"effect":"装备英雄卡获得+2攻击，+2攻击。【至高命令】：装备单位所在战线上的所有友方单位+1攻击。"},{"type":"装备","name":"豹皮披风","rarity":"SR","attr":"火","cost":3,"effect":"装备单位+1攻击，并获得伪装。"},{"type":"装备","name":"荷鲁斯之眼挂坠","rarity":"SR","attr":"光","cost":4,"effect":"装备单位获得【洞察】：装备单位可攻击伪装单位。装备单位攻击伪装单位时，造成额外2点伤害。"},{"type":"装备","name":"青铜镜盾","rarity":"SSR","attr":"金","cost":5,"effect":"装备单位+3生命，获得重甲（1）。【反射】：受到技能卡伤害时，将一半伤害（向上取整）反弹给技能卡使用者核心。"},{"type":"装备","name":"莎草纸卷轴","rarity":"SR","attr":"无","cost":2,"effect":"装备单位获得【书写】：主动，消耗2RP：抽一张埃及技能卡。每回合限一次。"},{"type":"技能","name":"尼罗河泛滥","rarity":"R","attr":"水","cost":5,"effect":"选择一条战线，其上所有单位移动力清0，持续一回合。"},{"type":"技能","name":"沙暴","rarity":"R","attr":"土","cost":4,"effect":"对敌方所有非土属性单位造成1点伤害，并使其获得削弱。"},{"type":"技能","name":"木乃伊化","rarity":"SR","attr":"暗","cost":6,"effect":"指定一个友方单位消灭（可触发单位词条），然后将其以1点生命复生，并获得+2攻击，+2生命。"},{"type":"技能","name":"太阳神之怒","rarity":"SR","attr":"光","cost":7,"effect":"对一条战线上的所有敌方单位造成3点伤害。"},{"type":"技能","name":"纸莎草沼泽","rarity":"SR","attr":"水","cost":3,"effect":"指定一条战线，使所有单位在此战线结束回合时，-1攻击，-1生命。持续两回合"},{"type":"技能","name":"法老的诅咒","rarity":"SR","attr":"暗","cost":8,"effect":"指定一个敌方英雄，选择其攻击力或生命值变为1，且无法使用技能，持续两回合。"},{"type":"技能","name":"尼罗河之怒","rarity":"SSR","attr":"火","cost":10,"effect":"献祭所有在场的尼罗河管家，每献祭一名尼罗河管家，对敌方二线所有单位和核心造成1点伤害。"},{"type":"技能","name":"丰饶仪式","rarity":"SR","attr":"水","cost":4,"effect":"获得1点RP上限。指定一个友方单位+3生命。"},{"type":"技能","name":"倾泻箭雨","rarity":"SR","attr":"无","cost":5,"effect":"对所有攻击距离大于1的敌方单位造成2点伤害。"},{"type":"技能","name":"巨石滚落","rarity":"SR","attr":"土","cost":6,"effect":"摧毁场上所有远程单位。"},{"type":"建筑","name":"金字塔群","rarity":"SSR","attr":"土","cost":12,"hp":7,"effect":"【永恒陵墓】：你的回合结束时，指定一张手牌-1RP部署消耗。"},{"type":"建筑","name":"太阳方尖碑","rarity":"SR","attr":"光","cost":7,"hp":2,"effect":"【太阳指针】：入场时，抽两张牌。【尖顶倒塌】：被破坏时，对手弃一张牌。"},{"type":"建筑","name":"孟菲斯大神庙","rarity":"SSR","attr":"光","cost":8,"hp":4,"effect":"【信仰中心】：你的回合结束时，为此战线所有光属性单位+1生命。"},{"type":"建筑","name":"河口运河网络","rarity":"SSR","attr":"水","cost":6,"hp":4,"effect":"【灌溉】：此战线所有水属性单位的+1生命。【运输】：（主动，消耗3RP）抽一张埃及水属性牌。每回合限一次。"},{"type":"建筑","name":"西奈军营","rarity":"SSR","attr":"金","cost":6,"hp":3,"effect":"【征兵】：（主动，消耗2RP）在本建筑相邻站位随机部署埃及征召兵、埃及弓箭手、埃及长矛兵、埃及战车兵中的一个单位。每回合限一次。"},{"type":"建筑","name":"尼罗河粮仓","rarity":"SR","attr":"水","cost":5,"hp":3,"effect":"【储备】：你的回合结束时，若本单位未被破坏，为随机一个友方单位+1生命。"},{"type":"建筑","name":"沙漠采石场","rarity":"SR","attr":"土","cost":5,"hp":3,"effect":"【巨石开采】：入场时，获得2点RP上限。本单位被破坏时，失去这2点RP上限。"},{"type":"建筑","name":"亚历山大里亚港","rarity":"SSR","attr":"水","cost":7,"hp":4,"effect":"【贸易与舰队】：你的回合结束时，从卡包中生成一张埃及金属性牌、一张埃及木属性牌至手牌。"},{"type":"建筑","name":"青铜铸造坊","rarity":"SR","attr":"火","cost":5,"hp":3,"effect":"【锻造】，（主动，消耗2RP）抽一张装备牌。每回合限一次。"},{"type":"建筑","name":"莎草纸作坊","rarity":"SR","attr":"无","cost":3,"hp":2,"effect":"【抄写】：你的回合结束时，抽一张技能牌。"}]};
+const CARD_DATA = {"通用卡包（80张）":[{"type":"英雄","name":"民兵队长","rarity":"R","attr":"无","range":"近","cost":7,"atk":4,"hp":5,"move":1,"dist":1,"effect":"【士气鼓舞】，（主动，消耗2RP）指定一个相邻友方部队本回合+1攻击。"},{"type":"英雄","name":"流浪剑客","rarity":"R","attr":"无","range":"近","cost":6,"atk":5,"hp":4,"move":2,"dist":1,"effect":"【匹夫之勇】：回合开始时，可选择+2攻击，-2生命或-2攻击，+2生命。"},{"type":"英雄","name":"村庄长老","rarity":"SR","attr":"无","range":"近","cost":5,"atk":2,"hp":4,"move":1,"dist":1,"effect":"【经验之谈】：你的回合结束时，指定一个相邻的友方单位+1生命。"},{"type":"英雄","name":"采石场工头","rarity":"R","attr":"土","range":"近","cost":6,"atk":3,"hp":6,"move":1,"dist":1,"effect":"【督促干活】：本单位在场时，你所有的土属性单位+1生命。"},{"type":"英雄","name":"见习法师","rarity":"SR","attr":"无","range":"远","cost":5,"atk":1,"hp":3,"move":1,"dist":2,"effect":"【不稳定的飞弹】，（主动，消耗2RP）指定一个敌方单位造成1~3点随机伤害。"},{"type":"英雄","name":"草药医生","rarity":"SR","attr":"木","range":"近","cost":5,"atk":2,"hp":4,"move":1,"dist":1,"effect":"【膏药】，（主动，消耗1RP）指定一个友方单位+1生命。每回合限一次。"},{"type":"英雄","name":"邋遢盗贼","rarity":"SR","attr":"无","range":"近","cost":4,"atk":3,"hp":3,"move":2,"dist":1,"effect":"【顺手牵羊】：本单位攻击核心时，对其造成1点额外伤害。闪击"},{"type":"英雄","name":"固执盾卫","rarity":"R","attr":"土","range":"近","cost":7,"atk":2,"hp":7,"move":1,"dist":1,"effect":"【坚守】：本单位无法后退。守卫。"},{"type":"英雄","name":"狂热信徒","rarity":"R","attr":"光","range":"近","cost":6,"atk":4,"hp":4,"move":1,"dist":1,"effect":"【盲信】：本单位无法攻击光属性单位。"},{"type":"英雄","name":"笨拙发明家","rarity":"SR","attr":"无","range":"近","cost":8,"atk":3,"hp":5,"move":1,"dist":1,"effect":"【蹩脚造物】：入场时，将一张随机通用卡包装备加入手牌。"},{"type":"部队","name":"民兵","rarity":"R","attr":"无","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"持矛民兵","rarity":"R","attr":"无","range":"近","cost":3,"atk":2,"hp":3,"move":1,"dist":1,"effect":"守卫"},{"type":"部队","name":"农夫","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"樵夫","rarity":"R","attr":"木","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"猎人","rarity":"R","attr":"无","range":"远","cost":3,"atk":3,"hp":2,"move":1,"dist":2,"effect":"无"},{"type":"部队","name":"石匠","rarity":"R","attr":"土","range":"近","cost":2,"atk":1,"hp":3,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"学徒","rarity":"R","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":2,"dist":1,"effect":"无"},{"type":"部队","name":"哨兵","rarity":"SR","attr":"无","range":"近","cost":3,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【眺望】：入场时，抽一张牌。"},{"type":"部队","name":"流浪狗","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":2,"dist":1,"effect":"闪击"},{"type":"部队","name":"街头混混","rarity":"R","attr":"无","range":"近","cost":2,"atk":2,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"笨重傀儡","rarity":"R","attr":"土","range":"近","cost":5,"atk":4,"hp":4,"move":1,"dist":1,"effect":"守卫"},{"type":"部队","name":"蹩脚弓手","rarity":"SR","attr":"无","range":"远","cost":3,"atk":2,"hp":1,"move":1,"dist":2,"effect":"【流矢】：攻击时有50%几率对随机目标额外造成1点伤害。"},{"type":"部队","name":"胆小鬼","rarity":"R","attr":"无","range":"远","cost":1,"atk":1,"hp":1,"move":1,"dist":2,"effect":"本单位仅可攻击非相邻战线的敌方单位"},{"type":"部队","name":"临时工","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【磨洋工】：本单位被摧毁后返还1RP。"},{"type":"部队","name":"酒鬼","rarity":"SR","attr":"无","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"【酗酒】：你的回合开始时，有50%几率+1攻击。"},{"type":"部队","name":"传令兵","rarity":"R","attr":"无","range":"近","cost":2,"atk":0,"hp":2,"move":2,"dist":1,"effect":"【送信】：入场时，抽一张牌。"},{"type":"部队","name":"疯癫预言者","rarity":"SR","attr":"无","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"【胡言乱语】：入场时，双方玩家各随机丢弃一张手牌。"},{"type":"部队","name":"老马","rarity":"R","attr":"无","range":"近","cost":2,"atk":1,"hp":3,"move":2,"dist":1,"effect":"闪击"},{"type":"部队","name":"见习水手","rarity":"R","attr":"水","range":"近","cost":3,"atk":2,"hp":3,"move":2,"dist":1,"effect":"无"},{"type":"部队","name":"矿工","rarity":"R","attr":"土","range":"近","cost":3,"atk":2,"hp":4,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"乌鸦","rarity":"SR","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":2,"dist":1,"effect":"【呱噪】：本单位被摧毁时，对手卡组洗入一张乌鸦。"},{"type":"部队","name":"迷路小孩","rarity":"SR","attr":"无","range":"近","cost":1,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【哭喊】：本单位被攻击时，攻击者本回合无法再次攻击。"},{"type":"部队","name":"稻草人","rarity":"R","attr":"无","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"守卫、【稻草人】：相邻战线有敌方单位时无法移动。"},{"type":"部队","name":"病弱的村民","rarity":"SR","attr":"无","range":"近","cost":1,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【传染】：本单位被摧毁时，对本战线所有单位和造成攻击单位造成1点伤害。"},{"type":"部队","name":"笨拙学徒","rarity":"R","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":2,"dist":1,"effect":"【打翻试剂】：入场时，指定一个随机单位造成1点伤害。"},{"type":"部队","name":"失眠守卫","rarity":"R","attr":"无","range":"近","cost":3,"atk":2,"hp":4,"move":1,"dist":1,"effect":"【疲惫】：无法获得闪击、连击。"},{"type":"部队","name":"贪吃鼠","rarity":"SR","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":2,"dist":1,"effect":"【偷吃粮草】：本单位首次攻击时，获得1点RP。"},{"type":"部队","name":"破旧扫帚","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"话痨鹦鹉","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【学舌】：入场时，+1点攻击力或生命值。"},{"type":"部队","name":"锈蚀铠甲","rarity":"R","attr":"无","range":"近","cost":2,"atk":0,"hp":3,"move":0,"dist":1,"effect":"守卫"},{"type":"部队","name":"笨重石像","rarity":"SR","attr":"土","range":"近","cost":3,"atk":0,"hp":5,"move":0,"dist":1,"effect":"守卫"},{"type":"部队","name":"闪烁的萤火虫","rarity":"SR","attr":"光","range":"近","cost":1,"atk":1,"hp":1,"move":2,"dist":1,"effect":"【微光】：本单位仅在该战线无其他友方单位时可被攻击。"},{"type":"部队","name":"湿滑苔藓","rarity":"SR","attr":"水","range":"近","cost":2,"atk":0,"hp":2,"move":0,"dist":1,"effect":"【滑腻】：进入本单位相邻战线的单位本回合移动力-1。"},{"type":"部队","name":"不安的幽灵","rarity":"SR","attr":"暗","range":"近","cost":3,"atk":2,"hp":1,"move":2,"dist":1,"effect":"【无形】：只被光属性单位攻击。"},{"type":"部队","name":"迷途蝴蝶","rarity":"R","attr":"无","range":"近","cost":0,"atk":0,"hp":1,"move":2,"dist":1,"effect":"无"},{"type":"部队","name":"陶罐","rarity":"R","attr":"土","range":"近","cost":1,"atk":0,"hp":1,"move":0,"dist":1,"effect":"【易碎】：被摧毁时，对攻击者造成1点伤害。"},{"type":"部队","name":"野猪","rarity":"R","attr":"无","range":"近","cost":3,"atk":3,"hp":2,"move":1,"dist":1,"effect":"【冲撞】：入场回合必须移动，否则将在结束回合摧毁。"},{"type":"部队","name":"瘦弱豺狼","rarity":"SR","attr":"无","range":"近","cost":2,"atk":2,"hp":1,"move":2,"dist":1,"effect":"闪击、【食腐】：本单位攻击受伤单位时，额外造成1点伤害。"},{"type":"部队","name":"地痞","rarity":"R","attr":"无","range":"近","cost":3,"atk":3,"hp":2,"move":1,"dist":1,"effect":"【勒索】：消灭本单位的单位操控者失去1点RP。"},{"type":"部队","name":"失眠的猫头鹰","rarity":"SR","attr":"无","range":"远","cost":2,"atk":2,"hp":2,"move":1,"dist":2,"effect":"【夜啼】：你的回合结束时，有50%几率使一个随机敌方单位本回合无法攻击。"},{"type":"装备","name":"生锈的剑","rarity":"R","attr":"金","cost":2,"effect":"装备单位+1攻击。"},{"type":"装备","name":"木盾","rarity":"R","attr":"木","cost":2,"effect":"装备单位+1生命。"},{"type":"装备","name":"破皮甲","rarity":"R","attr":"无","cost":3,"effect":"装备单位+2生命。"},{"type":"装备","name":"弹弓","rarity":"R","attr":"无","cost":2,"effect":"装备单位+1攻击，且攻击距离+1（距离≤2）。"},{"type":"装备","name":"磨刀石","rarity":"R","attr":"金","cost":1,"effect":"装备单位本回合攻击+1。（回合结束时破坏）"},{"type":"装备","name":"厚书本","rarity":"R","attr":"无","cost":3,"effect":"装备单位+2生命。"},{"type":"装备","name":"褪色披风","rarity":"SR","attr":"无","cost":1,"effect":"装备单位获得伪装。（仅在其未移动时生效）"},{"type":"装备","name":"不稳定的法杖","rarity":"R","attr":"无","cost":4,"effect":"装备单位+2攻击。此单位攻击时，有25%几率对自己造成2点伤害。"},{"type":"装备","name":"重枷锁","rarity":"R","attr":"土","cost":2,"effect":"装备单位+3生命，-1移动力。"},{"type":"装备","name":"漏水的桶","rarity":"SR","attr":"水","cost":3,"effect":"装备单位获得：“你的回合结束时，为此单位+1生命”。本效果在提供3点生命后摧毁。"},{"type":"技能","name":"头球","rarity":"R","attr":"无","cost":2,"effect":"指定一个敌方单位造成1点伤害。"},{"type":"技能","name":"呐喊","rarity":"R","attr":"无","cost":1,"effect":"指定一个友方单位本回合+1攻击。"},{"type":"技能","name":"简易包扎","rarity":"R","attr":"无","cost":2,"effect":"指定一个友方单位+2生命。"},{"type":"技能","name":"绊脚索","rarity":"R","attr":"无","cost":3,"effect":"指定一个敌方单位本回合-2移动力。"},{"type":"技能","name":"烟雾弹","rarity":"SR","attr":"无","cost":3,"effect":"指定一个友方单位获得伪装，直到其下次行动。"},{"type":"技能","name":"虚张声势","rarity":"SR","attr":"无","cost":2,"effect":"本回合内，一个友方单位获得+2攻击，但下回合其-2攻击。"},{"type":"技能","name":"征用粮草","rarity":"SR","attr":"无","cost":1,"effect":"你获得2点RP。下回合你的-1RP上限。"},{"type":"技能","name":"天气不佳","rarity":"SSR","attr":"无","cost":5,"effect":"所有敌方单位-1移动力，-1攻击，至下一个己方回合恢复。"},{"type":"技能","name":"计算失误","rarity":"R","attr":"无","cost":0,"effect":"抽一张牌，然后随机丢弃一张手牌。"},{"type":"技能","name":"临阵磨枪","rarity":"SR","attr":"无","cost":3,"effect":"本回合内，你所有单位获得+1攻击。回合结束时，所有友方单位受到1点伤害。"},{"type":"建筑","name":"简陋工事","rarity":"SR","attr":"土","cost":4,"hp":3,"effect":"【沙包墙】：此战线上的友方单位获得+1防御。"},{"type":"建筑","name":"瞭望塔","rarity":"R","attr":"无","cost":3,"hp":2,"effect":"【登高望远】：入场时，抽一张牌。"},{"type":"建筑","name":"篝火","rarity":"SR","attr":"火","cost":2,"hp":2,"effect":"【取暖】：你的回合结束时，指定此战线的一个友方单位+1生命。"},{"type":"建筑","name":"捕兽陷阱","rarity":"R","attr":"无","cost":3,"hp":1,"effect":"【机关】：当一个敌方单位移动至此战线时，对其造成2点伤害，然后本单位摧毁。"},{"type":"建筑","name":"摇摇欲坠的棚屋","rarity":"SR","attr":"无","cost":2,"hp":1,"effect":"【避风】：你的回合结束时，你获得1点RP上限。本单位在你获得2点RP上限后摧毁。"},{"type":"建筑","name":"杂乱的书桌","rarity":"R","attr":"无","cost":3,"hp":2,"effect":"【翻找】，（主动，消耗1RP）从你的牌库顶翻三张牌，将一张技能卡加入手牌，其余置入墓地。"},{"type":"建筑","name":"小药圃","rarity":"SR","attr":"木","cost":3,"hp":2,"effect":"【采收】：你的回合结束时，指定一个友方单位+1生命。"},{"type":"建筑","name":"破旧锻炉","rarity":"SR","attr":"火","cost":5,"hp":3,"effect":"【打铁】，（主动，消耗3RP）指定一个友方单位永久获得+1攻击。每回合限一次。"},{"type":"建筑","name":"蜂箱","rarity":"R","attr":"木","cost":4,"hp":1,"effect":"【蜂群】：本单位被破坏时，对所在战线所有单位造成1点伤害。"},{"type":"建筑","name":"告示牌","rarity":"SR","attr":"无","cost":1,"hp":1,"effect":"【谣言】：入场时，双方玩家各抽一张牌。"}],"古罗马文明卡包（80张）":[{"type":"英雄","name":"罗慕路斯","rarity":"SSR","attr":"火","range":"近","cost":7,"atk":4,"hp":6,"move":1,"dist":1,"effect":"【建城者】：入场时，召唤2个罗马新兵在本单位相邻站位。"},{"type":"英雄","name":"尤利乌斯·凯撒","rarity":"UR","attr":"金","range":"近","cost":10,"atk":6,"hp":8,"move":2,"dist":1,"effect":"【高卢征服】：(主动，消耗4RP)指定一个战线，该战线友方罗马军团部队本回合+2攻击并获得闪击。每三回合限一次。"},{"type":"英雄","name":"斯巴达克斯","rarity":"SR","attr":"火","range":"近","cost":9,"atk":5,"hp":6,"move":2,"dist":1,"effect":"【角斗士起义】：入场时，召唤2个角斗士在本单位相邻站位。"},{"type":"英雄","name":"大西庇阿·非洲努斯","rarity":"SSR","attr":"光","range":"近","cost":9,"atk":4,"hp":7,"move":2,"dist":1,"effect":"【扎马之战】：入场时，选择一条战线，该战线所有敌方单位获得削弱直至下回合结束。"},{"type":"英雄","name":"图拉真","rarity":"UR","attr":"土","range":"近","cost":11,"atk":5,"hp":9,"move":1,"dist":1,"effect":"【帝国极壁】：本单位所在战线可部署建筑。"},{"type":"英雄","name":"格拉古兄弟","rarity":"SR","attr":"水","range":"近","cost":6,"atk":3,"hp":5,"move":2,"dist":1,"effect":"(入场时选择模式)【土地改革】：(提比略)你的回合结束时，所有友方罗马农兵获得+1攻击，+1生命。"},{"type":"英雄","name":"卢克蕾提亚","rarity":"SR","attr":"暗","range":"远","cost":6,"atk":2,"hp":4,"move":1,"dist":2,"effect":"【高贵之殇】：(被动)本单位被敌方攻击摧毁时，所有友方单位下回合获得连击和+2攻击。"},{"type":"英雄","name":"马克里努斯","rarity":"SR","attr":"无","range":"近","cost":7,"atk":4,"hp":6,"move":2,"dist":1,"effect":"【昙花一现】：入场时，额外获得2点RP上限。三回合后，自动摧毁此卡。"},{"type":"英雄","name":"圣乔治","rarity":"SSR","attr":"光","range":"远","cost":10,"atk":6,"hp":4,"move":1,"dist":2,"effect":"【屠龙者】：攻击英雄卡时，攻击力翻倍。"},{"type":"英雄","name":"狄奥多西一世","rarity":"SSR","attr":"光","range":"远","cost":10,"atk":4,"hp":8,"move":1,"dist":2,"effect":"【国教诏令】：入场时，你场上所有光属性单位的+1生命。"},{"type":"部队","name":"罗马新兵","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"罗马农兵","rarity":"R","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"动员"},{"type":"部队","name":"罗马青年军","rarity":"SR","attr":"金","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"罗马军团、动员"},{"type":"部队","name":"征召投石兵","rarity":"R","attr":"无","range":"远","cost":2,"atk":2,"hp":1,"move":1,"dist":2,"effect":"无"},{"type":"部队","name":"罗马探路者","rarity":"SR","attr":"无","range":"近","cost":2,"atk":2,"hp":1,"move":1,"dist":1,"effect":"进入前线后，获得伪装"},{"type":"部队","name":"罗马哨兵","rarity":"R","attr":"无","range":"远","cost":2,"atk":1,"hp":2,"move":2,"dist":2,"effect":"预警"},{"type":"部队","name":"奴隶矿工","rarity":"R","attr":"土","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"罗马军乐手","rarity":"SR","attr":"无","range":"近","cost":2,"atk":0,"hp":2,"move":2,"dist":1,"effect":"【士气号角】：回合开始时，相邻友方单位+1移动力。"},{"type":"部队","name":"罗马书记官","rarity":"SR","attr":"无","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【记录】：入场时，抽一张卡。"},{"type":"部队","name":"维斯塔贞女","rarity":"SSR","attr":"光","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"【圣火守护】：相邻友方单位不受属性相克加成影响。"},{"type":"部队","name":"罗马重步兵","rarity":"R","attr":"土","range":"近","cost":4,"atk":3,"hp":4,"move":1,"dist":1,"effect":"罗马军团、守卫、重甲（1）"},{"type":"部队","name":"百夫长","rarity":"SR","attr":"金","range":"近","cost":4,"atk":3,"hp":3,"move":1,"dist":1,"effect":"罗马军团、【鼓舞】：相邻友方部队+1攻击。"},{"type":"部队","name":"角斗士","rarity":"R","attr":"火","range":"近","cost":4,"atk":3,"hp":2,"move":2,"dist":1,"effect":"连击"},{"type":"部队","name":"罗马工程师","rarity":"SR","attr":"土","range":"近","cost":3,"atk":1,"hp":3,"move":2,"dist":1,"effect":"【快速修筑】：入场时，指定一个友方建筑+2耐久。"},{"type":"部队","name":"辅助骑兵","rarity":"R","attr":"火","range":"近","cost":4,"atk":3,"hp":2,"move":2,"dist":1,"effect":"游击"},{"type":"部队","name":"同盟军标枪兵","rarity":"SR","attr":"无","range":"远","cost":3,"atk":2,"hp":2,"move":1,"dist":2,"effect":"【标枪投掷】，（主动，消耗1RP）指定一名敌方单位造成1点伤害并使其获得削弱。"},{"type":"部队","name":"罗马弩炮","rarity":"SR","attr":"金","range":"远","cost":6,"atk":3,"hp":2,"move":1,"dist":2,"effect":"打击、畏惧"},{"type":"部队","name":"罗马禁卫军","rarity":"UR","attr":"暗","range":"近","cost":6,"atk":4,"hp":5,"move":1,"dist":1,"effect":"【帝国之刃】：入场时，可消灭一个指定友方单位，若如此做，获得+2攻击+2生命和闪击。重甲（1）"},{"type":"部队","name":"堕落的百夫长","rarity":"SSR","attr":"暗","range":"近","cost":5,"atk":4,"hp":4,"move":1,"dist":1,"effect":"【克扣军饷】：你的回合开始时，你抽一张牌，相邻友方单位-1生命。"},{"type":"部队","name":"日耳曼佣兵","rarity":"SR","attr":"木","range":"近","cost":5,"atk":5,"hp":3,"move":1,"dist":1,"effect":"【狂暴】：攻击后，若目标未被消灭，则对自身造成2点伤害。"},{"type":"部队","name":"乌鸦战船","rarity":"SR","attr":"水","range":"近","cost":4,"atk":3,"hp":3,"move":2,"dist":1,"effect":"【跳帮】：每击杀一名敌方单位，可选择获得+1攻击或+1生命。"},{"type":"部队","name":"伊特鲁里亚祭司","rarity":"SR","attr":"暗","range":"近","cost":4,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【肝卜术】，（主动，消耗1RP）窥视对手的一张手牌。"},{"type":"部队","name":"罗马间谍","rarity":"SR","attr":"暗","range":"近","cost":3,"atk":2,"hp":1,"move":1,"dist":1,"effect":"【情报】：入场时，查看对手一张手牌。伪装。"},{"type":"部队","name":"高卢驻屯长","rarity":"SR","attr":"木","range":"近","cost":4,"atk":3,"hp":3,"move":2,"dist":1,"effect":"【驻屯】：未移动时，获得+2攻击。"},{"type":"部队","name":"努米底亚标枪骑兵","rarity":"R","attr":"火","range":"远","cost":4,"atk":3,"hp":1,"move":2,"dist":2,"effect":"游击、打击"},{"type":"部队","name":"城墙巡逻队","rarity":"R","attr":"土","range":"远","cost":3,"atk":2,"hp":3,"move":1,"dist":2,"effect":"警戒"},{"type":"部队","name":"宫廷宦官","rarity":"SR","attr":"暗","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【谗言】，（主动，消耗2RP）指定一个敌方单位本回合-2攻击。"},{"type":"部队","name":"贝尔萨轻骑兵","rarity":"R","attr":"火","range":"近","cost":5,"atk":3,"hp":2,"move":2,"dist":1,"effect":"游击"},{"type":"部队","name":"伏尔甘神柱","rarity":"UR","attr":"火","range":"远","cost":6,"atk":5,"hp":2,"move":0,"dist":2,"effect":"燃烧、【献祭】：本单位每消灭一个敌方单位，便获得+1攻击。"},{"type":"部队","name":"军团士兵","rarity":"SR","attr":"金","range":"近","cost":5,"atk":4,"hp":4,"move":1,"dist":1,"effect":"罗马军团、重甲（2）、【军阵】：每与一个友方罗马军团单位相邻，则获得+1生命，+1攻击。"},{"type":"部队","name":"罗马执政官","rarity":"SR","attr":"光","range":"近","cost":7,"atk":3,"hp":3,"move":1,"dist":1,"effect":"【政令】：你的回合开始时，同一战线友方单位本回合+1移动力。"},{"type":"部队","name":"达尔马提亚重骑兵","rarity":"SR","attr":"火","range":"近","cost":6,"atk":5,"hp":3,"move":2,"dist":1,"effect":"重甲（1）、【重装冲锋】：本单位移动至前线的第一个回合，+3攻击，回合结束后复原。"},{"type":"部队","name":"五列桨帆船","rarity":"SR","attr":"土","range":"近","cost":7,"atk":5,"hp":6,"move":1,"dist":1,"effect":"重甲（1）、削弱"},{"type":"部队","name":"布匿战争老兵","rarity":"SSR","attr":"金","range":"近","cost":4,"atk":3,"hp":4,"move":1,"dist":1,"effect":"罗马军团、【汉尼拔之惧】：与英雄卡相邻时，获得+2攻击，+1生命。"},{"type":"部队","name":"老兵殖民者","rarity":"SR","attr":"光","range":"近","cost":4,"atk":2,"hp":2,"move":1,"dist":1,"effect":"【屯田】：你的回合结束时，若本单位未移动，则你摸一张牌。"},{"type":"部队","name":"祭司团成员","rarity":"SR","attr":"光","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"【占卜】：（主动，消耗1RP）查看牌库顶三张牌，将其中一张加入手牌，其余洗回牌库。"},{"type":"部队","name":"罗马消防队","rarity":"SR","attr":"水","range":"近","cost":3,"atk":1,"hp":4,"move":1,"dist":1,"effect":"【灭火】：部署时移除一个指定友方单位的燃烧效果并为其+2生命。"},{"type":"部队","name":"日耳曼尼亚辅兵","rarity":"R","attr":"木","range":"近","cost":4,"atk":4,"hp":3,"move":1,"dist":1,"effect":"【蛮族血性】：攻击后，若自身生命≤2，则获得+2攻击。"},{"type":"部队","name":"罗马执旗手","rarity":"SR","attr":"木","range":"近","cost":4,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【军旗】：同一战线友方罗马军团获得+1攻击。"},{"type":"部队","name":"罗马伤病员","rarity":"R","attr":"无","range":"近","cost":1,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【伤兵营】：本单位被摧毁时，你获得1点RP。"},{"type":"装备","name":"罗马短剑","rarity":"R","attr":"金","cost":3,"effect":"装备单位+2攻击，并获得打击。"},{"type":"装备","name":"罗马大盾","rarity":"R","attr":"土","cost":4,"effect":"装备单位+3生命，并获得守卫。"},{"type":"装备","name":"军团鹰旗","rarity":"SR","attr":"光","cost":5,"effect":"装备单位+1攻击+1生命。【军团象征】：与本单位同一战线的所有友方罗马军团+1攻击。"},{"type":"装备","name":"凯旋盔甲","rarity":"SR","attr":"光","cost":5,"effect":"装备单位+1攻击+2生命，并在装备单位消灭一个敌方单位后，你+1RP。"},{"type":"装备","name":"密特拉神像","rarity":"SR","attr":"光","cost":5,"effect":"装备单位+1攻击+1生命。【太阳神的祝福】：你的回合开始时，装备单位+1生命。"},{"type":"装备","name":"法西斯卡","rarity":"SR","attr":"火","cost":5,"effect":"装备单位获得【飞斧】：装备单位+2攻击，距离+1（距离≤2）。"},{"type":"装备","name":"喀戎的教诲","rarity":"SR","attr":"无","cost":6,"effect":"装备单位获得+1攻击+2生命和吸血。"},{"type":"装备","name":"尼禄的金琴","rarity":"SSR","attr":"暗","cost":7,"effect":"装备英雄卡获得【纵火者的狂欢】：装备单位攻击时，对目标相邻单位造成1点伤害。装备单位被摧毁时，对所在战线所有单位造成3点伤害。"},{"type":"装备","name":"朱庇特之雷","rarity":"SSR","attr":"光","cost":8,"effect":"装备单位+3攻击。【神怒】：装备单位攻击时，有30%几率对目标造成额外2点光属性伤害。"},{"type":"装备","name":"冥王普鲁托的硬币","rarity":"UR","attr":"暗","cost":3,"effect":"装备单位获得【买路钱】：装备单位被摧毁时，你支付2RP，若如此做，则装备单位复生。若剩余RP不足2RP，不得发动效果。"},{"type":"技能","name":"龟甲阵","rarity":"R","attr":"土","cost":5,"effect":"本回合内，选择一条战线，该战线友方单位获得+1生命，且免疫下一次受到的远程伤害。"},{"type":"技能","name":"投掷标枪","rarity":"R","attr":"金","cost":4,"effect":"对一条战线上的所有敌方单位造成2点伤害，并使其-1移动力。"},{"type":"技能","name":"万神殿的祈祷","rarity":"SR","attr":"光","cost":7,"effect":"复活一个本场对决中被摧毁的友方非英雄单位，并使其本回合获得免疫伤害。"},{"type":"技能","name":"以神之名","rarity":"SR","attr":"光","cost":8,"effect":"本回合内，你所有单位的攻击无视守卫，且造成的伤害视为光属性。"},{"type":"技能","name":"迦太基的诅咒","rarity":"SR","attr":"暗","cost":5,"effect":"选择一个敌方单位，其攻击或生命变为1，持续两回合。"},{"type":"技能","name":"罗马大道急行军","rarity":"SSR","attr":"无","cost":3,"effect":"本回合内，你所有单位+2移动力。"},{"type":"技能","name":"元老院决议","rarity":"SSR","attr":"光","cost":5,"effect":"抽两张牌。你每控制一个英雄或建筑，便额外抽一张。"},{"type":"技能","name":"最终议和","rarity":"UR","attr":"无","cost":10,"effect":"【迦太基必须毁灭】：消灭场上所有单位，并对其所有者的核心造成等同于其费用总和一半（向下取整）的伤害。"},{"type":"技能","name":"神谴","rarity":"UR","attr":"光","cost":8,"effect":"消灭场上所有攻击≥5的单位。"},{"type":"技能","name":"酒神节狂欢","rarity":"SSR","attr":"火","cost":6,"effect":"本回合内，你所有单位获得+2攻击，-1生命，结束阶段时，未发动攻击的的友方单位全部摧毁。"},{"type":"建筑","name":"罗马水道","rarity":"SR","attr":"水","cost":6,"hp":4,"effect":"【清水涌流】：你的回合结束时，为此战线所有友方单位+1生命。"},{"type":"建筑","name":"罗马斗兽场","rarity":"SR","attr":"火","cost":8,"hp":5,"effect":"【血腥娱乐】：（主动：消耗2RP）召唤一个角斗士在相邻站位，每回合限一次。"},{"type":"建筑","name":"图拉真纪功柱","rarity":"SSR","attr":"金","cost":7,"hp":3,"effect":"【战功铭刻】：每有一个友方单位消灭敌方单位，你RP上限+1，每回合限1次。被破坏时移除此建筑提供的RP上限。"},{"type":"建筑","name":"哈德良长城","rarity":"SSR","attr":"土","cost":9,"hp":6,"effect":"【边境屏障】：本建筑相邻战线，敌方单位入场额外消耗1点移动力。本建筑仅可部署于我方二线。\n【烽火台】：本建筑相邻战线，敌方单位进入时，你抽一张卡。"},{"type":"建筑","name":"密特拉地下神庙","rarity":"SSR","attr":"暗","cost":6,"hp":3,"effect":"【秘密祭礼】：你的回合开始时，若本建筑相邻战线无敌方单位，你回复1点核心耐久。"},{"type":"建筑","name":"卡拉卡拉浴场","rarity":"UR","attr":"水","cost":7,"hp":4,"effect":"【休闲社交】：你的结束阶段，所在战线所有友方单位获得净化。"},{"type":"建筑","name":"朱庇特神庙","rarity":"UR","attr":"光","cost":9,"hp":5,"effect":"【神王怒火】：（主动，消耗3RP）对一条战线上所有单位造成3点光属性伤害。每局限一次。\n【神王赐福】：你的回合开始时，为友方随机一名非暗属性单位施加重甲（1）。"},{"type":"建筑","name":"谷神仓廪","rarity":"SSR","attr":"土","cost":5,"hp":3,"effect":"【丰饶】：你的回合结束时，若本建筑未被破坏，你获得1点RP上限。最多提供3点RP上限。"},{"type":"建筑","name":"罗曼军械库","rarity":"SSR","attr":"金","cost":5,"hp":4,"effect":"【装备补给】：你的回合开始时，从卡包中生成一张罗马装备牌至手牌。每回合限一次。"},{"type":"建筑","name":"西塞罗演讲台","rarity":"UR","attr":"光","cost":7,"hp":2,"effect":"【雄辩】：（主动，消耗5RP）选择一条战线，其上所有敌方单位本回合无法攻击。每三回合限一次。\n【号召】：（主动，消耗2RP）召唤一个罗马青年军在本建筑相邻站位。每回合限一次。"}],"古埃及文明卡包（80张）":[{"type":"英雄","name":"纳尔迈","rarity":"SSR","attr":"光","range":"远","cost":9,"atk":5,"hp":6,"move":1,"dist":2,"effect":"【上下埃及之王】：入场时，RP上限+2并抽一张牌。\n【调色板】，（主动，消耗3RP）指定一个友方单位本回合获得连击，但每次攻击后受到1点伤害。"},{"type":"英雄","name":"拉美西斯二世","rarity":"UR","attr":"光","range":"近","cost":11,"atk":5,"hp":9,"move":1,"dist":1,"effect":"【卡迭石之战】：被攻击时，召唤一个埃及战车兵(3/2/3/1)在相邻空位，赋予其守卫并抵挡本次伤害（每三回合限一次）。\n【伟大的建造者】：本单位在场时，尼罗河管家部署消耗-1RP。"},{"type":"英雄","name":"哈特谢普苏特","rarity":"SSR","attr":"水","range":"远","cost":8,"atk":3,"hp":6,"move":1,"dist":2,"effect":"【庞特远征】：你的回合结束时，若本单位未移动，则为随机一个我方建筑+1耐久。\n【女法老的威严】：本单位及相邻友方单位无法成为敌方技能卡目标。"},{"type":"英雄","name":"图特摩斯三世","rarity":"UR","attr":"火","range":"近","cost":10,"atk":6,"hp":7,"move":2,"dist":1,"effect":"【美吉多之战】：闪击。入场时对敌方一名指定单位造成2点伤害。\n【帝国扩张】：本单位消灭一个敌方单位后，你抽一张牌。"},{"type":"英雄","name":"阿赫摩斯一世","rarity":"SSR","attr":"金","range":"近","cost":8,"atk":4,"hp":6,"move":2,"dist":1,"effect":"【驱逐希克索斯】：对暗属性单位造成伤害时，额外造成2点伤害。\n【新时代】：入场时，所有友方埃及单位获得+1攻击，+1生命。"},{"type":"英雄","name":"托勒密一世","rarity":"SSR","attr":"光","range":"近","cost":9,"atk":4,"hp":7,"move":2,"dist":1,"effect":"【继业者】：入场时，复制场上一个非英雄单位的词条（除攻击/生命外），直至离场。\n【亚历山大遗产】：你的手牌每控制一个不同类型的卡牌，RP上限+1。"},{"type":"英雄","name":"拉美西斯三世","rarity":"SSR","attr":"土","range":"近","cost":9,"atk":4,"hp":8,"move":1,"dist":1,"effect":"【海民之战】：守卫。攻击时，对目标的相邻单位造成1点伤害。\n【防御态势】：未移动的回合，获得重甲（1）。"},{"type":"英雄","name":"普萨美提克一世","rarity":"SR","attr":"无","range":"远","cost":7,"atk":3,"hp":5,"move":1,"dist":2,"effect":"【希腊雇佣兵】：入场时，从牌库中随机抽取一张费用≤4的部队卡置入手牌。\n【复兴时代】：本单位在场时，尼罗河管家+1攻击，+1生命。"},{"type":"英雄","name":"斯尼弗鲁","rarity":"SSR","attr":"土","range":"近","cost":8,"atk":3,"hp":7,"move":1,"dist":1,"effect":"【弯曲金字塔】：入场时，选择一个友方建筑卡，其获得“无法被攻击”直到你的下个回合开始。\n【资源征收】：本单位攻击核心时，造成额外2点伤害。"},{"type":"英雄","name":"蝎子王","rarity":"SR","attr":"火","range":"近","cost":7,"atk":4,"hp":4,"move":2,"dist":1,"effect":"【早期征服者】：连击。第二次攻击时伤害不减少。\n【狩猎】：本单位攻击并消灭一个单位后，为其自身+2点生命。"},{"type":"部队","name":"埃及征召兵","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"尼罗河农夫","rarity":"R","attr":"水","range":"近","cost":2,"atk":1,"hp":1,"move":1,"dist":1,"effect":"尼罗河管家、【灌溉】：你的回合结束时，若本单位未移动，你获得1点RP上限。每单位限一次。"},{"type":"部队","name":"埃及弓箭手","rarity":"R","attr":"无","range":"远","cost":3,"atk":2,"hp":2,"move":1,"dist":2,"effect":"【齐射】：其他埃及弓箭手相邻时，攻击+1。"},{"type":"部队","name":"埃及长矛兵","rarity":"R","attr":"土","range":"近","cost":3,"atk":2,"hp":3,"move":1,"dist":1,"effect":"守卫"},{"type":"部队","name":"埃及精锐步兵","rarity":"SR","attr":"金","range":"近","cost":4,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【战斧】：攻击木属性或无属性单位时，攻击+1。"},{"type":"部队","name":"埃及战车兵","rarity":"SR","attr":"火","range":"近","cost":5,"atk":3,"hp":2,"move":2,"dist":1,"effect":"闪击。【蹂躏】：攻击后，使目标单位获得削弱。"},{"type":"部队","name":"努比亚弓箭手","rarity":"R","attr":"火","range":"远","cost":4,"atk":2,"hp":2,"move":1,"dist":2,"effect":"【精准射击】：本单位攻击未被守卫的单位时，造成额外1点伤害。"},{"type":"部队","name":"麦德查人雇佣兵","rarity":"SR","attr":"土","range":"近","cost":5,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【忠诚佣兵】：我方二线无其他单位时，不能部署。入场时和相邻单位获得+1攻击，+1生命。"},{"type":"部队","name":"法老禁卫军","rarity":"SR","attr":"光","range":"近","cost":5,"atk":3,"hp":4,"move":1,"dist":1,"effect":"守卫、重甲（1）。【王室之盾】：为英雄卡守卫时，+2生命。"},{"type":"部队","name":"沙漠侦察兵","rarity":"R","attr":"火","range":"近","cost":3,"atk":2,"hp":1,"move":2,"dist":1,"effect":"伪装。【沙海踪迹】：本单位首次攻击时，造成额外2点伤害。"},{"type":"部队","name":"埃及工兵","rarity":"R","attr":"土","range":"近","cost":3,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【建造者】：入场时，指定一个友方建筑卡+1耐久。"},{"type":"部队","name":"法老执扇官","rarity":"SR","attr":"光","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【宫廷仪仗】：相邻的英雄卡+1攻击，+1生命。"},{"type":"部队","name":"石板书记员","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【记录】：入场时，抽一张牌。"},{"type":"部队","name":"沙漠投石手","rarity":"R","attr":"无","range":"远","cost":2,"atk":2,"hp":1,"move":1,"dist":2,"effect":"无"},{"type":"部队","name":"贝都因骆驼骑兵","rarity":"SR","attr":"火","range":"近","cost":4,"atk":2,"hp":2,"move":2,"dist":1,"effect":"【沙漠适应】：部署时选择+1移动力并获得连击，或+1生命并获得守卫。"},{"type":"部队","name":"苇草陆战队","rarity":"SR","attr":"水","range":"近","cost":4,"atk":2,"hp":2,"move":1,"dist":1,"effect":"【两栖登陆】：进入前线后获得伪装。"},{"type":"部队","name":"法老护卫射手","rarity":"SR","attr":"土","range":"远","cost":6,"atk":4,"hp":3,"move":1,"dist":2,"effect":"燃烧、打击"},{"type":"部队","name":"阿蒙祭司","rarity":"SR","attr":"光","range":"近","cost":3,"atk":1,"hp":1,"move":1,"dist":1,"effect":"尼罗河管家、【祭祀】，（主动，消耗1RP）指定一个友方单位+1生命。每回合限一次。"},{"type":"部队","name":"采石矿工","rarity":"R","attr":"土","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【采石】：本单位被摧毁时，你获得1点RP。"},{"type":"部队","name":"埃及斥候","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【侦查】：入场时，查看敌方随机一张手牌。"},{"type":"部队","name":"方阵长枪兵","rarity":"R","attr":"土","range":"近","cost":4,"atk":2,"hp":4,"move":1,"dist":1,"effect":"【长枪阵列】：同时2个方阵长枪兵相邻时，获得守卫和+1攻击。"},{"type":"部队","name":"镰刃战车","rarity":"SR","attr":"火","range":"近","cost":6,"atk":4,"hp":1,"move":2,"dist":1,"effect":"【轮刃】：攻击时，对目标及其相邻单位造成伤害。"},{"type":"部队","name":"努比亚标枪兵","rarity":"R","attr":"火","range":"远","cost":3,"atk":2,"hp":2,"move":1,"dist":2,"effect":"削弱"},{"type":"部队","name":"三角洲粮官","rarity":"R","attr":"水","range":"近","cost":4,"atk":0,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【分配粮饷】：你的回合结束时，指定此战线两个友方单位+1生命。"},{"type":"部队","name":"绿洲建筑师","rarity":"SR","attr":"土","range":"近","cost":3,"atk":1,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【设计】：入场时，你下一个部署的建筑卡费用-1。"},{"type":"部队","name":"王室信使","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":2,"dist":1,"effect":"尼罗河管家、【疾驰】：部署后可移动。"},{"type":"部队","name":"法老侍从","rarity":"SR","attr":"光","range":"近","cost":4,"atk":1,"hp":2,"move":1,"dist":1,"effect":"【谏言】，（主动，消耗2RP）随机抽一张牌，然后指定一张牌弃置。每回合限一次。"},{"type":"部队","name":"海岸巡逻队","rarity":"SR","attr":"水","range":"近","cost":3,"atk":2,"hp":3,"move":1,"dist":1,"effect":"【警戒】：本单位相邻战线有敌方单位进入时，你抽一张卡。每回合限一次。"},{"type":"部队","name":"沙漠部落战士","rarity":"SR","attr":"火","range":"近","cost":3,"atk":3,"hp":2,"move":2,"dist":1,"effect":"【劫掠】：本单位攻击核心时，你获得1点RP。"},{"type":"部队","name":"埃及战俘","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"【苦力】：本单位被摧毁时，指定一个友方建筑+1耐久。"},{"type":"部队","name":"精锐努比亚矛兵","rarity":"SR","attr":"木","range":"近","cost":4,"atk":3,"hp":3,"move":1,"dist":1,"effect":"【部落战术】：场上存在友方努比亚弓箭手时，获得+1攻击，+1生命。"},{"type":"部队","name":"雇佣希腊方阵兵","rarity":"SSR","attr":"金","range":"近","cost":5,"atk":3,"hp":4,"move":1,"dist":1,"effect":"守卫、重甲（1）。【长枪阵】：攻击本单位的单位受到1点反弹伤害。"},{"type":"部队","name":"法老驯兽师","rarity":"SSR","attr":"火","range":"近","cost":4,"atk":1,"hp":1,"move":1,"dist":1,"effect":"尼罗河管家、【驱使战狮】：入场时，召唤两个战狮(2/1/2/1)在相邻空位。"},{"type":"部队","name":"战狮","rarity":"SR","attr":"火","range":"近","cost":2,"atk":2,"hp":1,"move":2,"dist":1,"effect":"闪击、驱散"},{"type":"部队","name":"运河船夫","rarity":"SR","attr":"水","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"尼罗河管家、【漕运】：本单位在场时，建筑卡的部署消耗-1RP。可叠加。"},{"type":"部队","name":"王室工匠","rarity":"SR","attr":"无","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"尼罗河管家、【雕琢】：入场时，指定一个友方装备卡的使用费用-1（最低为0）。可叠加。"},{"type":"部队","name":"沙漠强盗","rarity":"R","attr":"暗","range":"近","cost":3,"atk":3,"hp":1,"move":1,"dist":1,"effect":"伪装、【伏击】：攻击伪装状态下的单位时，直接将其毁坏且不受伤害。"},{"type":"部队","name":"双轮战车","rarity":"SR","attr":"火","range":"近","cost":4,"atk":3,"hp":1,"move":2,"dist":1,"effect":"游击"},{"type":"部队","name":"尼罗河测量员","rarity":"SR","attr":"土","range":"近","cost":2,"atk":1,"hp":1,"move":1,"dist":1,"effect":"尼罗河管家、【勘测】：入场时，无RP消耗发动指定一个友方建筑主动词条。"},{"type":"部队","name":"庆典舞者","rarity":"SR","attr":"无","range":"近","cost":1,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【鼓舞】：入场时，指定一个友方单位本回合攻击+1。"},{"type":"装备","name":"青铜战斧","rarity":"R","attr":"金","cost":3,"effect":"装备单位+2攻击。"},{"type":"装备","name":"芦苇盾牌","rarity":"R","attr":"水","cost":2,"effect":"装备单位+1生命，并获得守卫。"},{"type":"装备","name":"复合弓","rarity":"R","attr":"火","cost":4,"effect":"装备单位+2攻击，+1距离（距离≤2），获得打击。"},{"type":"装备","name":"金鹰盔甲","rarity":"SR","attr":"光","cost":5,"effect":"装备单位+1/+2。【神圣守护】：装备单位首次被摧毁时，将其移回手牌。"},{"type":"装备","name":"圣甲虫护身符","rarity":"SR","attr":"光","cost":3,"effect":"装备单位获得复生。"},{"type":"装备","name":"法老权杖","rarity":"SSR","attr":"光","cost":6,"effect":"装备英雄卡获得+2攻击，+2攻击。【至高命令】：装备单位所在战线上的所有友方单位+1攻击。"},{"type":"装备","name":"豹皮披风","rarity":"SR","attr":"火","cost":3,"effect":"装备单位+1攻击，并获得伪装。"},{"type":"装备","name":"荷鲁斯之眼挂坠","rarity":"SR","attr":"光","cost":4,"effect":"装备单位获得【洞察】：装备单位可攻击伪装单位。装备单位攻击伪装单位时，造成额外2点伤害。"},{"type":"装备","name":"青铜镜盾","rarity":"SSR","attr":"金","cost":5,"effect":"装备单位+3生命，获得重甲（1）。【反射】：受到技能卡伤害时，将一半伤害（向上取整）反弹给技能卡使用者核心。"},{"type":"装备","name":"莎草纸卷轴","rarity":"SR","attr":"无","cost":2,"effect":"装备单位获得【书写】：主动，消耗2RP：抽一张埃及技能卡。每回合限一次。"},{"type":"技能","name":"尼罗河泛滥","rarity":"R","attr":"水","cost":5,"effect":"选择一条战线，其上所有单位移动力清0，持续一回合。"},{"type":"技能","name":"沙暴","rarity":"R","attr":"土","cost":4,"effect":"对敌方所有非土属性单位造成1点伤害，并使其获得削弱。"},{"type":"技能","name":"木乃伊化","rarity":"SR","attr":"暗","cost":6,"effect":"指定一个友方单位消灭（可触发单位词条），然后将其以1点生命复生，并获得+2攻击，+2生命。"},{"type":"技能","name":"太阳神之怒","rarity":"SR","attr":"光","cost":7,"effect":"对一条战线上的所有敌方单位造成3点伤害。"},{"type":"技能","name":"纸莎草沼泽","rarity":"SR","attr":"水","cost":3,"effect":"指定一条战线，使所有单位在此战线结束回合时，-1攻击，-1生命。持续两回合"},{"type":"技能","name":"法老的诅咒","rarity":"SR","attr":"暗","cost":8,"effect":"指定一个敌方英雄，选择其攻击力或生命值变为1，且无法使用技能，持续两回合。"},{"type":"技能","name":"尼罗河之怒","rarity":"SSR","attr":"火","cost":10,"effect":"献祭所有在场的尼罗河管家，每献祭一名尼罗河管家，对敌方二线所有单位和核心造成1点伤害。"},{"type":"技能","name":"丰饶仪式","rarity":"SR","attr":"水","cost":4,"effect":"获得1点RP上限。指定一个友方单位+3生命。"},{"type":"技能","name":"倾泻箭雨","rarity":"SR","attr":"无","cost":5,"effect":"对所有攻击距离大于1的敌方单位造成2点伤害。"},{"type":"技能","name":"巨石滚落","rarity":"SR","attr":"土","cost":6,"effect":"摧毁场上所有远程单位。"},{"type":"建筑","name":"金字塔群","rarity":"SSR","attr":"土","cost":12,"hp":7,"effect":"【永恒陵墓】：你的回合结束时，指定一张手牌-1RP部署消耗。"},{"type":"建筑","name":"太阳方尖碑","rarity":"SR","attr":"光","cost":7,"hp":2,"effect":"【太阳指针】：入场时，抽两张牌。【尖顶倒塌】：被破坏时，对手弃一张牌。"},{"type":"建筑","name":"孟菲斯大神庙","rarity":"SSR","attr":"光","cost":8,"hp":4,"effect":"【信仰中心】：你的回合结束时，为此战线所有光属性单位+1生命。"},{"type":"建筑","name":"河口运河网络","rarity":"SSR","attr":"水","cost":6,"hp":4,"effect":"【灌溉】：此战线所有水属性单位的+1生命。【运输】：（主动，消耗3RP）抽一张埃及水属性牌。每回合限一次。"},{"type":"建筑","name":"西奈军营","rarity":"SSR","attr":"金","cost":6,"hp":3,"effect":"【征兵】：（主动，消耗2RP）在本建筑相邻站位随机部署埃及征召兵、埃及弓箭手、埃及长矛兵、埃及战车兵中的一个单位。每回合限一次。"},{"type":"建筑","name":"尼罗河粮仓","rarity":"SR","attr":"水","cost":5,"hp":3,"effect":"【储备】：你的回合结束时，若本单位未被破坏，为随机一个友方单位+1生命。"},{"type":"建筑","name":"沙漠采石场","rarity":"SR","attr":"土","cost":5,"hp":3,"effect":"【巨石开采】：入场时，获得2点RP上限。本单位被破坏时，失去这2点RP上限。"},{"type":"建筑","name":"亚历山大里亚港","rarity":"SSR","attr":"水","cost":7,"hp":4,"effect":"【贸易与舰队】：你的回合结束时，从卡包中生成一张埃及金属性牌、一张埃及木属性牌至手牌。"},{"type":"建筑","name":"青铜铸造坊","rarity":"SR","attr":"火","cost":5,"hp":3,"effect":"【锻造】，（主动，消耗2RP）抽一张装备牌。每回合限一次。"},{"type":"建筑","name":"莎草纸作坊","rarity":"SR","attr":"无","cost":3,"hp":2,"effect":"【抄写】：你的回合结束时，抽一张技能牌。"}],"古亚述文明卡包（80张）":[{"type":"英雄","name":"阿淑尔乌巴里特一世","rarity":"SSR","attr":"金","range":"近","cost":8,"atk":4,"hp":7,"move":1,"dist":1,"effect":"【建城者】群体（2）：入场时召唤2个“亚述征召兵”衍生物（1/1/1/1/1，无属性，无词条）在本单位左右。"},{"type":"英雄","name":"沙姆希阿达德一世","rarity":"SSR","attr":"土","range":"近","cost":9,"atk":5,"hp":7,"move":1,"dist":1,"effect":"重甲（1）。【山地王权】：相邻友方单位获得守卫。"},{"type":"英雄","name":"提格拉特帕拉沙尔三世","rarity":"UR","attr":"火","range":"近","cost":10,"atk":6,"hp":8,"move":2,"dist":1,"effect":"闪击。【战车改革】：（主动，消耗3RP）本回合所有友方战车单位+2攻击并获得游击。每三回合限一次。"},{"type":"英雄","name":"萨尔贡二世","rarity":"SSR","attr":"金","range":"近","cost":9,"atk":4,"hp":7,"move":1,"dist":1,"effect":"【攻城王】：本单位攻击建筑时+2攻击。【新都】：（主动，消耗2RP）指定一个友方建筑+1耐久。"},{"type":"英雄","name":"辛那赫里布","rarity":"SSR","attr":"火","range":"远","cost":10,"atk":5,"hp":6,"move":1,"dist":2,"effect":"【围城射手】：攻击后，对目标相邻单位造成1点伤害。攻击核心时+2攻击。"},{"type":"英雄","name":"塞米拉米斯","rarity":"SR","attr":"水","range":"远","cost":7,"atk":3,"hp":5,"move":1,"dist":2,"effect":"伪装。【女王号令】：（主动，消耗1RP）指定一个友方单位本回合+1攻击。"},{"type":"英雄","name":"亚述巴尼拔","rarity":"UR","attr":"光","range":"近","cost":11,"atk":5,"hp":9,"move":1,"dist":1,"effect":"【图书馆】：入场时抽两张牌。【泥板智慧】：（主动，消耗3RP）查看牌库顶三张牌，将其中一张加入手牌，其余洗回牌库。"},{"type":"英雄","name":"那西尔帕二世","rarity":"SSR","attr":"暗","range":"近","cost":9,"atk":5,"hp":7,"move":2,"dist":1,"effect":"【恐怖威名】：本单位攻击后，使目标畏惧。【掠夺】：（主动，消耗2RP）指定一个敌方单位本回合-1攻击。"},{"type":"英雄","name":"阿达德尼拉里三世","rarity":"SR","attr":"土","range":"近","cost":8,"atk":4,"hp":8,"move":1,"dist":1,"effect":"守卫、重甲（1）。【行省总督】：相邻友方单位+1生命。"},{"type":"英雄","name":"伊什塔尔祭司长","rarity":"SSR","attr":"光","range":"远","cost":8,"atk":3,"hp":6,"move":1,"dist":2,"effect":"【净化仪式】：入场时，所有友方单位获得净化。【神谕】：（主动，消耗2RP）指定一个敌方单位本回合畏惧。"},{"type":"部队","name":"亚述征召兵","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"亚述长矛兵","rarity":"R","attr":"土","range":"近","cost":3,"atk":2,"hp":3,"move":1,"dist":1,"effect":"守卫"},{"type":"部队","name":"亚述弓箭手","rarity":"R","attr":"无","range":"远","cost":2,"atk":2,"hp":1,"move":1,"dist":2,"effect":"无"},{"type":"部队","name":"亚述投石手","rarity":"R","attr":"无","range":"远","cost":2,"atk":2,"hp":1,"move":1,"dist":2,"effect":"无"},{"type":"部队","name":"亚述盾卫","rarity":"R","attr":"土","range":"近","cost":3,"atk":1,"hp":4,"move":1,"dist":1,"effect":"守卫、重甲（1）"},{"type":"部队","name":"亚述斥候","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":2,"dist":1,"effect":"伪装"},{"type":"部队","name":"亚述轻骑兵","rarity":"R","attr":"火","range":"近","cost":3,"atk":2,"hp":2,"move":2,"dist":1,"effect":"游击"},{"type":"部队","name":"亚述战车兵","rarity":"SR","attr":"火","range":"近","cost":5,"atk":3,"hp":3,"move":2,"dist":1,"effect":"闪击、游击"},{"type":"部队","name":"皇家战车兵","rarity":"SSR","attr":"金","range":"近","cost":6,"atk":4,"hp":4,"move":2,"dist":1,"effect":"闪击。攻击后使目标削弱。"},{"type":"部队","name":"亚述骑射手","rarity":"SR","attr":"火","range":"远","cost":4,"atk":2,"hp":2,"move":2,"dist":2,"effect":"游击"},{"type":"部队","name":"亚述重步兵","rarity":"SR","attr":"土","range":"近","cost":5,"atk":3,"hp":5,"move":1,"dist":1,"effect":"重甲（1）"},{"type":"部队","name":"亚述禁卫军","rarity":"SR","attr":"光","range":"近","cost":5,"atk":3,"hp":4,"move":1,"dist":1,"effect":"守卫。相邻英雄卡+1生命。"},{"type":"部队","name":"攻城槌","rarity":"SR","attr":"木","range":"近","cost":6,"atk":4,"hp":4,"move":1,"dist":1,"effect":"攻击建筑时+3攻击。"},{"type":"部队","name":"攻城塔","rarity":"SSR","attr":"木","range":"近","cost":7,"atk":3,"hp":6,"move":0,"dist":1,"effect":"重甲（2）。相邻友方单位+1攻击。"},{"type":"部队","name":"亚述工兵","rarity":"SR","attr":"土","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"入场时，指定一个友方建筑+2耐久。"},{"type":"部队","name":"亚述矿工","rarity":"R","attr":"土","range":"近","cost":2,"atk":2,"hp":2,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"亚述铁匠","rarity":"SR","attr":"金","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"入场时，抽一张装备卡。"},{"type":"部队","name":"亚述书记官","rarity":"SR","attr":"无","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"入场时，抽一张牌。"},{"type":"部队","name":"尼尼微守卫","rarity":"R","attr":"土","range":"近","cost":3,"atk":2,"hp":4,"move":1,"dist":1,"effect":"守卫"},{"type":"部队","name":"亚述祭司","rarity":"SR","attr":"光","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"【净化】：（主动，消耗1RP）指定一个友方单位获得净化。每回合限一次。"},{"type":"部队","name":"伊什塔尔侍祭","rarity":"SR","attr":"光","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"【祝福】：（主动，消耗1RP）指定一个友方单位+1生命。每回合限一次。"},{"type":"部队","name":"亚述间谍","rarity":"SR","attr":"暗","range":"近","cost":2,"atk":2,"hp":1,"move":1,"dist":1,"effect":"伪装。入场时，查看对手一张手牌。"},{"type":"部队","name":"恐怖宣传员","rarity":"SR","attr":"暗","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"入场时，指定一个敌方单位本回合畏惧。"},{"type":"部队","name":"俘虏劳工","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"本单位被摧毁时，你获得1RP。"},{"type":"部队","name":"亚述弓兵队长","rarity":"SR","attr":"无","range":"远","cost":4,"atk":3,"hp":2,"move":1,"dist":2,"effect":"相邻友方远程单位+1攻击。"},{"type":"部队","name":"亚述枪骑兵","rarity":"SR","attr":"火","range":"近","cost":5,"atk":4,"hp":2,"move":2,"dist":1,"effect":"游击。攻击后若目标未被摧毁，本单位-1生命。"},{"type":"部队","name":"亚述骆驼骑兵","rarity":"R","attr":"火","range":"近","cost":4,"atk":3,"hp":2,"move":2,"dist":1,"effect":"游击"},{"type":"部队","name":"亚述山地兵","rarity":"SR","attr":"木","range":"近","cost":3,"atk":3,"hp":2,"move":2,"dist":1,"effect":"无"},{"type":"部队","name":"亚述工程兵","rarity":"SR","attr":"土","range":"近","cost":4,"atk":2,"hp":4,"move":1,"dist":1,"effect":"入场时，指定一个友方建筑+1耐久。【修缮】：（主动，消耗2RP）指定一个友方建筑+1耐久。"},{"type":"部队","name":"亚述战狮","rarity":"SR","attr":"火","range":"近","cost":4,"atk":3,"hp":2,"move":2,"dist":1,"effect":"闪击、驱散"},{"type":"部队","name":"战狮饲养员","rarity":"SR","attr":"火","range":"近","cost":3,"atk":1,"hp":2,"move":1,"dist":1,"effect":"群体（1）：入场时召唤1个“战狮”衍生物（3/2/2/2/1，火，闪击、驱散）在相邻空位。"},{"type":"部队","name":"亚述神射手","rarity":"SSR","attr":"无","range":"远","cost":5,"atk":4,"hp":2,"move":1,"dist":2,"effect":"打击"},{"type":"部队","name":"亚述重装骑射手","rarity":"SSR","attr":"金","range":"远","cost":6,"atk":4,"hp":4,"move":1,"dist":2,"effect":"重甲（1）、游击"},{"type":"部队","name":"亚述皇家卫队","rarity":"SSR","attr":"光","range":"近","cost":6,"atk":4,"hp":6,"move":1,"dist":1,"effect":"守卫、重甲（1）"},{"type":"部队","name":"亚述行省兵","rarity":"SR","attr":"无","range":"近","cost":4,"atk":3,"hp":3,"move":1,"dist":1,"effect":"动员"},{"type":"部队","name":"亚述攻城弓手","rarity":"SR","attr":"无","range":"远","cost":5,"atk":3,"hp":3,"move":1,"dist":2,"effect":"攻击建筑时+2攻击。"},{"type":"部队","name":"亚述战俘","rarity":"R","attr":"暗","range":"近","cost":2,"atk":2,"hp":1,"move":1,"dist":1,"effect":"本单位被摧毁时，对手失去1RP。"},{"type":"部队","name":"亚述火焰投手","rarity":"SR","attr":"火","range":"远","cost":5,"atk":3,"hp":2,"move":1,"dist":2,"effect":"燃烧"},{"type":"部队","name":"亚述图书馆员","rarity":"SSR","attr":"光","range":"近","cost":4,"atk":1,"hp":4,"move":1,"dist":1,"effect":"入场时抽一张牌。【抄录】：（主动，消耗2RP）抽一张技能卡。每回合限一次。"},{"type":"部队","name":"亚述巡逻兵","rarity":"R","attr":"土","range":"远","cost":3,"atk":2,"hp":3,"move":1,"dist":2,"effect":"警戒"},{"type":"装备","name":"亚述铁剑","rarity":"R","attr":"金","cost":2,"effect":"装备单位+2攻击。"},{"type":"装备","name":"亚述圆盾","rarity":"R","attr":"土","cost":2,"effect":"装备单位+1生命，并获得守卫。"},{"type":"装备","name":"青铜头盔","rarity":"R","attr":"金","cost":2,"effect":"装备单位+1生命，并获得重甲（1）。"},{"type":"装备","name":"亚述复合弓","rarity":"R","attr":"火","cost":3,"effect":"装备单位+1攻击、+1距离（距离≤2），并获得打击。"},{"type":"装备","name":"战车挽具","rarity":"SR","attr":"火","cost":4,"effect":"装备单位+1攻击、+1移动力。"},{"type":"装备","name":"狮皮披风","rarity":"SR","attr":"暗","cost":3,"effect":"装备单位+1生命，并获得伪装。"},{"type":"装备","name":"攻城锤配件","rarity":"SR","attr":"木","cost":3,"effect":"装备单位攻击建筑时+2攻击。"},{"type":"装备","name":"伊什塔尔护符","rarity":"SR","attr":"光","cost":4,"effect":"装备单位+1生命。【净化】：（主动，消耗1RP）装备单位获得净化。每回合限一次。"},{"type":"装备","name":"王室铁甲","rarity":"SSR","attr":"金","cost":5,"effect":"装备单位+2生命，并获得重甲（1）。"},{"type":"装备","name":"阿淑尔战旗","rarity":"SSR","attr":"光","cost":6,"effect":"装备单位+1攻击、+1生命。同一战线友方单位+1攻击。"},{"type":"技能","name":"金属箭雨","rarity":"R","attr":"无","cost":4,"effect":"对一条战线上的所有敌方单位造成1点伤害。"},{"type":"技能","name":"托罗斯战吼","rarity":"R","attr":"无","cost":2,"effect":"指定一个友方单位本回合+2攻击。"},{"type":"技能","name":"铁器淬火","rarity":"R","attr":"金","cost":2,"effect":"指定一个友方单位本回合+1攻击，并获得打击。"},{"type":"技能","name":"掠夺营地","rarity":"SR","attr":"暗","cost":3,"effect":"消灭一个友方单位，然后你获得2RP。"},{"type":"技能","name":"恐吓战术","rarity":"SR","attr":"暗","cost":4,"effect":"选择一条战线，该战线所有敌方单位本回合畏惧。"},{"type":"技能","name":"强制行军","rarity":"SR","attr":"无","cost":3,"effect":"本回合你所有单位+1移动力。"},{"type":"技能","name":"亚述围城","rarity":"SR","attr":"土","cost":5,"effect":"指定一个敌方建筑，对其造成3点伤害。"},{"type":"技能","name":"献祭阿淑尔","rarity":"SSR","attr":"光","cost":6,"effect":"消灭一个友方单位，然后你所有其他友方单位+1攻击、+1生命。"},{"type":"技能","name":"帝国税赋","rarity":"SSR","attr":"金","cost":4,"effect":"你获得2点RP上限。"},{"type":"技能","name":"尼尼微陷落","rarity":"UR","attr":"暗","cost":10,"effect":"消灭场上所有建筑；每消灭一个建筑，对建筑所有者核心造成2点伤害。"},{"type":"建筑","name":"尼尼微狮墙","rarity":"SSR","attr":"土","cost":8,"hp":6,"effect":"相邻战线敌方单位进入时，额外消耗1点移动力。本单位被破坏时，召唤1个“战狮”衍生物（3/2/2/2/1，火，闪击、驱散）在相邻空位，并使此战线友方单位本回合+1攻击。"},{"type":"建筑","name":"亚述巴尼拔泥板库","rarity":"SR","attr":"光","cost":5,"hp":3,"effect":"你的回合结束时，抽一张技能卡。【泥板检索】，（主动，消耗2RP）将一张手牌洗回牌库，然后抽一张牌。每回合限一次。"},{"type":"建筑","name":"伊什塔尔星门","rarity":"SSR","attr":"光","cost":6,"hp":4,"effect":"相邻战线敌方单位进入时，使其本回合畏惧。【星辰裁决】，（主动，消耗3RP）驱散一个敌方单位的全部正面效果，并使其本回合-1攻击。每回合限一次。"},{"type":"建筑","name":"阿淑尔神谕塔","rarity":"SR","attr":"火","cost":5,"hp":3,"effect":"你的回合结束时，若此战线有友方英雄卡，抽一张牌。【神谕】，（主动，消耗2RP）查看牌库顶三张牌，将其中一张技能卡或装备卡加入手牌，其余置入墓地。每回合限一次。"},{"type":"建筑","name":"尼努尔塔战车圣坊","rarity":"SR","attr":"木","cost":5,"hp":3,"effect":"【圣坊锻造】，（主动，消耗2RP，本建筑耐久-1）召唤1个“亚述战车兵”衍生物（3/2/2/2/1，火，闪击、游击）在相邻空位。每回合限一次。"},{"type":"建筑","name":"阿达德风暴祭坛","rarity":"SSR","attr":"光","cost":7,"hp":5,"effect":"你的回合开始时，对相邻战线一个随机敌方单位造成1点伤害并使其削弱。【风暴阻截】，（主动，消耗3RP）选择一条战线，该战线敌方单位本回合-1移动力。每三回合限一次。"},{"type":"建筑","name":"辛月粮仓","rarity":"SR","attr":"土","cost":4,"hp":3,"effect":"你的回合结束时，你获得1点RP上限；本建筑最多提供3点RP上限。若本回合你的核心未受到伤害，随机一个友方单位+1生命。"},{"type":"建筑","name":"埃阿引水渠","rarity":"SR","attr":"暗","cost":4,"hp":2,"effect":"你的回合结束时，此战线所有友方单位+1生命。【净水】，（主动，消耗2RP）指定一个友方单位获得净化并+1生命。每回合限一次。"},{"type":"建筑","name":"拉马苏守护门","rarity":"SR","attr":"金","cost":4,"hp":3,"effect":"入场时，指定此战线一个友方单位获得守卫直到你的下个回合开始；此战线友方英雄卡+1生命。【神兽庇佑】，（主动，消耗2RP）指定一个友方单位获得伪装，直到其下次行动。每回合限一次。"},{"type":"建筑","name":"冥界七门审判台","rarity":"SR","attr":"水","cost":5,"hp":3,"effect":"【献祭审判】，（主动，消耗4RP）消灭一个友方非英雄单位，然后对敌方核心造成2点伤害。每回合限一次。本单位被破坏时，对手随机弃一张手牌。"}],"古波斯文明卡包（80张）":[{"type":"英雄","name":"居鲁士大帝","rarity":"SSR","attr":"光","range":"近","cost":9,"atk":5,"hp":7,"move":2,"dist":1,"effect":"【万王之王】入场时，所有友方单位+1生命。【宽容诏令】，（主动，消耗2RP）指定一个友方单位获得净化并+1生命。每回合限一次。"},{"type":"英雄","name":"大流士一世","rarity":"UR","attr":"金","range":"近","cost":10,"atk":5,"hp":8,"move":1,"dist":1,"effect":"【御道】，（主动，消耗3RP）本回合所有友方单位+1移动力。每三回合限一次。【行政改革】你的回合结束时，若你控制建筑，抽一张牌。"},{"type":"英雄","name":"薛西斯一世","rarity":"SSR","attr":"火","range":"近","cost":9,"atk":6,"hp":6,"move":1,"dist":1,"effect":"【不死军】入场时，召唤2个“不死军衍生物”在本单位相邻空位。【怒海】本单位攻击后，对目标相邻的一个随机敌方单位造成1点伤害。"},{"type":"英雄","name":"阿尔达希尔一世","rarity":"SSR","attr":"土","range":"近","cost":8,"atk":4,"hp":7,"move":2,"dist":1,"effect":"重甲（1）。【萨珊奠基】入场时，指定一个友方建筑+2耐久。【王权】相邻友方单位+1生命。"},{"type":"英雄","name":"沙普尔一世","rarity":"UR","attr":"暗","range":"近","cost":10,"atk":6,"hp":7,"move":2,"dist":1,"effect":"【俘获瓦勒良】本单位攻击英雄卡时+2攻击。【凯旋】本单位消灭一个敌方单位后，你抽一张牌。"},{"type":"英雄","name":"巴赫拉姆五世","rarity":"SSR","attr":"火","range":"近","cost":8,"atk":5,"hp":5,"move":2,"dist":1,"effect":"游击。【猎狮】本单位攻击并消灭一个单位后，+2生命。"},{"type":"英雄","name":"库思老一世","rarity":"SSR","attr":"光","range":"近","cost":9,"atk":4,"hp":8,"move":1,"dist":1,"effect":"【贤君】你的回合开始时，若你控制建筑，你获得1RP。【税制改革】，（主动，消耗2RP）查看牌库顶三张牌，将其中一张技能卡加入手牌，其余置入墓地。每三回合限一次。"},{"type":"英雄","name":"阿托莎王后","rarity":"SR","attr":"水","range":"远","cost":7,"atk":3,"hp":5,"move":1,"dist":2,"effect":"【王后谏言】，（主动，消耗1RP）指定一个友方单位本回合+1攻击。每回合限一次。【运河赞助】你部署建筑卡时少消耗1RP（最低1RP）。"},{"type":"英雄","name":"阿娜希塔女祭司","rarity":"SSR","attr":"水","range":"远","cost":8,"atk":3,"hp":6,"move":1,"dist":2,"effect":"【圣水】你的回合结束时，此战线所有友方单位+1生命。【净化仪式】，（主动，消耗2RP）指定一个友方单位获得净化。每回合限一次。"},{"type":"英雄","name":"祖尔万祭司","rarity":"SR","attr":"暗","range":"近","cost":7,"atk":3,"hp":6,"move":1,"dist":1,"effect":"【宿命窥视】入场时，查看牌库顶三张牌，将其中一张加入手牌，其余置入墓地。【延缓天命】，（主动，消耗3RP）指定一个敌方单位本回合畏惧。每三回合限一次。"},{"type":"部队","name":"波斯征召兵","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"无"},{"type":"部队","name":"波斯农兵","rarity":"R","attr":"水","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"动员"},{"type":"部队","name":"波斯长矛兵","rarity":"R","attr":"土","range":"近","cost":3,"atk":2,"hp":3,"move":1,"dist":1,"effect":"守卫"},{"type":"部队","name":"波斯弓箭手","rarity":"R","attr":"无","range":"远","cost":2,"atk":2,"hp":1,"move":1,"dist":2,"effect":"无"},{"type":"部队","name":"波斯投石手","rarity":"R","attr":"无","range":"远","cost":2,"atk":2,"hp":1,"move":1,"dist":2,"effect":"无"},{"type":"部队","name":"波斯轻骑兵","rarity":"R","attr":"火","range":"近","cost":3,"atk":2,"hp":2,"move":2,"dist":1,"effect":"游击"},{"type":"部队","name":"波斯骑射手","rarity":"SR","attr":"火","range":"远","cost":4,"atk":2,"hp":2,"move":2,"dist":2,"effect":"游击"},{"type":"部队","name":"波斯战车兵","rarity":"R","attr":"火","range":"近","cost":4,"atk":3,"hp":2,"move":2,"dist":1,"effect":"无"},{"type":"部队","name":"波斯重步兵","rarity":"SR","attr":"土","range":"近","cost":4,"atk":3,"hp":4,"move":1,"dist":1,"effect":"重甲（1）"},{"type":"部队","name":"波斯斥候","rarity":"SR","attr":"无","range":"近","cost":2,"atk":1,"hp":2,"move":2,"dist":1,"effect":"伪装"},{"type":"部队","name":"波斯祭司","rarity":"SR","attr":"光","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"【祈祷】，（主动，消耗1RP）指定一个友方单位获得净化。每回合限一次。"},{"type":"部队","name":"阿娜希塔侍女","rarity":"SR","attr":"水","range":"近","cost":2,"atk":0,"hp":3,"move":1,"dist":1,"effect":"【圣水侍奉】你的回合结束时，相邻一个友方单位+1生命。"},{"type":"部队","name":"密特拉骑士","rarity":"SSR","attr":"光","range":"近","cost":6,"atk":4,"hp":5,"move":2,"dist":1,"effect":"闪击。本单位攻击后，若目标未被摧毁，你获得1RP。"},{"type":"部队","name":"迪夫战士","rarity":"SR","attr":"暗","range":"近","cost":4,"atk":4,"hp":2,"move":2,"dist":1,"effect":"【狂暴】本单位攻击后，对自身造成1点伤害。"},{"type":"部队","name":"神鸟西穆尔格","rarity":"SSR","attr":"木","range":"远","cost":7,"atk":4,"hp":5,"move":2,"dist":2,"effect":"游击。【神羽】入场时，指定一个友方单位获得净化；本单位攻击后+1生命。"},{"type":"部队","name":"不死军统领","rarity":"SR","attr":"光","range":"近","cost":5,"atk":3,"hp":4,"move":1,"dist":1,"effect":"入场时，召唤1个“不死军衍生物”。相邻友方“不死军”单位+1攻击。"},{"type":"部队","name":"波斯长弓手","rarity":"SSR","attr":"无","range":"远","cost":5,"atk":4,"hp":2,"move":2,"dist":2,"effect":"打击"},{"type":"部队","name":"波斯工兵","rarity":"R","attr":"土","range":"近","cost":2,"atk":1,"hp":2,"move":1,"dist":1,"effect":"入场时，指定一个友方建筑+1耐久。"},{"type":"部队","name":"波斯书记官","rarity":"SR","attr":"无","range":"近","cost":2,"atk":0,"hp":2,"move":1,"dist":1,"effect":"入场时，抽一张牌。"},{"type":"部队","name":"波斯行省兵","rarity":"SR","attr":"无","range":"近","cost":4,"atk":3,"hp":3,"move":1,"dist":1,"effect":"动员"},{"type":"部队","name":"波斯山地兵","rarity":"R","attr":"木","range":"近","cost":3,"atk":3,"hp":2,"move":2,"dist":1,"effect":"无"},{"type":"部队","name":"波斯骆驼骑兵","rarity":"R","attr":"火","range":"近","cost":4,"atk":3,"hp":2,"move":2,"dist":1,"effect":"游击"},{"type":"部队","name":"波斯战象","rarity":"SSR","attr":"木","range":"近","cost":7,"atk":5,"hp":7,"move":1,"dist":1,"effect":"重甲（1）。本单位攻击后，对目标相邻单位造成1点伤害。"},{"type":"部队","name":"波斯皇家卫队","rarity":"SR","attr":"光","range":"近","cost":5,"atk":3,"hp":5,"move":1,"dist":1,"effect":"守卫"},{"type":"部队","name":"波斯禁卫骑兵","rarity":"SSR","attr":"金","range":"近","cost":6,"atk":4,"hp":4,"move":2,"dist":1,"effect":"闪击、游击"},{"type":"部队","name":"波斯弓兵队长","rarity":"SR","attr":"无","range":"远","cost":4,"atk":3,"hp":2,"move":1,"dist":2,"effect":"相邻友方远程单位+1攻击。"},{"type":"部队","name":"波斯火焰祭司","rarity":"SR","attr":"火","range":"远","cost":4,"atk":3,"hp":2,"move":1,"dist":2,"effect":"燃烧"},{"type":"部队","name":"波斯水渠工","rarity":"SR","attr":"水","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"入场时，指定一个友方建筑+1耐久。你的回合结束时，此战线一个友方单位+1生命。"},{"type":"部队","name":"波斯税吏","rarity":"SR","attr":"金","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"【征税】本单位攻击核心时，你获得1RP。"},{"type":"部队","name":"波斯奴隶兵","rarity":"R","attr":"无","range":"近","cost":1,"atk":1,"hp":1,"move":1,"dist":1,"effect":"本单位被摧毁时，你获得1RP。"},{"type":"部队","name":"波斯战俘","rarity":"R","attr":"暗","range":"近","cost":2,"atk":2,"hp":1,"move":1,"dist":1,"effect":"本单位被摧毁时，对手失去1RP。"},{"type":"部队","name":"波斯骑兵队长","rarity":"SR","attr":"火","range":"近","cost":5,"atk":4,"hp":3,"move":2,"dist":1,"effect":"相邻友方骑兵单位+1攻击。"},{"type":"部队","name":"波斯铁甲骑兵","rarity":"SSR","attr":"金","range":"近","cost":6,"atk":4,"hp":6,"move":1,"dist":1,"effect":"重甲（2）、守卫"},{"type":"部队","name":"波斯弓骑兵队长","rarity":"SR","attr":"火","range":"远","cost":5,"atk":3,"hp":3,"move":2,"dist":2,"effect":"游击。相邻友方骑射手+1攻击。"},{"type":"部队","name":"波斯神庙守卫","rarity":"SR","attr":"光","range":"近","cost":4,"atk":2,"hp":4,"move":1,"dist":1,"effect":"守卫。相邻友方英雄卡+1生命。"},{"type":"部队","name":"波斯战车驭手","rarity":"SR","attr":"火","range":"近","cost":4,"atk":2,"hp":3,"move":2,"dist":1,"effect":"相邻友方战车单位+1攻击。"},{"type":"部队","name":"波斯神谕者","rarity":"SR","attr":"光","range":"近","cost":3,"atk":1,"hp":3,"move":1,"dist":1,"effect":"入场时，查看牌库顶三张牌，将其中一张技能卡加入手牌，其余置入墓地。"},{"type":"部队","name":"祖尔万信徒","rarity":"SR","attr":"暗","range":"近","cost":4,"atk":2,"hp":4,"move":1,"dist":1,"effect":"复生"},{"type":"部队","name":"迪夫驯服者","rarity":"SR","attr":"暗","range":"近","cost":5,"atk":4,"hp":3,"move":1,"dist":1,"effect":"入场时，召唤1个“迪夫衍生物”在相邻空位。"},{"type":"部队","name":"不死军弓箭手","rarity":"SR","attr":"光","range":"远","cost":4,"atk":2,"hp":3,"move":1,"dist":2,"effect":"复生"},{"type":"部队","name":"不死军衍生物*","rarity":"R","summonOnly":true,"attr":"光","range":"近","atk":1,"hp":2,"move":1,"dist":1,"effect":"无"},{"type":"装备","name":"波斯弯刀","rarity":"R","attr":"金","cost":2,"effect":"装备单位+2攻击。"},{"type":"装备","name":"柳条盾","rarity":"R","attr":"木","cost":2,"effect":"装备单位+1生命，并获得守卫。"},{"type":"装备","name":"波斯复合弓","rarity":"R","attr":"火","cost":3,"effect":"装备单位+1攻击、+1距离（距离≤2），并获得打击。"},{"type":"装备","name":"波斯铁甲","rarity":"SR","attr":"土","cost":4,"effect":"装备单位+2生命，并获得重甲（1）。"},{"type":"装备","name":"密特拉徽记","rarity":"SR","attr":"光","cost":4,"effect":"装备单位+1攻击、+1生命，并获得吸血。"},{"type":"装备","name":"阿娜希塔圣水瓶","rarity":"SR","attr":"水","cost":3,"effect":"装备单位+1生命。【圣水】，（主动，消耗1RP）装备单位获得净化。每回合限一次。"},{"type":"装备","name":"神鸟羽饰","rarity":"SR","attr":"木","cost":3,"effect":"装备单位+1攻击，并获得伪装。"},{"type":"装备","name":"不死军面具","rarity":"SSR","attr":"光","cost":5,"effect":"装备单位获得复生。"},{"type":"装备","name":"御道马鞍","rarity":"SR","attr":"火","cost":4,"effect":"装备单位+1移动力，并获得游击。"},{"type":"装备","name":"万王宝座","rarity":"SSR","attr":"金","cost":6,"effect":"装备单位+2攻击、+2生命。同一战线友方单位+1攻击。"},{"type":"技能","name":"波斯箭雨","rarity":"R","attr":"无","cost":4,"effect":"对一条战线上的所有敌方单位造成1点伤害。"},{"type":"技能","name":"高原战吼","rarity":"R","attr":"无","cost":2,"effect":"指定一个友方单位本回合+2攻击。"},{"type":"技能","name":"坎儿井开凿","rarity":"R","attr":"水","cost":3,"effect":"指定一个友方建筑+2耐久，然后抽一张牌。"},{"type":"技能","name":"御道急行","rarity":"SR","attr":"无","cost":3,"effect":"本回合所有友方单位+1移动力。"},{"type":"技能","name":"密特拉审判","rarity":"SR","attr":"光","cost":5,"effect":"指定一个敌方单位造成2点伤害，并驱散其正面效果。"},{"type":"技能","name":"阿娜希塔祝福","rarity":"SR","attr":"水","cost":4,"effect":"指定一个友方单位+2生命，并获得净化。"},{"type":"技能","name":"迪夫恐吓","rarity":"SR","attr":"暗","cost":4,"effect":"选择一条战线，该战线所有敌方单位本回合畏惧。"},{"type":"技能","name":"不死军征召","rarity":"SSR","attr":"光","cost":6,"effect":"在一条友方战线的相邻空位召唤2个“不死军衍生物”。"},{"type":"技能","name":"万王诏令","rarity":"SSR","attr":"金","cost":5,"effect":"抽两张牌。你每控制一个建筑，额外抽一张，最多额外抽两张。"},{"type":"技能","name":"时间倒流","rarity":"UR","attr":"暗","cost":10,"effect":"将本局被摧毁的一个友方非英雄单位以1生命复生到一条友方战线空位，并使其获得复生。"},{"type":"建筑","name":"波斯波利斯万国门","rarity":"SSR","attr":"金","cost":7,"hp":5,"effect":"入场时抽两张牌。你的回合结束时，若此战线有友方英雄卡，抽一张牌。"},{"type":"建筑","name":"居鲁士陵墓","rarity":"SSR","attr":"土","cost":8,"hp":6,"effect":"你的英雄卡首次被摧毁时，将其以1生命复生在此战线空位；每局限一次。"},{"type":"建筑","name":"苏萨王宫","rarity":"SR","attr":"金","cost":5,"hp":3,"effect":"你的回合结束时，你获得1点RP上限；本建筑最多提供3点RP上限，被破坏时失去这些上限。"},{"type":"建筑","name":"皇家御道驿站","rarity":"SR","attr":"无","cost":4,"hp":2,"effect":"入场时抽一张牌。【驿传】，（主动，消耗2RP）指定一个友方单位本回合+1移动力。每回合限一次。"},{"type":"建筑","name":"坎儿井水渠","rarity":"SR","attr":"水","cost":5,"hp":3,"effect":"你的回合结束时，此战线所有友方单位+1生命。【净水】，（主动，消耗2RP）指定一个友方单位获得净化。每回合限一次。"},{"type":"建筑","name":"阿娜希塔圣水神庙","rarity":"SSR","attr":"水","cost":7,"hp":4,"effect":"你的回合结束时，此战线所有友方单位+1生命。【圣水洗礼】，（主动，消耗3RP）选择一条战线，该战线友方单位获得净化并+2生命。每三回合限一次。"},{"type":"建筑","name":"密特拉太阳祭坛","rarity":"SR","attr":"光","cost":6,"hp":3,"effect":"你的回合开始时，对相邻战线一个随机敌方单位造成1点伤害。【日光压制】，（主动，消耗2RP）指定一个敌方单位本回合削弱。每回合限一次。"},{"type":"建筑","name":"阿胡拉马兹达火坛","rarity":"SSR","attr":"光","cost":8,"hp":5,"effect":"入场时，所有友方单位获得净化。你的回合开始时，指定此战线一个友方单位获得重甲（1），直到你的下个回合开始。"},{"type":"建筑","name":"不朽者营地","rarity":"SR","attr":"光","cost":5,"hp":3,"effect":"【征召不朽者】，（主动，消耗2RP，本建筑耐久-1）在此建筑相邻空位召唤1个“不死军衍生物”。每回合限一次。"},{"type":"建筑","name":"迪夫封印塔","rarity":"SR","attr":"暗","cost":6,"hp":3,"effect":"敌方单位进入相邻战线时，使其本回合畏惧。【封印灼烧】，（主动，消耗3RP）对相邻战线一个敌方单位造成1点伤害并使其削弱。每回合限一次。"}]};
 
 /* ================= 基础常量 ================= */
 const ROWS = ['enemyBase','enemyBack','front','playerBack','playerBase'];   // 行距 = 下标差
@@ -555,7 +555,7 @@ const KW_FLAGS = ['闪击','守卫','伪装','连击','吸血','警戒','游击'
 const SAVE_AUTO='hx_auto', SET_KEY='hx_settings', PROFILE_KEY='hx_profile', SAVES_KEY='hx_saves', SAVE_VER=4;
 const PACK_KEYS = Object.keys(CARD_DATA);
 const RARITY_NAME = {R:'普通', SR:'稀有', SSR:'史诗', UR:'传说'};
-const FACTION_LABEL = {'通用卡包（80张）':'无阵营 · 基础','古罗马文明卡包（80张）':'古罗马','古埃及文明卡包（80张）':'古埃及'};
+const FACTION_LABEL = {'通用卡包（80张）':'无阵营 · 基础','古罗马文明卡包（80张）':'古罗马','古埃及文明卡包（80张）':'古埃及','古亚述文明卡包（80张）':'古亚述','古波斯文明卡包（80张）':'古波斯'};
 const packLabel = pk => FACTION_LABEL[pk] || pk.replace(/（\d+张）/,'');
 function fillPackSelect(sel){
   if(sel.options.length>1) return;
@@ -567,7 +567,9 @@ const SHOP_PACKS = [
   {id:'base',  name:'基础卡包',   price:50,  pool:['通用卡包（80张）'], desc:'无阵营基础卡牌<br>以 R / SR 为主'},
   {id:'rome',  name:'罗马卡包',   price:200, pool:['古罗马文明卡包（80张）'], desc:'罗马军团 · 重甲推进<br>可开出 UR 英雄'},
   {id:'egypt', name:'古埃及卡包', price:200, pool:['古埃及文明卡包（80张）'], desc:'尼罗河管家 · 诡秘术法<br>可开出 UR 英雄'},
-  {id:'univ',  name:'通用卡包',   price:100, pool:PACK_KEYS.slice(), desc:'三家卡牌皆有可能<br>新人启动首选'},
+  {id:'assyria', name:'亚述卡包', price:200, pool:['古亚述文明卡包（80张）'], desc:'铁血帝国 · 攻城掠地<br>可开出 UR 英雄'},
+  {id:'persia',  name:'波斯卡包', price:200, pool:['古波斯文明卡包（80张）'], desc:'万王之王 · 不死军团<br>可开出 UR 英雄'},
+  {id:'univ',  name:'通用卡包',   price:100, pool:PACK_KEYS.slice(), desc:'五家卡牌皆有可能<br>新人启动首选'},
 ];
 const RARITY_ODDS = [['UR',2],['SSR',8],['SR',30],['R',60]];   // 单抽出率；每包保底1张SR及以上
 
@@ -594,6 +596,9 @@ const MECH_GLOSSARY = [
   ['游击','本单位攻击后可移动。'],
   ['重甲（X）','本单位受到攻击时，受到伤害≤1，溢出部分免除，并失去一层重甲。'],
   ['主动技能','带有「（主动，消耗XRP）」字样的卡牌部署后，左键选中该单位，屏幕下方会出现技能按钮，点击并选择目标即可发动；大多数主动技能每回合限一次。建筑不能移动和攻击，但可以正常使用主动技能。'],
+  ['光环与被动','带有「相邻友方单位+1攻击」等字样的效果属于光环：持续生效，来源离场即消失。'],
+  ['防御','每层防御使本单位受到的攻击伤害 -1（最低降至 1 点）。'],
+  ['衍生物','通过「召唤」进入战场的单位（如不死军衍生物、战狮衍生物），无法从卡包开出。'],
   ['属性克制','金→木→土→水→火→金循环克制，光暗互克；克制时攻击效果+2。无属性不参与克制。'],
   ['战线规则','双方各有后场与二线，中央为前线。单位从己方后场部署，可沿直线或斜向移动；一方进入前线后另一方不可进入；任何单位不可进入对方后场。摧毁位于敌方后场中央的核心的牌手获胜。'],
 ];
@@ -626,7 +631,7 @@ function doRegister(){
   accs[n]={pw:hashPw(p), created:new Date().toLocaleString()};
   saveAccounts(accs);
   switchAccount(n);
-  hint('注册成功，欢迎「'+n+'」！记得去我的卡包领取新人福利');
+  hint('注册成功，欢迎「'+n+'」！记得去我的卡组领取新人福利');
 }
 function doLogin(){
   const n=document.getElementById('auth-name').value.trim(), p=document.getElementById('auth-pass').value;
@@ -671,7 +676,7 @@ function leaveRoomSilent(){
 function leaveLobby(){ leaveRoomSilent(); resetOnlineUI(); setOnlineStatus(''); }
 async function createRoom(){
   const errs = deckErrors(activeDeckKeys());
-  if(errs.length){ hint('卡包未就绪：'+errs[0]+'，请先设计卡包'); return; }
+  if(errs.length){ hint('卡组未就绪：'+errs[0]+'，请先设计卡组'); return; }
   setOnlineStatus('正在连接联机网络…');
   try{ await netLoad(); }catch(e){ setOnlineStatus('联机模块加载失败，请检查网络后重试'); return; }
   NET.mode='host'; NET.code=genCode();
@@ -683,7 +688,7 @@ async function createRoom(){
 }
 async function joinRoomByCode(){
   const errs = deckErrors(activeDeckKeys());
-  if(errs.length){ hint('卡包未就绪：'+errs[0]+'，请先设计卡包'); return; }
+  if(errs.length){ hint('卡组未就绪：'+errs[0]+'，请先设计卡组'); return; }
   const code = document.getElementById('code-input').value.trim().toUpperCase();
   if(code.length!==6){ hint('请输入 6 位邀请码'); return; }
   setOnlineStatus('正在连接联机网络…');
@@ -719,7 +724,7 @@ function setupRoom(code){
     const keys=(data.deck||[]).filter(k=>CARD_DB[k]);
     const heroes=keys.filter(k=>CARD_DB[k].type==='英雄');
     let reason=null;
-    if(keys.length<10||keys.length>30) reason='卡包需为 10~30 张';
+    if(keys.length<10||keys.length>30) reason='卡组需为 10~30 张';
     else if(heroes.length<1||heroes.length>3||new Set(heroes).size!==heroes.length) reason='英雄卡需 1~3 张且不可重复';
     if(reason){ try{NET.sendMsg({kind:'reject',reason},id);}catch(e){} return; }
     NET.peer=id;
@@ -769,8 +774,8 @@ function startOnlineGame(guestKeys){
     ver:SAVE_VER, round:1, active:'player', over:false, sel:null, busy:false, tut:null, online:true, log:[],
     board: emptyBoard(),
     sides: {
-      player:{name:'蓝方', pack:'蓝方卡包', deck:playerDeck, hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:false},
-      enemy:{name:'红方', pack:'红方卡包', deck:enemyDeck, hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:false}
+      player:{name:'蓝方', pack:'蓝方卡组', deck:playerDeck, hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:false},
+      enemy:{name:'红方', pack:'红方卡组', deck:enemyDeck, hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:false}
     }
   };
   showScreen(null);
@@ -819,6 +824,8 @@ const restrain = (a,d)=> a!=='无' && d!=='无' && (ATTR_BEATS[a]===d || (a==='�
 
 /* ================= 主动技能解析 ================= */
 function abilityTarget(text){
+  if(/指定一个友方建筑/.test(text)) return 'friendlyBuilding';
+  if(/对相邻战线一个敌方单位/.test(text)) return 'enemyAdjacentRow';
   if(/指定一个相邻友方(部队|单位)/.test(text)) return 'friendlyAdjacent';
   if(/指定[一个名]*(?:敌方|对手)/.test(text)) return 'enemy';
   if(/指定[一个名]*友方/.test(text)) return 'friendly';
@@ -828,24 +835,98 @@ function abilityTarget(text){
 function parseActives(effect){
   const out=[];
   if(!effect) return out;
-  const re=/【([^】]+)】[：:，,]?\s*[（(]?主动[，,：:]\s*消耗(\d+)\s*RP[)）]?[：:，,]?([^【]*)/g;
+  const re=/【([^】]+)】[：:，,]?\s*[（(]?主动[，,：:]\s*消耗(\d+)\s*RP(?:[，,]\s*本建筑耐久-(\d+))?[)）]?[：:，,]?([^【]*)/g;
   let m;
   while((m=re.exec(effect))){
-    let text=(m[3]||'').trim();
+    let text=(m[4]||'').trim();
     let limit=null;
     if(/每三回合/.test(text)) limit='three';
     else if(/每局/.test(text)) limit='game';
     else if(/每回合限/.test(text)) limit='turn';
     text=text.replace(/每(回合|局|三回合)限[^。.]*[。.]?/g,'').replace(/[\/\s]+$/,'').trim();
     if(!text) continue;
-    out.push({name:m[1], cost:+m[2], text, limit, target:abilityTarget(text)});
+    out.push({name:m[1], cost:+m[2], selfHp:m[3]?+m[3]:0, text, limit, target:abilityTarget(text)});
   }
   return out;
 }
 
+/* ================= 光环（持续被动）与费用修正 ================= */
+const AURAS=[
+  {re:/相邻友方单位\+1生命/, adj:1, eff:a=>a.hp++},
+  {re:/相邻友方单位\+1攻击/, adj:1, eff:a=>a.atk++},
+  {re:/同一战线友方单位\+1攻击/, row:1, eff:a=>a.atk++},
+  {re:/此战线上的友方单位获得\+1防御/, row:1, eff:a=>a.def++},
+  {re:/此战线所有水属性单位的?\+1生命/, row:1, cond:u=>u.attr==='水', eff:a=>a.hp++},
+  {re:/相邻友方骑射手[^，。]*\+1攻击/, adj:1, cond:u=>u.name.includes('骑射'), eff:a=>a.atk++},
+  {re:/相邻友方骑兵单位\+1攻击/, adj:1, cond:u=>u.name.includes('骑')&&!u.name.includes('骑射'), eff:a=>a.atk++},
+  {re:/相邻友方远程单位\+1攻击/, adj:1, cond:u=>u.range==='远', eff:a=>a.atk++},
+  {re:/相邻友方战车单位\+1攻击/, adj:1, cond:u=>u.name.includes('战车'), eff:a=>a.atk++},
+  {re:/相邻友方[“"]不死军[”"]单位\+1攻击/, adj:1, cond:u=>u.name.includes('不死军'), eff:a=>a.atk++},
+  {re:/相邻(?:友方)?英雄卡\+1生命/, adj:1, cond:u=>u.type==='英雄', eff:a=>a.hp++},
+  {re:/相邻友方单位获得守卫/, adj:1, eff:a=>{a.guard=true;}},
+  {re:/你所有罗马军团部队的?\+1移动力/, all:1, cond:u=>u.type==='部队'&&(u.card.pack||'').includes('古罗马'), eff:a=>a.move++},
+];
+function computeAura(u,row,col){
+  const res={atk:0,hp:0,move:0,def:0,guard:false};
+  for(const r of ROWS) for(let i=0;i<COLS;i++){
+    const p=S.board[r][i];
+    if(!p||p===u||p.owner!==u.owner) continue;
+    const texts=[p.card.effect||''];
+    (p.buffs||[]).forEach(b=>{ if(b.effect) texts.push(b.effect); });
+    for(const au of AURAS){
+      if(!texts.some(t=>au.re.test(t))) continue;
+      if(au.adj && !(r===row&&Math.abs(i-col)===1)) continue;
+      if(au.row && r!==row) continue;
+      if(au.cond && !au.cond(u)) continue;
+      au.eff(res);
+    }
+  }
+  return res;
+}
+function recomputeAuras(){
+  if(!S||!S.board) return;
+  const dead=[];
+  for(const row of ROWS) for(let i=0;i<COLS;i++){
+    const u=S.board[row][i]; if(!u) continue;
+    const a=computeAura(u,row,i);
+    const p=u._aura||{atk:0,hp:0,move:0,def:0,guard:false};
+    u.atk+=a.atk-p.atk; u.hp+=a.hp-p.hp; u.maxHp+=a.hp-p.hp;
+    u.move=Math.max(0,u.move+a.move-p.move); u.ap=Math.min(u.ap,u.move);
+    u._aura=a;
+    if(u.hp<=0) dead.push([row,i]);
+  }
+  dead.forEach(([r,i])=>killUnit(r,i));
+}
+function effCost(side,card){
+  // 费用修正：金字塔群折扣(_costMod) + 阿托莎建筑折扣
+  let c=(card.cost||0)+(card._costMod||0);
+  if(card.type==='建筑' && S && S.board){
+    for(const r of ROWS) for(const u of S.board[r])
+      if(u && u.owner===side && /部署建筑卡时少消耗1RP/.test(u.card.effect||'')) return Math.max(1,c-1);
+  }
+  return Math.max(0,c);
+}
+function hasText(u, re){
+  if(re.test(u.card.effect||'')) return true;
+  return (u.buffs||[]).some(b=>b.effect && re.test(b.effect));
+}
+function matchText(u, re){
+  const m=(u.card.effect||'').match(re); if(m) return m;
+  for(const b of (u.buffs||[])){ const m2=(b.effect||'').match(re); if(m2) return m2; }
+  return null;
+}
+function grantTempKw(u, kwName, untilSide){
+  if(!u.kw[kwName]){ u.kw[kwName]=true; (u.kwTemp=u.kwTemp||[]).push({kw:kwName, until:untilSide}); }
+}
+function markActed(u){
+  u.acted=true;
+  if(u._stealthOnce){ delete u.kw.伪装; u._stealthOnce=false; u.stealthed=false; }
+}
+const adjRows = row => { const i=ROWS.indexOf(row); return [ROWS[i-1],ROWS[i+1]].filter(Boolean); };
+
 /* ================= 初始化 ================= */
 function buildAIDeck(packKey){
-  const cards = CARD_DATA[packKey];
+  const cards = CARD_DATA[packKey].filter(c=>!c.summonOnly);
   const heroes = cards.filter(c=>c.type==='英雄');
   const others = cards.filter(c=>c.type!=='英雄');
   shuffle(heroes); shuffle(others);
@@ -856,21 +937,21 @@ function emptyBoard(){ const b={}; ROWS.forEach(r=>b[r]=Array(COLS).fill(null));
 
 function newGame(){
   const errs = deckErrors(activeDeckKeys());
-  if(errs.length){ hint('卡包未就绪：'+errs[0]+'，请先设计卡包'); return; }
+  if(errs.length){ hint('卡组未就绪：'+errs[0]+'，请先设计卡组'); return; }
   const aiPack = PACK_KEYS[Math.floor(Math.random()*PACK_KEYS.length)];
   const playerDeck = shuffle(PROFILE.deck.map(k=>({...CARD_DB[k]})));
   S = {
     ver:SAVE_VER, round:1, active:'player', over:false, sel:null, busy:false, tut:null, log:[],
     board: emptyBoard(),
     sides: {
-      player:{name:'我方', pack:'我的卡包', deck:playerDeck, hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:false},
+      player:{name:'我方', pack:'我的卡组', deck:playerDeck, hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:false},
       enemy:{name:'敌方', pack:aiPack, deck:buildAIDeck(aiPack), hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:false}
     }
   };
   showScreen(null);
   document.getElementById('game').style.display='grid';
   document.getElementById('log').innerHTML='';
-  log('系统','对局开始：我方「我的卡包」('+playerDeck.length+'张) vs 敌方「'+aiPack+'」','sys');
+  log('系统','对局开始：我方「我的卡组」('+playerDeck.length+'张) vs 敌方「'+aiPack+'」','sys');
   rollInitiative();
 }
 
@@ -907,9 +988,55 @@ function startTurn(side){
   for(const row of ROWS) for(const u of S.board[row]) if(u && u.owner===side){
     u.ap = u.move; u.hasAttacked = false; u._combo2 = false;
     if(u._actState) for(const k in u._actState) u._actState[k].turn=false;   // 主动技能的「每回合限一次」重置
+    // 动员：其回合开始时获得 +1+1（受伤后失效）
+    if(u.kw.动员 && !u._mobOn && !u._mobLost){ u._mobOn=true; u.atk++; u.hp++; u.maxHp++; log('效果',`【${u.name}】动员：+1+1`,'sys'); }
     // 伪装：上回合未行动则本回合不可被攻击
     u.stealthed = !!u.kw.伪装 && !u.acted;
     u.acted = false;
+  }
+  // 回合开始触发
+  for(const row of ROWS) for(let i=0;i<COLS;i++){
+    const u=S.board[row][i]; if(!u||u.owner!==side) continue;
+    const eff=u.card.effect||'';
+    if(/你的回合开始时，?若本建筑相邻战线无敌方单位，?你回复1点核心耐久/.test(eff)){
+      const hasFoe=adjRows(row).some(ar=>S.board[ar].some(x=>x&&x.owner!==side));
+      if(!hasFoe){ sd.core=Math.min(CORE_HP,sd.core+1); log('效果',`【${u.name}】秘密祭礼：核心耐久 +1`,'heal'); }
+    }
+    if(/你的回合开始时，?从卡包中生成一张罗马装备牌至手牌/.test(eff)){
+      const pool=CARD_DATA['古罗马文明卡包（80张）'].filter(c=>c.type==='装备'&&!c.summonOnly);
+      if(pool.length){ const g={...pool[Math.floor(Math.random()*pool.length)],pack:'古罗马文明卡包（80张）'}; sd.hand.push(g); log('效果',`【${u.name}】装备补给：获得【${g.name}】`,'sys'); }
+    }
+    if(/你的回合开始时，?为友方随机一名非暗属性单位施加重甲/.test(eff)){
+      const cand=[]; for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x.attr!=='暗') cand.push(x);
+      if(cand.length){ const x=cand[Math.floor(Math.random()*cand.length)]; x.kw.armor=(x.kw.armor||0)+1; log('效果',`【${u.name}】神王赐福：【${x.name}】获得重甲(1)`,'sys'); }
+    }
+    if(/你的回合开始时，?对相邻战线一个随机敌方单位造成1点伤害/.test(eff)){
+      const cand=[];
+      adjRows(row).forEach(ar=>S.board[ar].forEach((x,ci)=>{ if(x&&x.owner!==side) cand.push([ar,ci,x]); }));
+      if(cand.length){
+        const [ar,ci,x]=cand[Math.floor(Math.random()*cand.length)];
+        x.hp-=1; log('效果',`【${u.name}】：对【${x.name}】造成 1 点伤害`,'dmg');
+        if(/并使其削弱/.test(eff)&&x.hp>0) applyDebuff(x,'atk',-1,side,u.name);
+        if(x.hp<=0) killUnit(ar,ci);
+      }
+    }
+    if(/你的回合开始时，?若你控制建筑，?你获得1RP/.test(eff)){
+      const hasB=ROWS.some(r=>S.board[r].some(x=>x&&x.owner===side&&x.type==='建筑'));
+      if(hasB){ sd.rp++; log('效果',`【${u.name}】贤君：获得 1 RP`,'sys'); }
+    }
+    if(/你的回合开始时，?指定此战线一个友方单位获得重甲/.test(eff)){
+      let tgt=null;
+      for(const x of S.board[row]) if(x&&x.owner===side&&x!==u){ tgt=x; break; }
+      tgt=tgt||u;
+      tgt.kw.armor=(tgt.kw.armor||0)+1;
+      (tgt.armorTemp=tgt.armorTemp||[]).push({until:side});
+      log('效果',`【${u.name}】：【${tgt.name}】获得临时重甲(1)`,'sys');
+    }
+    if(/核心耐久<10时，?本单位获得\+2攻击和连击/.test(eff) && sd.core<10 && !u._caesarOn){
+      u._caesarOn=true; u.atk+=2;
+      if(!u.kw.连击) u.kw.连击=true;
+      log('效果',`【${u.name}】跨越卢比孔：获得 +2 攻击与连击！`,'sys');
+    }
   }
   phaseTip((side==='player'?'我方':'敌方')+'回合 · 第'+S.round+'轮');
   log('回合',`—— ${S.sides[side].name}回合（RP ${sd.rp}/${sd.rpCap}）——`,'t');
@@ -925,12 +1052,71 @@ function endTurn(){
   for(const row of ROWS) for(let i=0;i<COLS;i++){
     const u = S.board[row][i];
     if(u && u.tempMods.length){
-      u.tempMods.forEach(m=>{ u.atk-=m.atk; u.hp-=m.hp; u.maxHp-=m.hp; u.dist-=m.dist; });
+      u.tempMods.forEach(m=>{ u.atk-=m.atk; u.hp-=m.hp; u.maxHp-=m.hp; u.dist-=m.dist; u.move-=(m.move||0); });
       u.tempMods = [];
       if(u.hp<=0){ killUnit(row,i); continue; }
     }
     if(u && u.tempKws && u.tempKws.length){ u.tempKws.forEach(k=>delete u.kw[k]); u.tempKws=[]; }
     if(u) u.tempBleed=false;
+  }
+  // 回合结束触发
+  {
+    const sd=S.sides[side];
+    const healPick=list=>{
+      list=list.filter(Boolean);
+      if(!list.length) return;
+      list.sort((a,b)=>a.hp-b.hp);
+      const x=list[0]; x.hp++; x.maxHp++; x.buffs.push({atk:0,hp:1,dist:0,move:0,kw:[]});
+      log('效果',`【${x.name}】+1 生命`,'heal');
+    };
+    for(const row of ROWS) for(let i=0;i<COLS;i++){
+      const u=S.board[row][i]; if(!u||u.owner!==side) continue;
+      const eff=u.card.effect||'';
+      if(!/你的回合结束时|你的结束阶段/.test(eff)) continue;
+      if(/所在战线所有友方单位获得净化/.test(eff)) S.board[row].forEach(x=>{ if(x&&x.owner===side) cleanse(x,u.name); });
+      const rowHeal=eff.match(/此战线所有(?:(\S)属性)?(?:友方)?单位\+1生命/);
+      if(rowHeal) S.board[row].forEach(x=>{ if(x&&x.owner===side&&(!rowHeal[1]||x.attr===rowHeal[1])){ x.hp++; x.maxHp++; x.buffs.push({atk:0,hp:1,dist:0,move:0,kw:[]}); } });
+      if(/指定此战线的一个友方单位\+1生命/.test(eff)) healPick(S.board[row].filter(x=>x&&x.owner===side));
+      else if(/相邻一个友方单位\+1生命/.test(eff)) healPick([-1,1].map(dc=>S.board[row][i+dc]).filter(x=>x&&x.owner===side));
+      else if(/此战线一个友方单位\+1生命/.test(eff)) healPick(S.board[row].filter(x=>x&&x.owner===side));
+      else if(/随机一个友方单位\+1生命/.test(eff)){
+        const all=[]; for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side) all.push(x);
+        healPick(all.length?[all[Math.floor(Math.random()*all.length)]]:[]);
+      }
+      else if(/指定一个友方单位\+1生命/.test(eff)){
+        const all=[]; for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x!==u) all.push(x);
+        healPick(all);
+      }
+      if(/抽一张技能[牌卡]/.test(eff)) drawFiltered(side,c=>c.type==='技能',`【${u.name}】`);
+      if(/若你控制建筑，?抽一张牌/.test(eff)){
+        const hasB=ROWS.some(r=>S.board[r].some(x=>x&&x.owner===side&&x.type==='建筑'));
+        if(hasB){ drawCards(side,1); log('效果',`【${u.name}】行政改革：抽一张牌`,'sys'); }
+      }
+      if(/若此战线有友方英雄卡，?抽一张牌/.test(eff)){
+        if(S.board[row].some(x=>x&&x.owner===side&&x.type==='英雄')){ drawCards(side,1); log('效果',`【${u.name}】：抽一张牌`,'sys'); }
+      }
+      if(/指定一张手牌-1RP部署消耗/.test(eff)){
+        const h=sd.hand.find(c=>!c._costMod);
+        if(h){ h._costMod=-1; log('效果',`【${u.name}】永恒陵墓：【${h.name}】部署消耗 -1 RP`,'sys'); }
+      }
+      if(/你获得1点RP上限/.test(eff)){
+        if(/最多提供3点RP上限/.test(eff)){
+          if((u.grantedRp||0)<3){ sd.rpCap=Math.min(RP_MAX,sd.rpCap+1); u.grantedRp=(u.grantedRp||0)+1; log('效果',`【${u.name}】：RP 上限 +1`,'sys'); }
+        } else if(/获得2点RP上限后摧毁/.test(eff)){
+          sd.rpCap=Math.min(RP_MAX,sd.rpCap+1); u.grantedRp=(u.grantedRp||0)+1;
+          log('效果',`【${u.name}】：RP 上限 +1`,'sys');
+          if(u.grantedRp>=2){ log('效果',`【${u.name}】塌毁了`,'dmg'); killUnit(row,i); continue; }
+        }
+      }
+      if(/若本回合你的核心未受到伤害/.test(eff) && sd._coreHurtRound!==S.round){
+        const all=[]; for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side) all.push(x);
+        healPick(all.length?[all[Math.floor(Math.random()*all.length)]]:[]);
+      }
+      if(/50%几率使一个随机敌方单位本回合无法攻击/.test(eff) && Math.random()<0.5){
+        const foes=[]; for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner!==side) foes.push(x);
+        if(foes.length){ const x=foes[Math.floor(Math.random()*foes.length)]; applyDebuff(x,'atk','zero',side,u.name+'·夜啼'); }
+      }
+    }
   }
   if(side==='enemy') S.round++;
   log('系统',`${S.sides[side].name}回合结束`,'sys');
@@ -962,22 +1148,94 @@ function mkUnit(card, owner){
   if(u.type==='建筑') u.ap = 0;
   return u;
 }
-function deploy(side, card, col){
+function findCardAny(name){
+  const k=Object.keys(CARD_DB).find(k=>k.endsWith('::'+name));
+  return k?CARD_DB[k]:null;
+}
+function tokenCard(baseName, effText){
+  const real=findCardAny(baseName+'衍生物')||findCardAny(baseName);
+  if(real) return {...real};
+  const tk={type:'部队',name:baseName+'衍生物',attr:'无',range:'近',cost:0,atk:1,hp:1,move:1,dist:1,effect:''};
+  const nums=(effText||'').match(/[（(](\d+)\/(\d+)\/(\d+)\/(\d+)\/(\d+)[，,](\S+?)[，,](\S+?)[)）]/);
+  if(nums){ tk.cost=+nums[1]; tk.atk=+nums[2]; tk.hp=+nums[3]; tk.move=+nums[4]; tk.dist=Math.min(2,+nums[5]); tk.attr=nums[6]||'无'; tk.effect=(nums[7]||'').replace('无词条',''); }
+  return tk;
+}
+function deploy(side, card, col, row){
   const sd = S.sides[side];
-  const row = DEPLOY_ROW[side];
+  row = row || DEPLOY_ROW[side];
   if(col===CORE_COL || S.board[row][col]) return false;   // 后场中央是核心
-  if(sd.rp < card.cost) return false;
-  sd.rp -= card.cost;
+  const cost = effCost(side, card);
+  if(sd.rp < cost) return false;
+  sd.rp -= cost;
   sd.hand.splice(sd.hand.indexOf(card),1);
   const u = mkUnit(card, side);
   S.board[row][col] = u;
   log(sd.name,`部署【${card.name}】(${card.atk??'-'}/${card.hp}) 至${rowName(row)}${col+1}号位`);
-  if(/入场时，抽一张牌/.test(card.effect||'')){ drawCards(side,1); log('效果','【'+card.name+'】入场：抽一张牌','sys'); }
+  deployTriggers(side, u, row, col);
   // 预警：敌方部署时抽牌
   const foe = side==='player'?'enemy':'player';
   for(const r of ROWS) for(const x of S.board[r]) if(x && x.owner===foe && x.kw.预警){ drawCards(foe,1); log('效果','【'+x.name+'】预警：抽一张牌','sys'); }
   if(S.tut && side==='player') tutNotify('deploy', u);
   return true;
+}
+/* 入场触发 */
+function deployTriggers(side, u, row, col){
+  const eff=u.card.effect||'';
+  const sd=S.sides[side], foe=side==='player'?'enemy':'player';
+  const L=m=>log('效果',m,'sys');
+  if(/双方玩家各抽一张牌/.test(eff)){ drawCards(side,1); drawCards(foe,1); L(`【${u.name}】入场：双方各抽一张牌`); }
+  if(/入场时[，,]?抽两张牌/.test(eff)){ drawCards(side,2); L(`【${u.name}】入场：抽两张牌`); }
+  else if(/入场时[，,]?抽一张牌/.test(eff)){ drawCards(side,1); L(`【${u.name}】入场：抽一张牌`); }
+  if(/入场时[，,]?抽一张装备[卡牌]/.test(eff)) drawFiltered(side,c=>c.type==='装备',`【${u.name}】入场`);
+  const rpM=eff.match(/入场时[，,]?(?:获得)?(\d+)点RP上限/)||eff.match(/入场时[，,]?RP上限\+(\d+)/);
+  if(rpM){ sd.rpCap=Math.min(RP_MAX,sd.rpCap+(+rpM[1])); u.grantedRp=(u.grantedRp||0)+(+rpM[1]); L(`【${u.name}】入场：RP 上限 +${rpM[1]}`); }
+  if(/RP上限\+\d+并抽一张牌/.test(eff)) drawCards(side,1);
+  // 召唤衍生物 / 指定单位
+  let sm=eff.match(/召唤(\d+)个?[“"](\S+?)[”"]衍生物/);
+  if(sm) for(let k=0;k<+sm[1];k++) spawnAdjacent(side,row,col,tokenCard(sm[2],eff));
+  sm=eff.match(/召唤(\d+)个?(\S+?)在本单位相邻站位/);
+  if(sm){ const c=findCardAny(sm[2]); if(c) for(let k=0;k<+sm[1];k++) spawnAdjacent(side,row,col,{...c}); }
+  // 群体净化 / 增益 / 侦察
+  if(/入场时[，,]?所有友方单位获得净化/.test(eff)){ for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x!==u) cleanse(x,u.name); }
+  if(/入场时[，,]?所有友方单位\+1生命/.test(eff)){
+    for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x!==u){ x.hp++; x.maxHp++; x.buffs.push({atk:0,hp:1,dist:0,move:0,kw:[]}); }
+    L(`【${u.name}】入场：所有友方单位 +1 生命`);
+  }
+  if(/入场时[，,]?查看对手一张手牌/.test(eff)){
+    const fh=S.sides[foe].hand;
+    if(fh.length) L(`【${u.name}】入场：窥见对手手牌【${fh[Math.floor(Math.random()*fh.length)].name}】`);
+  }
+  if(/入场时[，,]?指定一个敌方单位本回合畏惧/.test(eff)){
+    let best=null,bv=-1;
+    for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===foe&&x.atk>bv){ bv=x.atk; best=x; }
+    if(best) applyDebuff(best,'atk','zero',side,u.name+'·恐吓');
+  }
+  if(/入场时[，,]?查看牌库顶三张牌/.test(eff)){
+    const top=sd.deck.splice(-3);
+    let pick;
+    if(/一张技能卡/.test(eff)) pick=top.find(c=>c.type==='技能')||top[0];
+    else pick=top[0];
+    if(pick){ sd.hand.push(pick); top.splice(top.indexOf(pick),1); L(`【${u.name}】入场：【${pick.name}】加入手牌`); }
+    if(/洗回牌库/.test(eff)){ top.forEach(c=>sd.deck.unshift(c)); shuffle(sd.deck); }
+    else top.forEach(c=>sd.discard.push(c));
+  }
+  const bm=eff.match(/入场时[，,]?指定一个友方建筑\+(\d+)耐久/);
+  if(bm){
+    let bld=null;
+    for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x.type==='建筑'&&x!==u){ bld=x; break; }
+    if(bld){ bld.hp+=+bm[1]; bld.maxHp+=+bm[1]; L(`【${u.name}】入场：【${bld.name}】+${bm[1]} 耐久`); }
+  }
+  if(/入场时[，,]?指定此战线一个友方单位获得守卫/.test(eff)){
+    let tgt=null;
+    for(const x of S.board[row]) if(x&&x.owner===side&&x!==u){ tgt=x; break; }
+    if(tgt){ grantTempKw(tgt,'守卫',side); L(`【${u.name}】入场：【${tgt.name}】获得守卫（到你的下回合开始）`); }
+    if(/此战线友方英雄卡\+1生命/.test(eff)) S.board[row].forEach(x=>{ if(x&&x.owner===side&&x.type==='英雄'){ x.hp++; x.maxHp++; x.buffs.push({atk:0,hp:1,dist:0,move:0,kw:[]}); } });
+  }
+  if(/入场时，?无RP消耗发动指定一个友方建筑主动词条/.test(eff)){
+    let bld=null;
+    for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x.type==='建筑'&&(x.actives||[]).length){ bld=x; break; }
+    if(bld){ const ab=bld.actives[0]; L(`【${u.name}】勘测：免费发动【${bld.name}】的【${ab.name}】`); applyAbilityEffect(side,bld,ab,null,null); }
+  }
 }
 function moveUnit(fromRow, fromCol, toRow, toCol){
   const u = S.board[fromRow][fromCol];
@@ -986,12 +1244,33 @@ function moveUnit(fromRow, fromCol, toRow, toCol){
   if(toRow==='front' && S.board.front.some(x=>x && x.owner!==u.owner)) return false;  // 前线独占
   S.board[toRow][toCol] = u; S.board[fromRow][fromCol] = null;
   u.ap--; u.acted = true; u.justDeployed = false; u.stealthed = false;
+  if(u._stealthOnce){ delete u.kw.伪装; u._stealthOnce=false; }
   log('',`${u.name} 移动至${rowName(toRow)}${toCol+1}号位`);
   // 警戒：相邻战线有敌方单位进入时抽牌
   const foe = u.owner==='player'?'enemy':'player';
   const dr = ROWS.indexOf(toRow);
   for(const row of ROWS) for(const x of S.board[row])
     if(x && x.owner===foe && x.kw.警戒 && Math.abs(ROWS.indexOf(row)-dr)===1){ drawCards(foe,1); log('效果','【'+x.name+'】警戒：抽一张牌','sys'); }
+  // 进入触发：捕兽陷阱（同战线建筑）
+  for(let i=0;i<COLS;i++){
+    const x=S.board[toRow][i];
+    if(x && x.owner===foe && x.type==='建筑' && /当一个敌方单位移动至此战线时/.test(x.card.effect||'')){
+      log('效果',`【${x.name}】机关触发：对【${u.name}】造成 2 点伤害`,'dmg');
+      u.hp-=2;
+      killUnit(toRow,i);
+      if(u.hp<=0){ killUnit(toRow,toCol); return true; }
+    }
+  }
+  // 相邻战线敌方建筑：入场减速 / 烽火台抽牌 / 畏惧
+  for(const ar of adjRows(toRow)) for(const b of S.board[ar]){
+    if(!b || b.owner!==foe || b.type!=='建筑') continue;
+    const be=b.card.effect||'';
+    if(/相邻战线.{0,6}敌方单位(?:进入|入场).{0,10}消耗1点移动力/.test(be) && u.ap>0){
+      u.ap--; log('效果',`【${b.name}】：【${u.name}】进入相邻战线，额外消耗 1 点移动力`,'sys');
+    }
+    if(/敌方单位进入时，?你抽一张卡/.test(be)){ drawCards(foe,1); log('效果',`【${b.name}】烽火台：抽一张牌`,'sys'); }
+    if(/使其本回合畏惧/.test(be)) applyDebuff(u,'atk','zero',foe,b.name);
+  }
   if(S.tut && u.owner==='player') tutNotify('move', u);
   return true;
 }
@@ -1027,21 +1306,32 @@ function applyDebuff(u, kind, amount, untilSide, srcName){
 }
 function expireDebuffs(side){
   for(const row of ROWS) for(const u of S.board[row]){
-    if(!u || !u.debuffs || !u.debuffs.length) continue;
-    const stay=[];
-    for(const d of u.debuffs){
-      if(d.until===side){ if(d.move) u.move+=d.move; if(d.atk) u.atk+=d.atk; }
-      else stay.push(d);
+    if(!u) continue;
+    if(u.debuffs && u.debuffs.length){
+      const stay=[];
+      for(const d of u.debuffs){
+        if(d.until===side){ if(d.move) u.move+=d.move; if(d.atk) u.atk+=d.atk; }
+        else stay.push(d);
+      }
+      if(stay.length!==u.debuffs.length) log('效果',`【${u.name}】的属性削弱已复原`,'sys');
+      u.debuffs=stay;
     }
-    if(stay.length!==u.debuffs.length) log('效果',`【${u.name}】的属性削弱已复原`,'sys');
-    u.debuffs=stay;
+    if(u.kwTemp && u.kwTemp.length){
+      u.kwTemp=u.kwTemp.filter(x=>{ if(x.until===side){ delete u.kw[x.kw]; return false; } return true; });
+    }
+    if(u.armorTemp && u.armorTemp.length){
+      u.armorTemp=u.armorTemp.filter(x=>{
+        if(x.until===side){ u.kw.armor=(u.kw.armor||0)-1; if(u.kw.armor<=0) delete u.kw.armor; return false; }
+        return true;
+      });
+    }
   }
 }
 function tickBurn(side){
   for(const row of ROWS) for(let i=0;i<COLS;i++){
     const u=S.board[row][i];
     if(u && u.owner===side && u.burn>0){
-      u.hp-=1; u.burn--;
+      u.hp-=1; mobBreak(u); u.burn--;
       log('效果',`【${u.name}】燃烧：受到 1 点伤害${u.burn>0?`（还会持续 ${u.burn} 回合）`:'（燃烧结束）'}`,'dmg');
       if(u.hp<=0) killUnit(row,i);
     }
@@ -1072,6 +1362,10 @@ function cleanse(u, srcName){
   if(n) log('效果',`【${srcName}】净化：移除【${u.name}】的负面效果`,'sys');
 }
 
+function mobBreak(u){
+  if(u.kw && u.kw.动员 && u._mobOn){ u._mobOn=false; u._mobLost=true; u.atk-=1; u.hp-=1; u.maxHp-=1; log('效果',`【${u.name}】动员加成失效`,'sys'); }
+}
+
 /* ================= 主动技能 ================= */
 function canUseAbility(u, ab){
   u._actState = u._actState||{};
@@ -1095,6 +1389,10 @@ function abilityTargets(u, row, col, ab){
       const x=S.board[row][c];
       if(x && x.owner===u.owner && x.type==='部队') out.push([row,c]);
     }
+  } else if(ab.target==='friendlyBuilding'){
+    for(const r of ROWS) S.board[r].forEach((x,i)=>{ if(x && x.owner===u.owner && x.type==='建筑' && x!==u) out.push([r,i]); });
+  } else if(ab.target==='enemyAdjacentRow'){
+    for(const ar of adjRows(row)) S.board[ar].forEach((x,i)=>{ if(x && x.owner!==u.owner) out.push([ar,i]); });
   } else if(ab.target==='row'){
     for(const r of ROWS) for(let i=0;i<COLS;i++){
       if((r==='enemyBase'||r==='playerBase') && i===CORE_COL) continue;
@@ -1132,6 +1430,11 @@ function executeAbility(side, fr, fc, ab, tRow, tCol){
   if(ab.limit==='turn') st.turn=true;
   if(ab.limit==='game') st.game=true;
   if(ab.limit==='three') st.lastRound=S.round;
+  if(ab.selfHp){   // 本建筑耐久-N 的额外代价（战车圣坊/不朽者营地）
+    u.hp-=ab.selfHp;
+    log('效果',`【${u.name}】耐久 -${ab.selfHp}`,'dmg');
+    if(u.hp<=0){ killUnit(fr,fc); return true; }   // 建筑自身损毁，效果不再发动
+  }
   applyAbilityEffect(side, u, ab, tRow, tCol);
   checkGameOver();
   return true;
@@ -1152,6 +1455,7 @@ function applyAbilityEffect(side, u, ab, tRow, tCol){
         let dmg=+dm[1];
         if(x.kw.armor>0){ dmg=Math.min(dmg,1); x.kw.armor--; if(x.kw.armor<=0) delete x.kw.armor; }
         x.hp-=dmg;
+        mobBreak(x);
         log('技能',`【${ab.name}】对【${x.name}】造成 ${dmg} 点伤害`,'dmg');
         if(x.hp<=0) killUnit(tRow,i);
       });
@@ -1161,6 +1465,18 @@ function applyAbilityEffect(side, u, ab, tRow, tCol){
       let n=0;
       S.board[tRow].forEach(x=>{ if(x && x.owner!==side){ applyDebuff(x,'atk','zero',side,ab.name); n++; } });
       log('技能',`【${ab.name}】：${rowName(tRow)}的 ${n} 个敌方单位本回合无法攻击`,'sys');
+      return;
+    }
+    const clR=t.match(/该战线友方单位获得净化并\+(\d+)生命/);
+    if(clR){
+      let n=0;
+      S.board[tRow].forEach(x=>{ if(x&&x.owner===side){ cleanse(x,ab.name); x.hp+=+clR[1]; x.maxHp+=+clR[1]; x.buffs.push({atk:0,hp:+clR[1],dist:0,move:0,kw:[]}); n++; } });
+      log('技能',`【${ab.name}】：${rowName(tRow)}的 ${n} 个友方单位获得净化并 +${clR[1]} 生命`,'heal');
+      return;
+    }
+    if(/该战线敌方单位本回合-1移动力/.test(t)){
+      S.board[tRow].forEach(x=>{ if(x&&x.owner!==side) applyDebuff(x,'move',-1,side,ab.name); });
+      log('技能',`【${ab.name}】：${rowName(tRow)}敌方单位本回合 -1 移动力`,'sys');
       return;
     }
     const buffM=t.match(/本回合\+(\d+)攻击/);
@@ -1178,13 +1494,57 @@ function applyAbilityEffect(side, u, ab, tRow, tCol){
   }
   // —— 单体目标类 ——
   if(tgt){
+    const hpB=t.match(/\+(\d+)耐久/);
+    if(hpB){
+      tgt.hp+=+hpB[1]; tgt.maxHp+=+hpB[1]; tgt.buffs.push({atk:0,hp:+hpB[1],dist:0,move:0,kw:[]});
+      log('技能',`【${ab.name}】：【${tgt.name}】+${hpB[1]} 耐久`,'heal');
+      return;
+    }
+    const clH=t.match(/获得净化并\+(\d+)生命/);
+    if(clH){
+      cleanse(tgt,ab.name);
+      tgt.hp+=+clH[1]; tgt.maxHp+=+clH[1]; tgt.buffs.push({atk:0,hp:+clH[1],dist:0,move:0,kw:[]});
+      log('技能',`【${ab.name}】：【${tgt.name}】获得净化并 +${clH[1]} 生命`,'heal');
+      return;
+    }
+    if(/获得净化/.test(t)){ cleanse(tgt,ab.name); return; }
+    if(/本回合畏惧/.test(t)){ applyDebuff(tgt,'atk','zero',side,ab.name); return; }
+    if(/本回合削弱/.test(t)){ applyDebuff(tgt,'atk',-1,side,ab.name); return; }
+    if(/驱散一个敌方单位的全部正面效果/.test(t)){
+      dispelBuffs(tgt,ab.name);
+      const dm2=t.match(/本回合-(\d+)攻击/);
+      if(dm2) applyDebuff(tgt,'atk',-(+dm2[1]),side,ab.name);
+      return;
+    }
+    if(/获得伪装，直到其下次行动/.test(t)){
+      if(!tgt.kw.伪装){ tgt.kw.伪装=true; tgt._stealthOnce=true; }
+      tgt.stealthed=true;
+      log('技能',`【${ab.name}】：【${tgt.name}】获得伪装（直到其下次行动）`,'sys');
+      return;
+    }
+    if(/获得对手一个指定非英雄衍生物部队的控制权/.test(t)){
+      if(tgt.type==='英雄'){ log('技能',`【${ab.name}】不能控制英雄卡`,'sys'); return; }
+      for(const r of ROWS) for(const x of S.board[r]) if(x && x._controller===u){ x.owner=x._origOwner||'enemy'; x._controller=null; }
+      tgt._origOwner=tgt.owner; tgt._controller=u; tgt.owner=side; tgt.stealthed=false;
+      log('技能',`【${ab.name}】：【${u.name}】控制了【${tgt.name}】！`,'sys');
+      return;
+    }
+    const sacM=t.match(/消灭一个友方非英雄单位，然后对敌方核心造成(\d+)点伤害/);
+    if(sacM){
+      if(tgt.type==='英雄'){ log('技能',`【${ab.name}】不能献祭英雄卡`,'sys'); return; }
+      killUnit(tRow,tCol);
+      S.sides[foe].core-=+sacM[1]; S.sides[foe]._coreHurtRound=S.round;
+      log('技能',`【${ab.name}】献祭【${tgt.name}】，对敌方核心造成 ${sacM[1]} 点伤害`,'dmg');
+      return;
+    }
     const dm=t.match(/造成(\d+)(?:\s*~\s*(\d+))?点(?:随机)?伤害/);
     if(dm){
       let dmg=dm[2] ? (+dm[1])+Math.floor(Math.random()*(+dm[2]-+dm[1]+1)) : +dm[1];
       if(tgt.kw.armor>0){ dmg=Math.min(dmg,1); tgt.kw.armor--; if(tgt.kw.armor<=0) delete tgt.kw.armor; }
       tgt.hp-=dmg;
+      mobBreak(tgt);
       log('技能',`【${ab.name}】对【${tgt.name}】造成 ${dmg} 点伤害`,'dmg');
-      if(/获得削弱/.test(t) && tgt.hp>0) applyDebuff(tgt,'atk',-1,side,ab.name);
+      if(/获得削弱|使其削弱/.test(t) && tgt.hp>0) applyDebuff(tgt,'atk',-1,side,ab.name);
       if(tgt.hp<=0) killUnit(tRow,tCol);
       return;
     }
@@ -1215,6 +1575,28 @@ function applyAbilityEffect(side, u, ab, tRow, tCol){
       return;
     }
   }
+  // —— 全军 / 无目标增益 ——
+  if(/本回合所有友方单位\+1移动力/.test(t)){
+    let n=0;
+    for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x.type!=='建筑'){ x.move++; x.ap++; x.tempMods.push({atk:0,hp:0,dist:0,move:1}); n++; }
+    log('技能',`【${ab.name}】：${n} 个友方单位本回合 +1 移动力`,'sys');
+    return;
+  }
+  if(/本回合所有友方战车单位\+2攻击并获得游击/.test(t)){
+    let n=0;
+    for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x.name.includes('战车')){
+      x.atk+=2; x.tempMods.push({atk:2,hp:0,dist:0,move:0});
+      if(!x.kw.游击){ x.kw.游击=true; x.tempKws.push('游击'); }
+      n++;
+    }
+    log('技能',`【${ab.name}】：${n} 个战车单位本回合 +2 攻击并获得游击`,'sys');
+    return;
+  }
+  if(/将一张手牌洗回牌库，然后抽一张牌/.test(t)){
+    if(sd.hand.length){ const c=sd.hand.pop(); sd.deck.unshift(c); shuffle(sd.deck); log('技能',`【${ab.name}】：【${c.name}】洗回牌库`,'sys'); }
+    drawCards(side,1);
+    return;
+  }
   // —— 召唤类 ——
   const sumRnd=t.match(/相邻站位随机部署(.+?)中的一个/);
   if(sumRnd){
@@ -1241,10 +1623,14 @@ function applyAbilityEffect(side, u, ab, tRow, tCol){
   if(/查看牌库顶三张牌/.test(t)){
     const top=sd.deck.splice(-3);
     if(top.length){
-      sd.hand.push(top[0]);
-      top.slice(1).forEach(c=>sd.deck.unshift(c));
-      shuffle(sd.deck);
-      log('技能',`【${ab.name}】：将【${top[0].name}】加入手牌，其余洗回牌库`,'sys');
+      let pick=top[0];
+      if(/技能卡或装备卡/.test(t)) pick=top.find(c=>c.type==='技能'||c.type==='装备')||top[0];
+      else if(/一张技能卡/.test(t)) pick=top.find(c=>c.type==='技能')||top[0];
+      sd.hand.push(pick);
+      top.splice(top.indexOf(pick),1);
+      if(/置入墓地/.test(t)) top.forEach(c=>sd.discard.push(c));
+      else { top.forEach(c=>sd.deck.unshift(c)); shuffle(sd.deck); }
+      log('技能',`【${ab.name}】：将【${pick.name}】加入手牌`,'sys');
     }
     return;
   }
@@ -1279,11 +1665,16 @@ function attack(fr, fc, tr, tc){
   const att = S.board[fr][fc];
   if(!att || att.ap<1 || att.atk<=0) return false;
   att.ap--; att.hasAttacked = true; att.acted = true; att.justDeployed = false; att.stealthed = false;
+  if(att._stealthOnce){ delete att.kw.伪装; att._stealthOnce=false; }
   let baseAtk = att.atk;
   if(att.kw.连击 && att._combo2) baseAtk = Math.floor(att.atk/2);   // 连击第二次减半
   if(tr==='core'){
     const def = S.sides[att.owner==='player'?'enemy':'player'];
+    const cm=matchText(att,/攻击核心时\+(\d+)攻击/);
+    if(cm) baseAtk+=+cm[1];
+    if(matchText(att,/攻击核心时[，,]?你获得1RP/)){ S.sides[att.owner].rp++; log('效果',`【${att.name}】征税：获得 1 RP`,'sys'); }
     def.core -= baseAtk;
+    def._coreHurtRound = S.round;
     log('战斗',`【${att.name}】攻击${def.name}核心，造成 ${baseAtk} 点伤害`,'dmg');
     if(att.kw.吸血 && baseAtk>0){ att.hp=Math.min(att.maxHp,att.hp+1); log('效果',`【${att.name}】吸血：回复 1 点生命`,'heal'); }
     afterAttack(att, fr, fc);
@@ -1293,26 +1684,33 @@ function attack(fr, fc, tr, tc){
   const def = S.board[tr][tc];
   if(!def) return false;
   let dmgA = baseAtk + (restrain(att.attr,def.attr)?2:0);
+  const bm=matchText(att,/攻击建筑时\+(\d+)攻击/);
+  if(bm && def.type==='建筑') dmgA+=+bm[1];   // 攻城类加成
   let armorNote = '';
+  if(def._aura && def._aura.def>0 && dmgA>1){ dmgA=Math.max(1,dmgA-def._aura.def); armorNote+='（防御减免）'; }
   if(def.kw.armor>0){   // 重甲：单次伤害≤1，失去一层
     dmgA = Math.min(dmgA, 1); def.kw.armor--;
     armorNote = `（重甲抵挡，剩${def.kw.armor}层）`;
     if(def.kw.armor<=0) delete def.kw.armor;
   }
   def.hp -= dmgA;
+  mobBreak(def);
   let msg = `【${att.name}】→【${def.name}】造成 ${dmgA} 点伤害`;
   if(restrain(att.attr,def.attr)) msg += '（克制+2）';
+  if(bm && def.type==='建筑') msg += `（攻城+${bm[1]}）`;
   msg += armorNote;
   log('战斗', msg, 'dmg');
   if(att.kw.吸血 && dmgA>0){ att.hp=Math.min(att.maxHp,att.hp+1); log('效果',`【${att.name}】吸血：回复 1 点生命`,'heal'); }
   // 反击：近↔近 或 远↔远，且防御方有攻击力且仍存活
   if(def.atk>0 && att.range===def.range && def.type!=='建筑' && def.hp>0){
     let dmgD = def.atk + (restrain(def.attr,att.attr)?2:0);
+    if(att._aura && att._aura.def>0 && dmgD>1) dmgD=Math.max(1,dmgD-att._aura.def);
     if(att.kw.armor>0){
       dmgD = Math.min(dmgD, 1); att.kw.armor--;
       if(att.kw.armor<=0) delete att.kw.armor;
     }
     att.hp -= dmgD;
+    mobBreak(att);
     log('战斗',`【${def.name}】反击，对【${att.name}】造成 ${dmgD} 点伤害`,'dmg');
     if(def.kw.吸血 && dmgD>0) def.hp=Math.min(def.maxHp,def.hp+1);
   }
@@ -1323,13 +1721,34 @@ function attack(fr, fc, tr, tc){
     if(att.kw.压制) applyDebuff(def,'move','zero',A,att.name+'·压制');
     if(att.kw.削弱) applyDebuff(def,'atk',-1,A,att.name+'·削弱');
     if(att.kw.畏惧) applyDebuff(def,'atk','zero',A,att.name+'·畏惧');
-    if(/攻击后，使目标单位获得削弱/.test(eff) && !att.kw.削弱) applyDebuff(def,'atk',-1,A,att.name+'·蹂躏');
+    if(/攻击后[，,]?使目标(?:单位)?(?:获得)?削弱/.test(eff) && !att.kw.削弱) applyDebuff(def,'atk',-1,A,att.name+'·蹂躏');
+    if(/攻击后[，,]?[^。]*使目标(?:单位)?畏惧/.test(eff) && !att.kw.畏惧) applyDebuff(def,'atk','zero',A,att.name+'·恐怖威名');
     if(att.kw.燃烧){ def.burn=2; log('效果',`【${att.name}】点燃【${def.name}】：每回合 -1 生命，持续 2 回合`,'dmg'); }
     if(att.kw.驱散) dispelBuffs(def, att.name);
   }
+  // 攻击后的其它触发（溅射 / 反噬 / 征税类）
+  {
+    const eff=att.card.effect||'';
+    const defKilled=def.hp<=0;
+    if(/攻击后[，,]?对目标相邻单位造成1点伤害/.test(eff)){   // 战象/辛那赫里布：溅射相邻全部
+      for(const dc of [-1,1]){
+        const c=tc+dc; if(c<0||c>=COLS) continue;
+        const x=S.board[tr][c];
+        if(x && x.owner!==att.owner){ x.hp-=1; log('效果',`【${att.name}】溅射：对【${x.name}】造成 1 点伤害`,'dmg'); if(x.hp<=0) killUnit(tr,c,att); }
+      }
+    } else if(/攻击后[，,]?对目标相邻的一个随机敌方单位造成1点伤害/.test(eff)){   // 薛西斯：随机一个
+      const opts=[];
+      for(const dc of [-1,1]){ const c=tc+dc; if(c<0||c>=COLS) continue; const x=S.board[tr][c]; if(x&&x.owner!==att.owner) opts.push([c,x]); }
+      if(opts.length){ const [c,x]=opts[Math.floor(Math.random()*opts.length)]; x.hp-=1; log('效果',`【${att.name}】怒海：对【${x.name}】造成 1 点伤害`,'dmg'); if(x.hp<=0) killUnit(tr,c,att); }
+    }
+    if(/攻击后[，,]?对自身造成1点伤害/.test(eff) && att.hp>0){ att.hp-=1; log('效果',`【${att.name}】狂暴反噬：-1 生命`,'dmg'); }
+    if(/攻击后\+1生命|攻击后[，,]?\+1生命/.test(eff) && att.hp>0){ att.hp+=1; att.maxHp+=1; att.buffs.push({atk:0,hp:1,dist:0,move:0,kw:[]}); }
+    if(/攻击后[，,]?若目标未被摧毁[，,]?你获得1RP/.test(eff) && !defKilled){ S.sides[att.owner].rp++; log('效果',`【${att.name}】：获得 1 RP`,'sys'); }
+    if(/攻击后若目标未被摧毁[，,]?本单位-1生命/.test(eff) && !defKilled && att.hp>0){ att.hp-=1; log('效果',`【${att.name}】反冲：-1 生命`,'dmg'); }
+  }
   if(S.tut && att.owner==='player') tutNotify(att.range==='远'?'rangedAttack':'attack', att);
-  if(att.hp<=0) killUnit(fr,fc);
-  if(def.hp<=0) killUnit(tr,tc);
+  if(att.hp<=0) killUnit(fr,fc,def.hp>0?def:null);
+  if(def.hp<=0) killUnit(tr,tc,att.hp>0?att:null);
   afterAttack(att, fr, fc);
   checkGameOver();
   return true;
@@ -1347,16 +1766,73 @@ function afterAttack(att, fr, fc){
     if(att.hp<=0) killUnit(fr,fc);
   }
 }
-function killUnit(row,col){
+function killUnit(row,col,killer){
   const u = S.board[row][col]; if(!u) return;
   if(u.kw.复生 && !u._revived){
     u._revived = true; u.hp = 1; u.stealthed = false;
     log('效果',`【${u.name}】复生：以 1 点生命值复活！`,'heal');
     return;
   }
+  // 居鲁士陵墓：你的英雄卡首次被摧毁时，以 1 生命复生在其战线空位（每局限一次）
+  if(u.type==='英雄'){
+    outer: for(const r of ROWS) for(let i=0;i<COLS;i++){
+      const b=S.board[r][i];
+      if(b && b.owner===u.owner && b.type==='建筑' && !b._tombUsed && /你的英雄卡首次被摧毁时/.test(b.card.effect||'')){
+        const empty=[]; S.board[r].forEach((s,ci)=>{ if(!s && !(r===BASE_ROW[u.owner]&&ci===CORE_COL)) empty.push(ci); });
+        if(empty.length){
+          b._tombUsed=true;
+          S.board[row][col]=null;
+          u.hp=1; u.stealthed=false;
+          S.board[r][empty[0]]=u;
+          log('效果',`【${b.name}】：【${u.name}】以 1 点生命复生！`,'heal');
+          return;
+        }
+        break outer;
+      }
+    }
+  }
   log('战斗',`【${u.name}】被摧毁`,'dmg');
   S.board[row][col] = null;
   S.sides[u.owner].discard.push(u.card);
+  const sd=S.sides[u.owner], foe=u.owner==='player'?'enemy':'player';
+  const eff=u.card.effect||'';
+  // 被破坏/被摧毁时触发
+  if(/被破坏时，?对手(?:随机)?弃一张手?牌/.test(eff)){
+    const fh=S.sides[foe].hand;
+    if(fh.length){ const c=fh.splice(Math.floor(Math.random()*fh.length),1)[0]; S.sides[foe].discard.push(c); log('效果',`【${u.name}】：对手弃置【${c.name}】`,'sys'); }
+  }
+  if(u.grantedRp){ sd.rpCap=Math.max(0,sd.rpCap-u.grantedRp); sd.rp=Math.min(sd.rp,sd.rpCap); log('效果',`【${u.name}】被摧毁：失去其提供的 ${u.grantedRp} 点 RP 上限`,'sys'); }
+  if(/被破坏时，?对所在战线所有单位造成1点伤害/.test(eff)){
+    for(let i=0;i<COLS;i++){ const x=S.board[row][i]; if(x){ x.hp-=1; if(x.hp<=0) killUnit(row,i); } }
+    log('效果',`【${u.name}】蜂群：对所在战线所有单位造成 1 点伤害`,'dmg');
+  }
+  if(/被破坏时，?召唤1个[“"]战狮[”"]/.test(eff)){
+    spawnAdjacent(u.owner,row,col,tokenCard('战狮',eff));
+    for(const x of S.board[row]) if(x && x.owner===u.owner){ x.atk+=1; x.tempMods.push({atk:1,hp:0,dist:0,move:0}); }
+    log('效果',`【${u.name}】：战狮出闸！此战线友方单位本回合 +1 攻击`,'sys');
+  }
+  if(/被摧毁时，?你获得1RP/.test(eff)){ sd.rp++; log('效果',`【${u.name}】：你获得 1 RP`,'sys'); }
+  if(/被摧毁时，?对手失去1RP/.test(eff)){ S.sides[foe].rp=Math.max(0,S.sides[foe].rp-1); log('效果',`【${u.name}】：对手失去 1 RP`,'sys'); }
+  // 罗慕路斯离场：解除其控制的单位
+  for(const r of ROWS) for(const x of S.board[r]) if(x && x._controller===u){
+    x.owner=x._origOwner||foe; x._controller=null;
+    log('效果',`【${x.name}】的控制被解除`,'sys');
+  }
+  // 击杀者收益
+  if(killer && killer.owner && killer.owner!==u.owner){
+    const keff=killer.card.effect||'';
+    if(/每消灭一个敌方单位，?便获得\+1攻击/.test(keff)){ killer.atk+=1; killer.buffs.push({atk:1,hp:0,dist:0,move:0,kw:[]}); log('效果',`【${killer.name}】献祭：+1 攻击`,'sys'); }
+    if(/消灭一个敌方单位后，?你抽一张牌/.test(keff)){ drawCards(killer.owner,1); log('效果',`【${killer.name}】凯旋：抽一张牌`,'sys'); }
+    if(/消灭一个单位后，?\+2生命/.test(keff)){ killer.hp+=2; killer.maxHp+=2; killer.buffs.push({atk:0,hp:2,dist:0,move:0,kw:[]}); log('效果',`【${killer.name}】猎狮：+2 生命`,'heal'); }
+    for(const r of ROWS) for(const b of S.board[r]){
+      if(b && b.owner===killer.owner && b.type==='建筑' && b._zhuRound!==S.round && /每有一个友方单位消灭敌方单位/.test(b.card.effect||'')){
+        b._zhuRound=S.round;
+        S.sides[killer.owner].rpCap=Math.min(RP_MAX,S.sides[killer.owner].rpCap+1);
+        b.grantedRp=(b.grantedRp||0)+1;
+        log('效果',`【${b.name}】战功铭刻：RP 上限 +1`,'sys');
+      }
+    }
+  }
 }
 function checkGameOver(){
   if(S.over) return;
@@ -1442,6 +1918,10 @@ function applyEquip(side, card, row, col){
 }
 function skillNeedsTarget(card){
   const t = card.effect||'';
+  if(/消灭一个友方/.test(t)) return 'friendlyKill';
+  if(/指定一个敌方建筑/.test(t)) return 'enemyBuilding';
+  if(/指定一个友方建筑/.test(t)) return 'friendlyBuilding';
+  if(/选择一条战线|指定一个战线|对一条战线|在一条友方战线/.test(t)) return 'row';
   if(/指定一个敌方/.test(t)) return 'enemy';
   if(/指定一个友方/.test(t)) return 'friendly';
   return null;
@@ -1452,18 +1932,115 @@ function castSkill(side, card, tRow, tCol){
   const t = card.effect||'';
   sd.rp -= card.cost; sd.hand.splice(sd.hand.indexOf(card),1);
   let applied = false;
-  const tgt = (tRow!=null) ? S.board[tRow][tCol] : null;
+  const foeSide = side==='player'?'enemy':'player';
+  const tgt = (tRow!=null && tCol!=null && tCol>=0) ? S.board[tRow][tCol] : null;
+  // 战线目标（金属箭雨 / 恐吓战术 / 不死军征召 等）
+  if(tRow!=null && tCol===-1){
+    const rowDm=t.match(/(?:对一条战线上|该战线)的?所有敌方单位造成(\d+)点伤害/);
+    if(rowDm){
+      for(let i=0;i<COLS;i++){
+        const u=S.board[tRow][i];
+        if(!u||u.owner===side) continue;
+        let dmg=+rowDm[1];
+        if(u.kw.armor>0){ dmg=Math.min(dmg,1); u.kw.armor--; if(u.kw.armor<=0) delete u.kw.armor; }
+        u.hp-=dmg;
+        if(u.hp<=0) killUnit(tRow,i);
+      }
+      log('技能',`【${card.name}】：${rowName(tRow)}所有敌方单位受到 ${rowDm[1]} 点伤害`,'dmg');
+      applied=true;
+    }
+    if(/该战线所有敌方单位本回合畏惧/.test(t)){
+      S.board[tRow].forEach(u=>{ if(u&&u.owner!==side) applyDebuff(u,'atk','zero',side,card.name); });
+      log('技能',`【${card.name}】：${rowName(tRow)}敌方单位本回合畏惧`,'sys');
+      applied=true;
+    }
+    const sumR=t.match(/在一条友方战线的相邻空位召唤(\d+)个[“"](\S+?)[”"]/);
+    if(sumR){
+      for(let k=0;k<+sumR[1];k++){
+        const empt=[]; S.board[tRow].forEach((s,i)=>{ if(!s&&!(tRow===BASE_ROW[side]&&i===CORE_COL)) empt.push(i); });
+        if(!empt.length) break;
+        S.board[tRow][empt[0]]=mkUnit(tokenCard(sumR[2],t),side);
+        log('效果',`【${card.name}】：召唤【${sumR[2]}】至${rowName(tRow)}`,'sys');
+      }
+      applied=true;
+    }
+  }
+  // 消灭友方单位（献祭类）
+  if(/消灭一个友方单位/.test(t) && tgt && tgt.owner===side){
+    killUnit(tRow,tCol);
+    log('技能',`【${card.name}】：消灭【${tgt.name}】`,'dmg');
+    if(/你获得2RP/.test(t)){ sd.rp+=2; log('技能',`【${card.name}】：获得 2 RP`,'sys'); }
+    if(/所有其他友方单位\+1攻击、\+1生命/.test(t)){
+      for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side){ x.atk++; x.hp++; x.maxHp++; x.buffs.push({atk:1,hp:1,dist:0,move:0,kw:[]}); }
+      log('技能',`【${card.name}】：其余友方单位 +1攻击 +1生命`,'sys');
+    }
+    applied=true;
+  }
+  // 尼尼微陷落：消灭所有建筑并轰击核心
+  if(/消灭场上所有建筑/.test(t)){
+    let n=0;
+    for(const r of ROWS) for(let i=0;i<COLS;i++){
+      const u=S.board[r][i];
+      if(u&&u.type==='建筑'){
+        S.sides[u.owner].core-=2; S.sides[u.owner]._coreHurtRound=S.round; n++;
+        killUnit(r,i);
+      }
+    }
+    log('技能',`【${card.name}】：摧毁 ${n} 座建筑，每座对其所有者核心造成 2 点伤害`,'dmg');
+    applied=true;
+  }
+  // 复活（时间倒流）
+  if(/将本局被摧毁的一个友方非英雄单位以1生命复生/.test(t)){
+    const idx=sd.discard.map((c,i)=>[c,i]).filter(([c])=>c.type!=='英雄'&&c.atk!==undefined).pop();
+    if(idx){
+      const [c]=idx;
+      sd.discard.splice(idx[1],1);
+      const nu={...c, effect:(c.effect||'')+((c.effect||'').includes('复生')?'':'、复生')};
+      const rows=[side==='player'?'playerBack':'enemyBack', side==='player'?'playerBase':'enemyBase'];
+      let placed=false;
+      for(const r of rows){ for(let i=0;i<COLS&&!placed;i++){
+        if(!S.board[r][i] && !(r===BASE_ROW[side]&&i===CORE_COL)){
+          const nu2=mkUnit(nu,side); nu2.hp=1;
+          S.board[r][i]=nu2; placed=true;
+        }
+      }}
+      log('技能',`【${card.name}】：【${c.name}】以 1 生命重返战场并获得复生`,'heal');
+      applied=true;
+    }
+  }
+  // 建筑耐久增益（坎儿井开凿）
+  const bdM=t.match(/指定一个友方建筑\+(\d+)耐久/);
+  if(bdM && tgt && tgt.type==='建筑'){
+    tgt.hp+=+bdM[1]; tgt.maxHp+=+bdM[1]; tgt.buffs.push({atk:0,hp:+bdM[1],dist:0,move:0,kw:[]});
+    log('技能',`【${card.name}】：【${tgt.name}】+${bdM[1]} 耐久`,'heal');
+    applied=true;
+  }
+  // RP 上限（帝国税赋）
+  if(/你获得2点RP上限/.test(t)){ sd.rpCap=Math.min(RP_MAX,sd.rpCap+2); log('技能',`【${card.name}】：RP 上限 +2`,'sys'); applied=true; }
+  // 万王诏令：抽两张 + 每控制一个建筑额外抽（最多+2）
+  if(/抽两张牌/.test(t) && /每控制一个建筑/.test(t)){
+    let b=0; for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x.type==='建筑') b++;
+    const n=2+Math.min(2,b);
+    drawCards(side,n);
+    log('技能',`【${card.name}】：抽 ${n} 张牌（控制 ${b} 座建筑）`,'sys');
+    applied=true;
+  }
+  // 全体移动力（强制行军 / 御道急行）
+  if(/本回合(?:你)?所有单位\+1移动力/.test(t)){
+    for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x.type!=='建筑'){ x.move++; x.ap++; x.tempMods.push({atk:0,hp:0,dist:0,move:1}); }
+    log('技能',`【${card.name}】：所有友方单位本回合 +1 移动力`,'sys');
+    applied=true;
+  }
   // 群体伤害（如「沙暴」：对敌方所有非土属性单位造成1点伤害，并使其获得削弱）
   const aoe = t.match(/对敌方所有(?:非(\S)属性)?单位造成(\d+)点伤害/);
   if(aoe){
-    const foeSide = side==='player'?'enemy':'player';
     let hits=0;
     for(const row of ROWS) for(let i=0;i<COLS;i++){
       const u=S.board[row][i];
       if(!u || u.owner!==foeSide || (aoe[1] && u.attr===aoe[1])) continue;
       let dmg=+aoe[2];
       if(u.kw.armor>0){ dmg=Math.min(dmg,1); u.kw.armor--; if(u.kw.armor<=0) delete u.kw.armor; }
-      u.hp-=dmg; hits++;
+      u.hp-=dmg; mobBreak(u); hits++;
       if(/获得削弱/.test(t) && u.hp>0) applyDebuff(u,'atk',-1,side,card.name);
       if(u.hp<=0) killUnit(row,i);
     }
@@ -1475,19 +2052,25 @@ function castSkill(side, card, tRow, tCol){
     let dmg=+dm[1];
     if(tgt.kw.armor>0){ dmg=Math.min(dmg,1); tgt.kw.armor--; if(tgt.kw.armor<=0) delete tgt.kw.armor; }
     tgt.hp -= dmg;
+    mobBreak(tgt);
     log('技能',`【${card.name}】对【${tgt.name}】造成 ${dmg} 点伤害`,'dmg');
     if(tgt.hp<=0) killUnit(tRow,tCol);
     applied = true;
   }
-  if(/\+?\d+攻击|\+?\d+生命|-\d+移动力/.test(t) && tgt && !dm){
+  if(tgt && /驱散其正面效果/.test(t)){ dispelBuffs(tgt,card.name); applied=true; }
+  if(tgt && /获得净化/.test(t)){ cleanse(tgt,card.name); applied=true; }
+  if(/\+?\d+攻击|\+?\d+生命|-\d+移动力/.test(t) && tgt && !dm && !bdM){
     const m = parseMods(t);
     tgt.atk+=m.atk; tgt.hp+=m.hp; tgt.maxHp+=m.hp; tgt.move+=m.move; tgt.ap=Math.max(0,tgt.ap+m.move);
     if(m.temp) tgt.tempMods.push(m);
+    // 技能附带词条（铁器淬火：获得打击）
+    const kwG=t.match(/获得(打击|压制|燃烧|驱散|净化|震慑|削弱|畏惧|游击|闪击|守卫|伪装|连击|吸血|复生|警戒|预警|动员)/);
+    if(kwG && !tgt.kw[kwG[1]]){ tgt.kw[kwG[1]]=true; tgt.buffs.push({atk:0,hp:0,dist:0,move:0,kw:[kwG[1]]}); }
     log('技能',`【${card.name}】→【${tgt.name}】：${t}`,'sys');
     applied = true;
   }
   let dr = t.match(/抽(一|两|\d)张牌/);
-  if(dr){ const n = dr[1]==='一'?1:dr[1]==='两'?2:+dr[1]; drawCards(side,n); log('技能',`【${card.name}】：抽${dr[1]}张牌`,'sys'); applied = true; }
+  if(dr && !/每控制一个建筑/.test(t)){ const n = dr[1]==='一'?1:dr[1]==='两'?2:+dr[1]; drawCards(side,n); log('技能',`【${card.name}】：抽${dr[1]}张牌`,'sys'); applied = true; }
   if(!applied) log('技能',`【${card.name}】发动（效果「${t||'无'}」将于后续版本实装）`,'sys');
   sd.discard.push(card);
   checkGameOver();
@@ -1500,13 +2083,14 @@ function aiMain(){
   const sd = S.sides.enemy;
   let guard=0;
   while(guard++<12){
-    const playable = sd.hand.filter(c=>c.cost<=sd.rp);
+    const playable = sd.hand.filter(c=>effCost('enemy',c)<=sd.rp);
     if(!playable.length) break;
-    const card = playable.sort((a,b)=>b.cost-a.cost)[0];
+    const card = playable.sort((a,b)=>effCost('enemy',b)-effCost('enemy',a))[0];
     if(card.type==='英雄'||card.type==='部队'||card.type==='建筑'){
-      const empt=[]; S.board.enemyBase.forEach((s,i)=>{if(!s && i!==CORE_COL)empt.push(i);});
+      const dRow=/仅可部署于(?:我方|己方)?二线/.test(card.effect||'')?'enemyBack':'enemyBase';
+      const empt=[]; S.board[dRow].forEach((s,i)=>{if(!s && i!==CORE_COL)empt.push(i);});
       if(!empt.length) break;
-      deploy('enemy',card,empt[Math.floor(Math.random()*empt.length)]);
+      deploy('enemy',card,empt[Math.floor(Math.random()*empt.length)],dRow);
     } else if(card.type==='装备'){
       const units=[]; for(const row of ROWS) S.board[row].forEach((u,i)=>{if(u&&u.owner==='enemy'&&u.type!=='建筑')units.push([row,i]);});
       if(!units.length){ break; }
@@ -1521,6 +2105,21 @@ function aiMain(){
         const tg=[]; for(const row of ROWS) S.board[row].forEach((u,i)=>{if(u&&u.owner==='enemy')tg.push([row,i]);});
         if(!tg.length) break;
         const [r,c]=tg[Math.floor(Math.random()*tg.length)]; castSkill('enemy',card,r,c);
+      } else if(need==='friendlyKill'){
+        const tg=[]; for(const row of ROWS) S.board[row].forEach((u,i)=>{if(u&&u.owner==='enemy'&&u.type!=='英雄')tg.push([row,i]);});
+        if(!tg.length) break;
+        tg.sort((a,b)=>S.board[a[0]][a[1]].atk-S.board[b[0]][b[1]].atk);
+        castSkill('enemy',card,tg[0][0],tg[0][1]);
+      } else if(need==='enemyBuilding'||need==='friendlyBuilding'){
+        const own=need==='friendlyBuilding';
+        const tg=[]; for(const row of ROWS) S.board[row].forEach((u,i)=>{if(u&&u.type==='建筑'&&(u.owner==='enemy')===own)tg.push([row,i]);});
+        if(!tg.length) break;
+        const [r,c]=tg[Math.floor(Math.random()*tg.length)]; castSkill('enemy',card,r,c);
+      } else if(need==='row'){
+        // 选玩家单位最多的战线
+        let best='front',bn=-1;
+        for(const row of ROWS){ const n=S.board[row].filter(u=>u&&u.owner==='player').length; if(n>bn){bn=n;best=row;} }
+        castSkill('enemy',card,best,-1);
       } else castSkill('enemy',card);
     }
     render();
@@ -1568,15 +2167,17 @@ function onSlotClick(row,col){
   doSlotClick(CTRL,row,col);
 }
 function doSlotClick(side,row,col){
-  if(S.active!==side || S.over) return;
+  if(S.active!==side || S.over || !S.board[row] || col<0 || col>=COLS) return;
   const sd = S.sides[side];
   const u = S.board[row][col];
   if(S.sel && S.sel.kind==='hand'){
     const card = S.sel.card;
     if(card.type==='英雄'||card.type==='部队'||card.type==='建筑'){
-      if(row===DEPLOY_ROW[side] && !u && col!==CORE_COL){
-        if(card.cost<=sd.rp){ deploy(side,card,col); S.sel=null; render(); }
-        else hint('共鸣点不足：需要 '+card.cost+' RP');
+      const dRow=/仅可部署于(?:我方|己方)?二线/.test(card.effect||'') ? (side==='player'?'playerBack':'enemyBack') : DEPLOY_ROW[side];
+      if(row===dRow && !u && col!==CORE_COL){
+        const cost=effCost(side,card);
+        if(cost<=sd.rp){ deploy(side,card,col,row); S.sel=null; render(); }
+        else hint('共鸣点不足：需要 '+cost+' RP');
       }
     } else if(card.type==='装备'){
       if(u && u.owner===side){ applyEquip(side,card,row,col); S.sel=null; render(); }
@@ -1584,6 +2185,10 @@ function doSlotClick(side,row,col){
       const need = skillNeedsTarget(card);
       if(need==='enemy' && u && u.owner!==side && !u.stealthed){ castSkill(side,card,row,col); S.sel=null; render(); }
       else if(need==='friendly' && u && u.owner===side){ castSkill(side,card,row,col); S.sel=null; render(); }
+      else if(need==='friendlyKill' && u && u.owner===side && u.type!=='英雄'){ castSkill(side,card,row,col); S.sel=null; render(); }
+      else if(need==='enemyBuilding' && u && u.owner!==side && u.type==='建筑'){ castSkill(side,card,row,col); S.sel=null; render(); }
+      else if(need==='friendlyBuilding' && u && u.owner===side && u.type==='建筑'){ castSkill(side,card,row,col); S.sel=null; render(); }
+      else if(need==='row'){ castSkill(side,card,row,-1); S.sel=null; render(); }
     }
     return;
   }
@@ -1673,11 +2278,13 @@ function doHandClick(side, idx){
   // 左键：选择 / 再点取消（右键查看详情）
   if(S.sel && S.sel.kind==='hand' && S.sel.card===card){ S.sel=null; render(); return; }
   if(card.type==='技能' && !skillNeedsTarget(card)){
-    if(card.cost > S.sides[side].rp){ hint('共鸣点不足：需要 '+card.cost+' RP'); return; }
+    const cost=effCost(side,card);
+    if(cost > S.sides[side].rp){ hint('共鸣点不足：需要 '+cost+' RP'); return; }
     castSkill(side,card); render(); return;
   }
   S.sel = {kind:'hand', card};
-  if(card.cost > S.sides[side].rp) hint('共鸣点不足：需要 '+card.cost+' RP（当前 '+S.sides[side].rp+'）');
+  const cost=effCost(side,card);
+  if(cost > S.sides[side].rp) hint('共鸣点不足：需要 '+cost+' RP（当前 '+S.sides[side].rp+'）');
   render();
 }
 function playerEndTurn(){
@@ -1705,7 +2312,7 @@ function onAbilityClick(abIdx){
   render();
 }
 function doAbility(side,fr,fc,abIdx,tRow,tCol){
-  if(S.active!==side || S.over) return;
+  if(S.active!==side || S.over || !S.board[fr] || (tRow!=null && !S.board[tRow])) return;
   const u=S.board[fr][fc]; if(!u || u.owner!==side) return;
   const ab=(u.actives||[])[abIdx]; if(!ab) return;
   if(ab.target!=='none'){
@@ -1724,14 +2331,14 @@ function doEndTurn(side){
 /* ================= 渲染 ================= */
 function attrIcon(a){ return ATTR_ICON[a]||'○'; }
 function rarColor(r){ return 'var(--rar-'+(r||'R')+')'; }
-function cardFace(u,card,inHand){
+function cardFace(u,card,inHand,costOv){
   const c = card||u.card;
   const kw = u ? u.kw : parseKeywords(c.effect).kw;
   const badges = Object.keys(kw).filter(k=>kw[k]&&k!=='armor'&&k!=='swarm').map(k=>`<span>${k}</span>`).join('')
     + (kw.armor?`<span>重甲${kw.armor}</span>`:'') + (kw.swarm?`<span>群体${kw.swarm}</span>`:'')
     + (u&&u.burn>0?`<span class="fx">🔥${u.burn}</span>`:'') + (u&&u.debuffs&&u.debuffs.length?`<span class="fx">⬇${u.debuffs.length}</span>`:'');
   const sleep = u && u.justDeployed && !kw.闪击 ? '<div class="sleep">💤</div>' : '';
-  const cost = inHand ? `<div class="c-cost">${c.cost}</div>` : '';
+  const cost = inHand ? `<div class="c-cost">${costOv!==undefined?costOv:c.cost}</div>` : '';
   const rar = c.rarity ? `<div class="c-rar" style="color:${rarColor(c.rarity)}">${c.rarity}</div>` : '';
   return `${cost}<div class="c-attr">${attrIcon(c.attr)}</div>${rar}
     <div class="c-kw">${badges}</div>
@@ -1741,6 +2348,7 @@ function cardFace(u,card,inHand){
 }
 function render(){
   if(!S) return;
+  recomputeAuras();
   const ME=CTRL, FOE=ME==='player'?'enemy':'player';
   const p=S.sides[ME], e=S.sides[FOE];
   const foeName = NET.mode ? '对手' : '敌方';
@@ -1792,9 +2400,16 @@ function render(){
       const slot=document.createElement('div'); slot.className='slot';
       slot.onclick=()=>onSlotClick(row,i);
       const u=S.board[row][i];
-      if(selH && (selH.type==='英雄'||selH.type==='部队'||selH.type==='建筑') && row===DEPLOY_ROW[ME] && !u) slot.classList.add('hl');
+      if(selH && (selH.type==='英雄'||selH.type==='部队'||selH.type==='建筑')){
+        const dRow=/仅可部署于(?:我方|己方)?二线/.test(selH.effect||'') ? (ME==='player'?'playerBack':'enemyBack') : DEPLOY_ROW[ME];
+        if(row===dRow && !u) slot.classList.add('hl');
+      }
       if(selH && selH.type==='装备' && u && u.owner===ME) slot.classList.add('hl');
-      if(selH && selH.type==='技能' && u && ((skillNeedsTarget(selH)==='enemy'&&u.owner!==ME&&!u.stealthed)||(skillNeedsTarget(selH)==='friendly'&&u.owner===ME))) slot.classList.add('hl-atk');
+      if(selH && selH.type==='技能'){
+        const nd=skillNeedsTarget(selH);
+        if(nd==='row') slot.classList.add('hl-atk');
+        else if(u && ((nd==='enemy'&&u.owner!==ME&&!u.stealthed)||(nd==='friendly'&&u.owner===ME)||(nd==='friendlyKill'&&u.owner===ME&&u.type!=='英雄')||(nd==='enemyBuilding'&&u.owner!==ME&&u.type==='建筑')||(nd==='friendlyBuilding'&&u.owner===ME&&u.type==='建筑'))) slot.classList.add('hl-atk');
+      }
       if(selU && !u && mvT.some(([r,c])=>r===row&&c===i)) slot.classList.add('hl');
       if(selU && u && atT.some(([r,c])=>r===row&&c===i)) slot.classList.add('hl-atk');
       if(selAb && abT.some(([r,c])=>r===row&&(selAbAb.target==='row'||c===i))) slot.classList.add('hl-atk');
@@ -1814,11 +2429,12 @@ function render(){
   // 手牌
   const hand=document.getElementById('hand'); hand.innerHTML='';
   p.hand.forEach((c,i)=>{
+    const ec=effCost(ME,c);
     const w=document.createElement('div');
-    w.className='hcard'+(c.cost>p.rp?' unplayable':'');
+    w.className='hcard'+(ec>p.rp?' unplayable':'');
     const cd=document.createElement('div');
     cd.className=`card t-${c.type}`+(S.sel&&S.sel.kind==='hand'&&S.sel.card===c?' selected':'');
-    cd.innerHTML=cardFace(null,c,true);
+    cd.innerHTML=cardFace(null,c,true,ec);
     cd.onclick=()=>onHandClick(i);
     cd.oncontextmenu=(ev)=>{ev.preventDefault();showDetail(c);};
     addLongPress(cd, ()=>showDetail(c));
@@ -1937,16 +2553,16 @@ function loadSettings(){
 }
 function saveSettings(){ try{ localStorage.setItem(SET_KEY, JSON.stringify(SETTINGS)); }catch(e){} }
 
-/* ================= 我的卡包：金币 / 收藏 / 开包 ================= */
+/* ================= 我的卡组：金币 / 收藏 / 开包 ================= */
 function loadProfile(){
   let p;
   try{ p = Object.assign({gold:0,streak:0,freeClaimed:false,collection:{},decks:[],activeDeck:null}, JSON.parse(localStorage.getItem(pkey(PROFILE_KEY))||'{}')); }
   catch(e){ p = {gold:0,streak:0,freeClaimed:false,collection:{},decks:[],activeDeck:null}; }
   if(!Array.isArray(p.decks)) p.decks=[];
-  // 旧版单卡包数据迁移为多卡包（注意：此处 CARD_DB 尚未初始化，不能引用）
+  // 旧版单卡包数据迁移为多卡组（注意：此处 CARD_DB 尚未初始化，不能引用）
   if(Array.isArray(p.deck)){
     if(p.deck.length && !p.decks.length){
-      p.decks.push({id:Date.now()+Math.floor(Math.random()*1000), name:'我的卡包', keys:p.deck.slice()});
+      p.decks.push({id:Date.now()+Math.floor(Math.random()*1000), name:'我的卡组', keys:p.deck.slice()});
       p.activeDeck = p.decks[0].id;
     }
     delete p.deck;
@@ -1992,7 +2608,7 @@ function buyPack(sp){
 function rollPack(packId){
   const sp = SHOP_PACKS.find(x=>x.id===packId);
   const pool=[];
-  sp.pool.forEach(pk=>CARD_DATA[pk].forEach(c=>pool.push({...c, pack:pk})));
+  sp.pool.forEach(pk=>CARD_DATA[pk].forEach(c=>{ if(!c.summonOnly) pool.push({...c, pack:pk}); }));   // 衍生物只被召唤，不进卡包
   const cards=[];
   for(let i=0;i<10;i++) cards.push(rollOne(pool));
   // 保底：每包至少一张 SR 及以上
@@ -2079,14 +2695,14 @@ function openMech(){
   show('mech-overlay');
 }
 
-/* ================= 设计卡包（多卡包管理） ================= */
+/* ================= 设计卡组（多卡组管理） ================= */
 let DB_DECK = [];   // 编辑中的卡包（key 数组）
 function activeDeck(){ return PROFILE.decks.find(d=>d.id===PROFILE.activeDeck) || PROFILE.decks[0] || null; }
 function activeDeckKeys(){ const d=activeDeck(); return d ? d.keys.filter(k=>CARD_DB[k]) : []; }
 const newDeckId = () => Date.now()*1000 + Math.floor(Math.random()*1000);
 function ensureDeck(){
   if(!PROFILE.decks.length){
-    PROFILE.decks.push({id:newDeckId(), name:'我的卡包', keys:[]});
+    PROFILE.decks.push({id:newDeckId(), name:'我的卡组', keys:[]});
     PROFILE.activeDeck=PROFILE.decks[0].id;
     saveProfile();
   }
@@ -2125,19 +2741,19 @@ function switchDeck(){
   renderDeckbuild();
 }
 function createDeck(){
-  const name=(prompt('给新卡包起个名字：','卡包 '+(PROFILE.decks.length+1))||'').trim();
+  const name=(prompt('给新卡组起个名字：','卡包 '+(PROFILE.decks.length+1))||'').trim();
   if(!name) return;
   const cur=activeDeck(); if(cur) cur.keys=DB_DECK.slice();
   const d={id:newDeckId(), name:name.slice(0,12), keys:[]};
   PROFILE.decks.push(d); PROFILE.activeDeck=d.id; DB_DECK=[];
   saveProfile();
   fillDeckSelect(); renderDeckbuild();
-  hint('已创建卡包「'+d.name+'」，从左侧收藏点击加入卡牌');
+  hint('已创建卡组「'+d.name+'」，从左侧收藏点击加入卡牌');
 }
 function deleteDeck(){
-  if(PROFILE.decks.length<=1){ hint('至少保留一个卡包'); return; }
+  if(PROFILE.decks.length<=1){ hint('至少保留一个卡组'); return; }
   const d=activeDeck();
-  if(!confirm('删除卡包「'+d.name+'」？（卡牌仍保留在收藏中）')) return;
+  if(!confirm('删除卡组「'+d.name+'」？（卡牌仍保留在收藏中）')) return;
   PROFILE.decks=PROFILE.decks.filter(x=>x.id!==d.id);
   PROFILE.activeDeck=PROFILE.decks[0].id;
   DB_DECK=activeDeckKeys();
@@ -2183,7 +2799,7 @@ function renderDeckbuild(){
   const errs=deckErrors(DB_DECK);
   const st=document.getElementById('db-status');
   const heroCnt=DB_DECK.filter(k=>CARD_DB[k].type==='英雄').length;
-  st.textContent = errs.length ? errs[0] : `✓ 卡包就绪：${DB_DECK.length} 张 · 英雄 ${heroCnt} 张`;
+  st.textContent = errs.length ? errs[0] : `✓ 卡组就绪：${DB_DECK.length} 张 · 英雄 ${heroCnt} 张`;
   st.className = errs.length ? '' : 'ok';
 }
 function saveDeck(){
@@ -2192,7 +2808,7 @@ function saveDeck(){
   const d=activeDeck();
   d.keys=DB_DECK.slice();
   saveProfile();
-  hint('卡包「'+d.name+'」已保存（'+DB_DECK.length+' 张）');
+  hint('卡组「'+d.name+'」已保存（'+DB_DECK.length+' 张）');
   hide('deckbuild-overlay');
 }
 
@@ -2204,10 +2820,10 @@ function openPregame(){
   const heroCnt=keys.filter(k=>CARD_DB[k].type==='英雄').length;
   const dname=(activeDeck()||{}).name||'（未命名）';
   if(errs.length){
-    info.innerHTML=`<span style="color:var(--red)">卡包「${dname}」未就绪：${errs[0]}</span><br><span style="color:var(--dim);font-size:13px">请先在「我的卡包 → 设计卡包」中完成组卡</span>`;
+    info.innerHTML=`<span style="color:var(--red)">卡组「${dname}」未就绪：${errs[0]}</span><br><span style="color:var(--dim);font-size:13px">请先在「卡包商店 → 设计卡组」中完成组卡</span>`;
     document.getElementById('start-btn').disabled=true;
   }else{
-    info.innerHTML=`当前卡包：<b style="color:var(--gold)">${dname} · ${keys.length} 张</b>（英雄 ${heroCnt} 张）<br><span style="color:var(--dim);font-size:13px">胜利 +60 金币 · 三连胜起 ×1.2 递增</span>`;
+    info.innerHTML=`当前卡组：<b style="color:var(--gold)">${dname} · ${keys.length} 张</b>（英雄 ${heroCnt} 张）<br><span style="color:var(--dim);font-size:13px">胜利 +60 金币 · 三连胜起 ×1.2 递增</span>`;
     document.getElementById('start-btn').disabled=false;
   }
   showScreen('pregame-screen');
@@ -2228,7 +2844,7 @@ const TUT = [
    setup(){ giveCard('猎人'); }},
   {t:'<b>【摧毁核心】</b>最后一步：攻击敌方核心🏛️！<br>远程单位站在<b>前线</b>即可攻击敌方后场核心（距离2）；近战单位则需突入<b>敌方二线</b>（距离1）。<br>把敌方核心生命值打到 0！（教程中敌方核心已削弱至 6 点）', gate:'win',
    setup(){ S.sides.enemy.core = 6; }},
-  {t:'🎉 <b>教程完成！</b><br>你已经掌握了出牌、移动、攻击、血量、攻击距离与核心摧毁。回到主菜单后，记得先去「我的卡包」领取新人福利、设计你的第一副卡包！', end:true}
+  {t:'🎉 <b>教程完成！</b><br>你已经掌握了出牌、移动、攻击、血量、攻击距离与核心摧毁。回到主菜单后，记得先去「我的卡组」领取新人福利、设计你的第一副卡包！', end:true}
 ];
 function startTutorial(){
   S = {
