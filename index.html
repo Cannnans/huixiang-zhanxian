@@ -144,6 +144,11 @@ button{font-family:inherit;cursor:pointer}
   background:linear-gradient(135deg,#7a5a9e,#a97fe0);color:#160a24}
 .ab-btn:disabled{filter:grayscale(.9);opacity:.45;cursor:not-allowed}
 .ab-tip{font-size:11px;color:var(--dim)}
+#choice-box{min-width:320px;max-width:96vw}
+#choice-body .cnote{font-size:13px;color:var(--dim);line-height:1.6;margin-bottom:10px}
+#choice-body .ccards{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+#choice-body .ccards .card{cursor:pointer}
+#choice-body .cbtn{display:block;width:100%;margin-top:8px}
 #reward-line{font-size:17px;color:var(--gold);font-weight:700}
 
 /* ---------- 教程条 ---------- */
@@ -341,6 +346,12 @@ button{font-family:inherit;cursor:pointer}
   <div class="sub">使用你自己设计的卡包作战 · 敌方使用系统卡包</div>
   <div class="dialog-box" style="border-color:var(--line);min-width:380px">
     <div id="pregame-deck-info" style="font-size:15px;line-height:2"></div>
+    <div style="font-size:13px;color:var(--dim);text-align:left">选择难度：</div>
+    <select id="ai-difficulty" style="background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:9px 12px;font-size:14px;width:100%">
+      <option value="normal">普通 · 随机卡组（收益 ×1.0）</option>
+      <option value="hard">困难 · 半体系卡组（收益 ×1.2）</option>
+      <option value="extreme">极难 · 完整体系卡组（收益 ×1.5）</option>
+    </select>
     <button class="menu-btn primary" id="start-btn" style="width:220px">开 始 对 决</button>
     <button class="menu-btn small" id="btn-goto-deck">设计卡组</button>
   </div>
@@ -475,6 +486,13 @@ button{font-family:inherit;cursor:pointer}
     <h2 id="packopen-title">开 包</h2>
     <div id="packopen-grid"></div>
     <button class="btn" onclick="hide('packopen-overlay')">收 下</button>
+  </div>
+</div>
+<!-- 选择（二选一 / 看牌选牌） -->
+<div class="overlay" id="choice-overlay">
+  <div class="dialog-box" id="choice-box">
+    <h2 id="choice-title">选 择</h2>
+    <div id="choice-body"></div>
   </div>
 </div>
 <!-- 图鉴 -->
@@ -767,6 +785,7 @@ function receiveState(data){
   if(S.over && !NET.overShown){ NET.overShown=true; showGameOver(); }
 }
 function startOnlineGame(guestKeys){
+  CHOICE_QUEUE=[];
   CTRL='player';
   const playerDeck=shuffle(activeDeckKeys().map(k=>({...CARD_DB[k]})));
   const enemyDeck=shuffle(guestKeys.map(k=>({...CARD_DB[k]})));
@@ -945,20 +964,71 @@ function buildAIDeck(packKey){
   shuffle(heroes); shuffle(others);
   return shuffle(heroes.slice(0,2).concat(others.slice(0,28)).map(c=>({...c, pack:packKey})));
 }
+
+/* ================= 难度 & 体系化 AI 卡组 ================= */
+const DIFF_MULT = {normal:1, hard:1.2, extreme:1.5};
+const DIFF_NAME = {normal:'普通', hard:'困难', extreme:'极难'};
+// 每个势力两套完整体系卡组（极难），困难在此基础上随机换入一部分卡降低难度
+const SYSTEM_DECKS = {
+  '古罗马文明卡包（80张）': [
+    { name:'罗马重装军团', heroes:['尤利乌斯·凯撒','图拉真'], cards:['罗马重步兵','罗马重步兵','百夫长','军团士兵','罗马禁卫军','罗马哨兵','罗马新兵','罗马农兵','罗马青年军','布匿战争老兵','堕落的百夫长','城墙巡逻队','罗马消防队','罗马执旗手','日耳曼尼亚辅兵','高卢驻屯长','罗马执政官','罗马大盾','罗马短剑','凯旋盔甲','军团鹰旗','龟甲阵','罗马大道急行军','元老院决议','罗曼军械库','哈德良长城','图拉真纪功柱','罗马斗兽场'] },
+    { name:'罗马闪击突袭', heroes:['圣乔治','斯巴达克斯'], cards:['辅助骑兵','辅助骑兵','贝尔萨轻骑兵','努米底亚标枪骑兵','达尔马提亚重骑兵','乌鸦战船','日耳曼佣兵','罗马探路者','征召投石兵','同盟军标枪兵','角斗士','罗马间谍','罗马军乐手','罗马书记官','伊特鲁里亚祭司','维斯塔贞女','五列桨帆船','朱庇特之雷','尼禄的金琴','密特拉神像','投掷标枪','酒神节狂欢','神谴','以神之名','密特拉地下神庙','卡拉卡拉浴场','西塞罗演讲台','谷神仓廪'] },
+  ],
+  '古埃及文明卡包（80张）': [
+    { name:'法老战车冲锋', heroes:['图特摩斯三世','拉美西斯二世'], cards:['埃及战车兵','埃及战车兵','镰刃战车','双轮战车','法老禁卫军','埃及精锐步兵','埃及长矛兵','埃及弓箭手','埃及征召兵','尼罗河农夫','法老护卫射手','努比亚弓箭手','沙漠侦察兵','沙漠投石手','方阵长枪兵','埃及工兵','复合弓','青铜战斧','金鹰盔甲','倾泻箭雨','沙暴','尼罗河泛滥','巨石滚落','西奈军营','亚历山大里亚港','沙漠采石场','青铜铸造坊','尼罗河粮仓'] },
+    { name:'尼罗河祭司', heroes:['哈特谢普苏特','托勒密一世'], cards:['阿蒙祭司','法老驯兽师','战狮','战狮','石板书记员','法老执扇官','法老侍从','王室工匠','运河船夫','绿洲建筑师','尼罗河测量员','三角洲粮官','法老禁卫军','埃及精锐步兵','麦德查人雇佣兵','精锐努比亚矛兵','雇佣希腊方阵兵','圣甲虫护身符','法老权杖','荷鲁斯之眼挂坠','木乃伊化','法老的诅咒','丰饶仪式','太阳神之怒','孟菲斯大神庙','太阳方尖碑','莎草纸作坊','金字塔群'] },
+  ],
+  '古亚述文明卡包（80张）': [
+    { name:'亚述攻城掠地', heroes:['提格拉特帕拉沙尔三世','萨尔贡二世'], cards:['攻城槌','攻城塔','攻城塔','亚述攻城弓手','亚述重步兵','亚述禁卫军','亚述工程兵','亚述工兵','亚述矿工','亚述铁匠','俘虏劳工','亚述盾卫','亚述长矛兵','亚述弓箭手','亚述投石手','亚述行省兵','攻城锤配件','亚述铁剑','亚述圆盾','亚述围城','强制行军','金属箭雨','掠夺营地','尼尼微狮墙','埃阿引水渠','拉马苏守护门','亚述巴尼拔泥板库','辛月粮仓'] },
+    { name:'亚述铁血冲锋', heroes:['辛那赫里布','亚述巴尼拔'], cards:['亚述枪骑兵','亚述枪骑兵','皇家战车兵','亚述战车兵','亚述战狮','战狮饲养员','亚述重装骑射手','亚述骑射手','亚述轻骑兵','亚述骆驼骑兵','亚述山地兵','亚述火焰投手','亚述神射手','亚述弓兵队长','亚述斥候','亚述间谍','恐怖宣传员','王室铁甲','狮皮披风','战车挽具','托罗斯战吼','恐吓战术','献祭阿淑尔','铁器淬火','伊什塔尔星门','尼努尔塔战车圣坊','阿达德风暴祭坛','冥界七门审判台'] },
+  ],
+  '古波斯文明卡包（80张）': [
+    { name:'不死军团', heroes:['大流士一世','薛西斯一世'], cards:['不死军统领','不死军弓箭手','不死军弓箭手','波斯皇家卫队','波斯重步兵','波斯长矛兵','波斯弓箭手','波斯投石手','波斯征召兵','波斯农兵','波斯长弓手','波斯弓兵队长','波斯弓骑兵队长','波斯骑射手','波斯禁卫骑兵','密特拉骑士','不死军面具','波斯复合弓','波斯铁甲','波斯箭雨','不死军征召','万王诏令','密特拉审判','高原战吼','不朽者营地','阿胡拉马兹达火坛','波斯波利斯万国门','密特拉太阳祭坛'] },
+    { name:'万王铁骑', heroes:['居鲁士大帝','沙普尔一世'], cards:['波斯铁甲骑兵','波斯铁甲骑兵','波斯禁卫骑兵','波斯骑兵队长','波斯战象','波斯战车兵','波斯战车驭手','波斯骑射手','波斯轻骑兵','波斯骆驼骑兵','波斯山地兵','波斯行省兵','迪夫战士','迪夫驯服者','波斯火焰祭司','神鸟西穆尔格','密特拉徽记','神鸟羽饰','御道马鞍','万王宝座','御道急行','坎儿井开凿','迪夫恐吓','阿娜希塔祝福','皇家御道驿站','苏萨王宫','迪夫封印塔','居鲁士陵墓'] },
+  ],
+};
+function buildSystemDeck(packKey, d, swapRatio){
+  const pack = CARD_DATA[packKey]||[];
+  const find = name => pack.find(c=>c.name===name);
+  const heroes = d.heroes.map(find).filter(Boolean);
+  let cards = d.cards.map(find).filter(Boolean);
+  const pool = pack.filter(c=>!c.summonOnly && c.type!=='英雄');
+  while(cards.length < 28) cards.push(pool[Math.floor(Math.random()*pool.length)]);
+  cards = cards.slice(0, 28);
+  if(swapRatio > 0){
+    const n = Math.floor(cards.length * swapRatio);
+    for(let i=0;i<n;i++) cards[Math.floor(Math.random()*cards.length)] = pool[Math.floor(Math.random()*pool.length)];
+  }
+  return shuffle(heroes.slice(0,2).concat(cards).map(c=>({...c, pack:packKey})));
+}
+function buildAIDeckByDifficulty(packKey, diff){
+  if(diff==='extreme' || diff==='hard'){
+    const decks = SYSTEM_DECKS[packKey];
+    if(decks){
+      const d = decks[Math.floor(Math.random()*decks.length)];
+      return buildSystemDeck(packKey, d, diff==='hard' ? 0.4 : 0);
+    }
+  }
+  return buildAIDeck(packKey);
+}
 function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
 function emptyBoard(){ const b={}; ROWS.forEach(r=>b[r]=Array(COLS).fill(null)); return b; }
 
 function newGame(){
+  CHOICE_QUEUE=[];
   const errs = deckErrors(activeDeckKeys());
   if(errs.length){ hint('卡组未就绪：'+errs[0]+'，请先设计卡组'); return; }
+  const diffSel = document.getElementById('ai-difficulty');
+  const diff = diffSel ? diffSel.value : 'normal';
   const aiPack = PACK_KEYS[Math.floor(Math.random()*PACK_KEYS.length)];
   const playerDeck = shuffle(activeDeckKeys().map(k=>({...CARD_DB[k]})));
+  const enemyDeck = buildAIDeckByDifficulty(aiPack, diff);
   S = {
-    ver:SAVE_VER, round:1, active:'player', over:false, sel:null, busy:false, tut:null, log:[],
+    ver:SAVE_VER, round:1, active:'player', over:false, sel:null, busy:false, tut:null, log:[], aiDifficulty:diff,
     board: emptyBoard(),
     sides: {
       player:{name:'我方', pack:'我的卡组', deck:playerDeck, hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:false},
-      enemy:{name:'敌方', pack:aiPack, deck:buildAIDeck(aiPack), hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:false}
+      enemy:{name:'敌方', pack:aiPack, deck:enemyDeck, hand:[], discard:[], core:CORE_HP, rpCap:0, rp:0, firstTurnDone:false}
     }
   };
   showScreen(null);
@@ -1295,12 +1365,20 @@ function deployTriggers(side, u, row, col){
   }
   if(/入场时[，,]?查看牌库顶三张牌/.test(eff)){
     const top=sd.deck.splice(-3);
-    let pick;
-    if(/一张技能卡/.test(eff)) pick=top.find(c=>c.type==='技能')||top[0];
-    else pick=top[0];
-    if(pick){ sd.hand.push(pick); top.splice(top.indexOf(pick),1); L(`【${u.name}】入场：【${pick.name}】加入手牌`); }
-    if(/洗回牌库/.test(eff)){ top.forEach(c=>sd.deck.unshift(c)); shuffle(sd.deck); }
-    else top.forEach(c=>sd.discard.push(c));
+    const finish=(pick)=>{
+      sd.hand.push(pick); top.splice(top.indexOf(pick),1); L(`【${u.name}】入场：【${pick.name}】加入手牌`);
+      if(/洗回牌库/.test(eff)){ top.forEach(c=>sd.deck.unshift(c)); shuffle(sd.deck); }
+      else top.forEach(c=>sd.discard.push(c));
+    };
+    const filter=/技能卡或装备卡/.test(eff)?(c=>c.type==='技能'||c.type==='装备'):(/一张技能卡/.test(eff)?(c=>c.type==='技能'):null);
+    const cand=filter?top.filter(filter):top.slice();
+    if(side===CTRL && top.length){
+      queueChoice({ title:`【${u.name}】查看牌库顶三张`, cards:true,
+        options:(cand.length?cand:top).map(c=>({card:c, apply:()=>finish(c)})) });
+    } else {
+      const pick=cand.length?cand[0]:top[0];
+      if(pick) finish(pick);
+    }
   }
   const bm=eff.match(/入场时[，,]?指定一个友方建筑\+(\d+)耐久/);
   if(bm){
@@ -1759,15 +1837,21 @@ function applyAbilityEffect(side, u, ab, tRow, tCol){
   }
   if(/查看牌库顶三张牌/.test(t)){
     const top=sd.deck.splice(-3);
-    if(top.length){
-      let pick=top[0];
-      if(/技能卡或装备卡/.test(t)) pick=top.find(c=>c.type==='技能'||c.type==='装备')||top[0];
-      else if(/一张技能卡/.test(t)) pick=top.find(c=>c.type==='技能')||top[0];
-      sd.hand.push(pick);
-      top.splice(top.indexOf(pick),1);
+    const finish=(pick)=>{
+      sd.hand.push(pick); top.splice(top.indexOf(pick),1);
       if(/置入墓地/.test(t)) top.forEach(c=>sd.discard.push(c));
       else { top.forEach(c=>sd.deck.unshift(c)); shuffle(sd.deck); }
       log('技能',`【${ab.name}】：将【${pick.name}】加入手牌`,'sys');
+    };
+    const filter=/技能卡或装备卡/.test(t)?(c=>c.type==='技能'||c.type==='装备'):(/一张技能卡/.test(t)?(c=>c.type==='技能'):null);
+    const cand=filter?top.filter(filter):top.slice();
+    if(top.length){
+      if(side===CTRL){
+        queueChoice({ title:`【${ab.name}】查看牌库顶三张`, cards:true,
+          options:(cand.length?cand:top).map(c=>({card:c, apply:()=>finish(c)})) });
+      } else {
+        finish(cand.length?cand[0]:top[0]);
+      }
     }
     return;
   }
@@ -2056,6 +2140,16 @@ function killUnit(row,col,killer){
   if(killer && killer.owner && killer.owner!==u.owner){
     const keff=killer.card.effect||'';
     if(/每消灭一个敌方单位，?便获得\+1攻击/.test(keff)){ killer.atk+=1; killer.buffs.push({atk:1,hp:0,dist:0,move:0,kw:[]}); log('效果',`【${killer.name}】献祭：+1 攻击`,'sys'); }
+    if(/每击杀一名敌方单位，?可选择获得\+1攻击或\+1生命/.test(keff)){
+      if(killer.owner===CTRL){
+        queueChoice({ title:`【${killer.name}】跳帮`, note:'选择一种增益', options:[
+          {label:'+1 攻击', apply:()=>{ killer.atk+=1; killer.buffs.push({atk:1,hp:0,dist:0,move:0,kw:[]}); log('效果',`【${killer.name}】跳帮：+1 攻击`,'sys'); }},
+          {label:'+1 生命', apply:()=>{ killer.hp+=1; killer.maxHp+=1; killer.buffs.push({atk:0,hp:1,dist:0,move:0,kw:[]}); log('效果',`【${killer.name}】跳帮：+1 生命`,'heal'); }},
+        ]});
+      } else {
+        killer.atk+=1; killer.buffs.push({atk:1,hp:0,dist:0,move:0,kw:[]}); log('效果',`【${killer.name}】跳帮：+1 攻击`,'sys');
+      }
+    }
     if(/消灭一个敌方单位后，?你抽一张牌/.test(keff)){ drawCards(killer.owner,1); log('效果',`【${killer.name}】凯旋：抽一张牌`,'sys'); }
     if(/消灭一个单位后，?\+2生命/.test(keff)){ killer.hp+=2; killer.maxHp+=2; killer.buffs.push({atk:0,hp:2,dist:0,move:0,kw:[]}); log('效果',`【${killer.name}】猎狮：+2 生命`,'heal'); }
     for(const r of ROWS) for(const b of S.board[r]){
@@ -2077,14 +2171,19 @@ function checkGameOver(){
     if(NET.mode){ NET.overShown=true; showGameOver(); render(); return; }
     const win = e<=0 && p>0;
     let rewardText = '';
-    if(e<=0 && p<=0){ PROFILE.streak=0; }
+    const diff = S.aiDifficulty || 'normal';
+    const mult = DIFF_MULT[diff] || 1;
+    PROFILE.streaks = PROFILE.streaks || {};
+    if(e<=0 && p<=0){ PROFILE.streaks[diff]=0; }
     else if(win){
-      PROFILE.streak++;
-      const reward = PROFILE.streak>=3 ? Math.round(60*Math.pow(1.2, PROFILE.streak-2)) : 60;
+      const st = (PROFILE.streaks[diff]||0) + 1;
+      PROFILE.streaks[diff] = st;
+      const base = Math.round(60 * mult);
+      const reward = st>=3 ? Math.round(base*Math.pow(1.2, st-2)) : base;
       PROFILE.gold += reward;
-      rewardText = `胜利奖励 +${reward} 金币` + (PROFILE.streak>=2 ? `（当前 ${PROFILE.streak} 连胜）` : '');
+      rewardText = `胜利奖励 +${reward} 金币（${DIFF_NAME[diff]}）` + (st>=2 ? `（当前 ${st} 连胜）` : '');
     } else {
-      PROFILE.streak = 0;
+      PROFILE.streaks[diff]=0;
       rewardText = '连胜中断，再接再厉';
     }
     saveProfile();
@@ -2792,6 +2891,7 @@ function render(){
   if(NET.mode==='host' && NET.peer && S && !S.tut){
     try{ NET.sendState({...S, sel:null, busy:false}); }catch(e){}
   }
+  renderChoices();
 }
 
 /* ================= 详情弹窗 ================= */
@@ -2884,8 +2984,8 @@ function saveSettings(){ try{ localStorage.setItem(SET_KEY, JSON.stringify(SETTI
 /* ================= 我的卡组：金币 / 收藏 / 开包 ================= */
 function loadProfile(){
   let p;
-  try{ p = Object.assign({gold:0,streak:0,freeClaimed:false,collection:{},decks:[],activeDeck:null}, JSON.parse(localStorage.getItem(pkey(PROFILE_KEY))||'{}')); }
-  catch(e){ p = {gold:0,streak:0,freeClaimed:false,collection:{},decks:[],activeDeck:null}; }
+  try{ p = Object.assign({gold:0,streak:0,freeClaimed:false,collection:{},decks:[],activeDeck:null,streaks:{normal:0,hard:0,extreme:0}}, JSON.parse(localStorage.getItem(pkey(PROFILE_KEY))||'{}')); }
+  catch(e){ p = {gold:0,streak:0,freeClaimed:false,collection:{},decks:[],activeDeck:null,streaks:{normal:0,hard:0,extreme:0}}; }
   if(!Array.isArray(p.decks)) p.decks=[];
   // 旧版单卡包数据迁移为多卡组（注意：此处 CARD_DB 尚未初始化，不能引用）
   if(Array.isArray(p.deck)){
@@ -3151,7 +3251,7 @@ function openPregame(){
     info.innerHTML=`<span style="color:var(--red)">卡组「${dname}」未就绪：${errs[0]}</span><br><span style="color:var(--dim);font-size:13px">请先在「卡包商店 → 设计卡组」中完成组卡</span>`;
     document.getElementById('start-btn').disabled=true;
   }else{
-    info.innerHTML=`当前卡组：<b style="color:var(--gold)">${dname} · ${keys.length} 张</b>（英雄 ${heroCnt} 张）<br><span style="color:var(--dim);font-size:13px">胜利 +60 金币 · 三连胜起 ×1.2 递增</span>`;
+    info.innerHTML=`当前卡组：<b style="color:var(--gold)">${dname} · ${keys.length} 张</b>（英雄 ${heroCnt} 张）<br><span style="color:var(--dim);font-size:13px">胜利金币按难度 ×1.0 / ×1.2 / ×1.5 · 三连胜起 ×1.2 递增 · 各难度连胜独立</span>`;
     document.getElementById('start-btn').disabled=false;
   }
   showScreen('pregame-screen');
@@ -3175,6 +3275,7 @@ const TUT = [
   {t:'🎉 <b>教程完成！</b><br>你已经掌握了出牌、移动、攻击、血量、攻击距离与核心摧毁。回到主菜单后，记得先去「我的卡组」领取新人福利、设计你的第一副卡包！', end:true}
 ];
 function startTutorial(){
+  CHOICE_QUEUE=[];
   S = {
     ver:SAVE_VER, round:1, active:'player', over:false, sel:null, busy:false, tut:{step:0}, log:[],
     board: emptyBoard(),
@@ -3254,6 +3355,7 @@ function showScreen(id){
   if(id==='menu-screen') refreshMenuButtons();
 }
 function backToMenu(){
+  CHOICE_QUEUE=[];
   if(NET.mode) leaveRoomSilent();
   CTRL='player';
   hide('gameover-overlay'); hide('ingame-menu'); hide('dice-overlay');
@@ -3290,6 +3392,53 @@ function rebuildLog(){
 }
 function show(id){ document.getElementById(id).classList.add('show'); }
 function hide(id){ document.getElementById(id).classList.remove('show'); }
+
+/* ================= 玩家选择弹窗（二选一 / 看牌选牌） ================= */
+let CHOICE_QUEUE = [];
+function queueChoice(choice){ CHOICE_QUEUE.push(choice); }
+function resolveChoice(index){
+  const choice = CHOICE_QUEUE.shift();
+  if(!choice) return;
+  const opt = choice.options[index];
+  if(opt && opt.apply) opt.apply();
+  hide('choice-overlay');
+  render();
+  renderChoices();
+}
+function renderChoices(){
+  if(!CHOICE_QUEUE.length){ hide('choice-overlay'); return; }
+  const choice = CHOICE_QUEUE[0];
+  document.getElementById('choice-title').textContent = choice.title || '选 择';
+  const body = document.getElementById('choice-body');
+  body.innerHTML = '';
+  if(choice.note){
+    const n = document.createElement('div'); n.className='cnote'; n.textContent = choice.note; body.appendChild(n);
+  }
+  if(choice.cards){
+    const grid = document.createElement('div'); grid.className='ccards';
+    choice.options.forEach((opt,i)=>{
+      const cd = document.createElement('div');
+      cd.className = 'card t-'+(opt.card.type||'');
+      cd.innerHTML = cardFace(null, opt.card, true);
+      cd.onclick = ()=>resolveChoice(i);
+      cd.oncontextmenu = (ev)=>{ ev.preventDefault(); showDetail(opt.card); };
+      addLongPress(cd, ()=>showDetail(opt.card));
+      const ib = cd.querySelector('.info-btn');
+      if(ib) ib.onclick = (ev)=>{ ev.stopPropagation(); showDetail(opt.card); };
+      grid.appendChild(cd);
+    });
+    body.appendChild(grid);
+  } else {
+    choice.options.forEach((opt,i)=>{
+      const b = document.createElement('button'); b.className='btn cbtn';
+      b.textContent = opt.label;
+      if(opt.desc) b.title = opt.desc;
+      b.onclick = ()=>resolveChoice(i);
+      body.appendChild(b);
+    });
+  }
+  show('choice-overlay');
+}
 function phaseTip(t){
   const el=document.getElementById('phase-tip'); el.textContent=t; el.style.opacity=1;
   setTimeout(()=>el.style.opacity=0,1100);
