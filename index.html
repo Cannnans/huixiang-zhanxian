@@ -1537,10 +1537,10 @@ function loadProfile(){
   try{ p = Object.assign({gold:0,streak:0,freeClaimed:false,collection:{},decks:[],activeDeck:null}, JSON.parse(localStorage.getItem(pkey(PROFILE_KEY))||'{}')); }
   catch(e){ p = {gold:0,streak:0,freeClaimed:false,collection:{},decks:[],activeDeck:null}; }
   if(!Array.isArray(p.decks)) p.decks=[];
-  // 旧版单卡包数据迁移为多卡包
+  // 旧版单卡包数据迁移为多卡包（注意：此处 CARD_DB 尚未初始化，不能引用）
   if(Array.isArray(p.deck)){
     if(p.deck.length && !p.decks.length){
-      p.decks.push({id:Date.now()+Math.floor(Math.random()*1000), name:'我的卡包', keys:p.deck.filter(k=>CARD_DB[k])});
+      p.decks.push({id:Date.now()+Math.floor(Math.random()*1000), name:'我的卡包', keys:p.deck.slice()});
       p.activeDeck = p.decks[0].id;
     }
     delete p.deck;
