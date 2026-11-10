@@ -952,7 +952,7 @@ function newGame(){
   const errs = deckErrors(activeDeckKeys());
   if(errs.length){ hint('卡组未就绪：'+errs[0]+'，请先设计卡组'); return; }
   const aiPack = PACK_KEYS[Math.floor(Math.random()*PACK_KEYS.length)];
-  const playerDeck = shuffle(PROFILE.deck.map(k=>({...CARD_DB[k]})));
+  const playerDeck = shuffle(activeDeckKeys().map(k=>({...CARD_DB[k]})));
   S = {
     ver:SAVE_VER, round:1, active:'player', over:false, sel:null, busy:false, tut:null, log:[],
     board: emptyBoard(),
