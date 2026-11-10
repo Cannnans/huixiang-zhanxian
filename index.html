@@ -815,6 +815,8 @@ function parseMods(text){
   if(!text) return m;
   m.temp = /本回合/.test(text);
   (text.match(/\+(\d+)攻击/g)||[]).forEach(s=>m.atk+=+s.match(/\d+/)[0]);
+  const slash=text.match(/\+(\d+)\/\+(\d+)/);   // 「+1/+2」简写（金鹰盔甲）
+  if(slash){ m.atk+=+slash[1]; m.hp+=+slash[2]; }
   (text.match(/\+(\d+)生命/g)||[]).forEach(s=>m.hp+=+s.match(/\d+/)[0]);
   (text.match(/\+(\d+)(?:攻击)?距离|距离\+(\d+)/g)||[]).forEach(s=>m.dist+=+s.match(/\d+/)[0]);
   (text.match(/-(\d+)移动力/g)||[]).forEach(s=>m.move-=+s.match(/\d+/)[0]);
@@ -898,11 +900,22 @@ function recomputeAuras(){
   dead.forEach(([r,i])=>killUnit(r,i));
 }
 function effCost(side,card){
-  // 费用修正：金字塔群折扣(_costMod) + 阿托莎建筑折扣
+  // 费用修正：金字塔群(_costMod) + 建筑折扣（阿托莎/运河船夫可叠加）+ 绿洲建筑师 + 拉美西斯二世（尼罗河管家）
   let c=(card.cost||0)+(card._costMod||0);
-  if(card.type==='建筑' && S && S.board){
+  if(!S||!S.board) return Math.max(0,c);
+  if(card.type==='建筑'){
+    let disc=0;
+    for(const r of ROWS) for(const u of S.board[r]){
+      if(!u||u.owner!==side) continue;
+      if(/部署建筑卡时少消耗1RP/.test(u.card.effect||'')) disc+=1;
+      if(/建筑卡的部署消耗-1RP/.test(u.card.effect||'')) disc+=1;   // 运河船夫：可叠加
+    }
+    if(S.sides[side]._nextBuildingDisc) disc+=S.sides[side]._nextBuildingDisc;
+    if(disc>0) return Math.max(1,c-disc);
+  }
+  if(/尼罗河管家/.test(card.effect||'')){
     for(const r of ROWS) for(const u of S.board[r])
-      if(u && u.owner===side && /部署建筑卡时少消耗1RP/.test(u.card.effect||'')) return Math.max(1,c-1);
+      if(u&&u.owner===side&&/尼罗河管家部署消耗-1RP/.test(u.card.effect||'')) return Math.max(0,c-1);
   }
   return Math.max(0,c);
 }
@@ -992,12 +1005,40 @@ function startTurn(side){
     if(u.kw.动员 && !u._mobOn && !u._mobLost){ u._mobOn=true; u.atk++; u.hp++; u.maxHp++; log('效果',`【${u.name}】动员：+1+1`,'sys'); }
     // 伪装：上回合未行动则本回合不可被攻击
     u.stealthed = !!u.kw.伪装 && !u.acted;
-    u.acted = false;
+    u.acted = false; u._moved = false; u._noAtkTurn = false; u._noMoreAtk = false;
   }
   // 回合开始触发
+  if(sd._nextRpCapMod){ sd.rpCap=Math.max(0,sd.rpCap+sd._nextRpCapMod); sd.rp=Math.min(sd.rp,sd.rpCap); log('效果','征用粮草：RP 上限 '+sd._nextRpCapMod,'sys'); sd._nextRpCapMod=0; }
+  // 托勒密一世·亚历山大遗产：手牌卡牌类型数 = RP 上限加成
+  {
+    let ptol=false;
+    for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&/你的手牌每控制一个不同类型的卡牌/.test(x.card.effect||'')) ptol=true;
+    if(ptol){
+      const bonus=new Set(sd.hand.map(c=>c.type)).size, old=sd._ptolBonus||0;
+      sd.rpCap=Math.max(0,Math.min(RP_MAX,sd.rpCap-old+bonus)); sd._ptolBonus=bonus;
+    } else if(sd._ptolBonus){ sd.rpCap=Math.max(0,sd.rpCap-sd._ptolBonus); sd._ptolBonus=0; }
+  }
   for(const row of ROWS) for(let i=0;i<COLS;i++){
     const u=S.board[row][i]; if(!u||u.owner!==side) continue;
     const eff=u.card.effect||'';
+    // 马克里努斯：三回合后自动摧毁
+    if(u._dieRound && S.round>=u._dieRound){ log('效果',`【${u.name}】昙花一现：自动摧毁`,'dmg'); killUnit(row,i); continue; }
+    // 流浪剑客：回合开始自动二选一（血多抢攻，血少保命）
+    if(/回合开始时，?可选择\+2攻击，?-2生命或-2攻击，?\+2生命/.test(eff)){
+      if(u.hp>3){ u.atk+=2; u.hp-=2; u.maxHp-=2; u.tempMods.push({atk:2,hp:-2,dist:0,move:0}); }
+      else { u.atk=Math.max(0,u.atk-2); u.hp+=2; u.maxHp+=2; u.tempMods.push({atk:-2,hp:2,dist:0,move:0}); }
+      log('效果',`【${u.name}】匹夫之勇：调整攻防`,'sys');
+    }
+    // 罗马军乐手：相邻友方本回合+1移动力
+    if(/回合开始时，?相邻友方单位\+1移动力/.test(eff)){
+      for(const dc of [-1,1]){ const x=S.board[row][i+dc]; if(x&&x.owner===side){ x.move++; x.ap++; x.tempMods.push({atk:0,hp:0,dist:0,move:1}); } }
+      log('效果',`【${u.name}】士气号角：相邻友方 +1 移动力`,'sys');
+    }
+    // 罗马执政官：同战线友方本回合+1移动力
+    if(/你的回合开始时，?同一战线友方单位本回合\+1移动力/.test(eff)){
+      S.board[row].forEach(x=>{ if(x&&x.owner===side){ x.move++; x.ap++; x.tempMods.push({atk:0,hp:0,dist:0,move:1}); } });
+      log('效果',`【${u.name}】政令：同战线友方 +1 移动力`,'sys');
+    }
     if(/你的回合开始时，?若本建筑相邻战线无敌方单位，?你回复1点核心耐久/.test(eff)){
       const hasFoe=adjRows(row).some(ar=>S.board[ar].some(x=>x&&x.owner!==side));
       if(!hasFoe){ sd.core=Math.min(CORE_HP,sd.core+1); log('效果',`【${u.name}】秘密祭礼：核心耐久 +1`,'heal'); }
@@ -1116,7 +1157,39 @@ function endTurn(){
         const foes=[]; for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner!==side) foes.push(x);
         if(foes.length){ const x=foes[Math.floor(Math.random()*foes.length)]; applyDebuff(x,'atk','zero',side,u.name+'·夜啼'); }
       }
+      // 格拉古兄弟：罗马农兵+1+1
+      if(/所有友方罗马农兵获得\+1攻击，?\+1生命/.test(eff)){
+        for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x.name.includes('罗马农兵')){ x.atk++; x.hp++; x.maxHp++; x.buffs.push({atk:1,hp:1,dist:0,move:0,kw:[]}); }
+        log('效果',`【${u.name}】土地改革：罗马农兵 +1+1`,'sys');
+      }
+      // 村庄长老：相邻的友方单位+1生命
+      if(/指定一个相邻的友方单位\+1生命/.test(eff)) healPick([-1,1].map(dc=>S.board[row][i+dc]).filter(x=>x&&x.owner===side));
     }
+  }
+  // 野猪：入场回合未移动则摧毁
+  for(const row of ROWS) for(let i=0;i<COLS;i++){
+    const u=S.board[row][i];
+    if(u && u.owner===side && u._mustMove){
+      u._mustMove=false;
+      if(!u._moved){ log('效果',`【${u.name}】冲撞失败：未移动被摧毁`,'dmg'); killUnit(row,i); }
+    }
+  }
+  // 拉美西斯三世：未移动的回合获得重甲(1)
+  for(const row of ROWS) for(let i=0;i<COLS;i++){
+    const u=S.board[row][i];
+    if(u && u.owner===side && /未移动的回合，?获得重甲/.test(u.card.effect||'') && !u._moved){
+      u.kw.armor=(u.kw.armor||0)+1;
+      (u.armorTemp=u.armorTemp||[]).push({until:side});
+      log('效果',`【${u.name}】防御态势：获得重甲(1)`,'sys');
+    }
+  }
+  // 纸莎草沼泽等区域效果
+  if(S.zones && S.zones.length){
+    for(const z of S.zones){
+      S.board[z.row].forEach((x,ci)=>{ if(x){ x.atk=Math.max(0,x.atk-1); x.hp-=1; x.maxHp-=1; log('效果',`纸莎草沼泽：【${x.name}】-1 攻击 -1 生命`,'sys'); if(x.hp<=0) killUnit(z.row,ci); } });
+      if(side==='enemy') z.roundsLeft--;
+    }
+    S.zones=S.zones.filter(z=>z.roundsLeft>0);
   }
   if(side==='enemy') S.round++;
   log('系统',`${S.sides[side].name}回合结束`,'sys');
@@ -1145,6 +1218,8 @@ function mkUnit(card, owner){
     actives:parseActives(card.effect), _actState:{}, tempKws:[], tempBleed:false,
     stealthed:!!kw.伪装, _combo2:false, _revived:false};
   if(kw.闪击) u.ap = u.move;
+  if(/部署后可移动/.test(card.effect||'') && !kw.闪击){ u.ap=u.move; u._noAtkTurn=true; }   // 王室信使：可移动不可攻击
+  if(/入场回合必须移动/.test(card.effect||'')) u._mustMove=true;   // 野猪
   if(u.type==='建筑') u.ap = 0;
   return u;
 }
@@ -1167,6 +1242,7 @@ function deploy(side, card, col, row){
   const cost = effCost(side, card);
   if(sd.rp < cost) return false;
   sd.rp -= cost;
+  if(card.type==='建筑' && sd._nextBuildingDisc) sd._nextBuildingDisc=0;   // 绿洲建筑师折扣消费
   sd.hand.splice(sd.hand.indexOf(card),1);
   const u = mkUnit(card, side);
   S.board[row][col] = u;
@@ -1184,17 +1260,24 @@ function deployTriggers(side, u, row, col){
   const sd=S.sides[side], foe=side==='player'?'enemy':'player';
   const L=m=>log('效果',m,'sys');
   if(/双方玩家各抽一张牌/.test(eff)){ drawCards(side,1); drawCards(foe,1); L(`【${u.name}】入场：双方各抽一张牌`); }
-  if(/入场时[，,]?抽两张牌/.test(eff)){ drawCards(side,2); L(`【${u.name}】入场：抽两张牌`); }
-  else if(/入场时[，,]?抽一张牌/.test(eff)){ drawCards(side,1); L(`【${u.name}】入场：抽一张牌`); }
+  if(/入场时[，,]?抽两张[牌卡]/.test(eff)){ drawCards(side,2); L(`【${u.name}】入场：抽两张牌`); }
+  else if(/入场时[，,]?抽一张[牌卡]/.test(eff)){ drawCards(side,1); L(`【${u.name}】入场：抽一张牌`); }
   if(/入场时[，,]?抽一张装备[卡牌]/.test(eff)) drawFiltered(side,c=>c.type==='装备',`【${u.name}】入场`);
-  const rpM=eff.match(/入场时[，,]?(?:获得)?(\d+)点RP上限/)||eff.match(/入场时[，,]?RP上限\+(\d+)/);
+  const rpM=eff.match(/入场时[，,]?(?:额外)?(?:获得)?(\d+)点RP上限/)||eff.match(/入场时[，,]?RP上限\+(\d+)/);   // 含「额外获得」
   if(rpM){ sd.rpCap=Math.min(RP_MAX,sd.rpCap+(+rpM[1])); u.grantedRp=(u.grantedRp||0)+(+rpM[1]); L(`【${u.name}】入场：RP 上限 +${rpM[1]}`); }
   if(/RP上限\+\d+并抽一张牌/.test(eff)) drawCards(side,1);
   // 召唤衍生物 / 指定单位
-  let sm=eff.match(/召唤(\d+)个?[“"](\S+?)[”"]衍生物/);
+  let sm=eff.match(/召唤(\d+)个?[“"](\S+?)[”"](?:衍生物)?/);
   if(sm) for(let k=0;k<+sm[1];k++) spawnAdjacent(side,row,col,tokenCard(sm[2],eff));
   sm=eff.match(/召唤(\d+)个?(\S+?)在本单位相邻站位/);
   if(sm){ const c=findCardAny(sm[2]); if(c) for(let k=0;k<+sm[1];k++) spawnAdjacent(side,row,col,{...c}); }
+  // 法老驯兽师：召唤两个战狮(2/1/2/1)在相邻空位（中文数字、无引号、无「衍生物」后缀）
+  sm=eff.match(/召唤([一二两三四])(个)?(\S+?)[(（]\d/);
+  if(sm){
+    const cnt={'一':1,'二':2,'两':2,'三':3,'四':4}[sm[1]]||1;
+    const c=findCardAny(sm[3]);
+    if(c) for(let k=0;k<cnt;k++) spawnAdjacent(side,row,col,{...c});
+  }
   // 群体净化 / 增益 / 侦察
   if(/入场时[，,]?所有友方单位获得净化/.test(eff)){ for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x!==u) cleanse(x,u.name); }
   if(/入场时[，,]?所有友方单位\+1生命/.test(eff)){
@@ -1231,6 +1314,35 @@ function deployTriggers(side, u, row, col){
     if(tgt){ grantTempKw(tgt,'守卫',side); L(`【${u.name}】入场：【${tgt.name}】获得守卫（到你的下回合开始）`); }
     if(/此战线友方英雄卡\+1生命/.test(eff)) S.board[row].forEach(x=>{ if(x&&x.owner===side&&x.type==='英雄'){ x.hp++; x.maxHp++; x.buffs.push({atk:0,hp:1,dist:0,move:0,kw:[]}); } });
   }
+  if(/入场时，?双方玩家各随机丢弃一张手牌/.test(eff)){   // 疯癫预言者
+    for(const sd2 of [sd,S.sides[foe]]){
+      if(sd2.hand.length){ const c=sd2.hand.splice(Math.floor(Math.random()*sd2.hand.length),1)[0]; sd2.discard.push(c); L(`【${u.name}】胡言乱语：${sd2.name}弃置【${c.name}】`); }
+    }
+  }
+  if(/入场时[，,]?\+1点攻击力或生命值/.test(eff)){   // 话痨鹦鹉
+    if(Math.random()<0.5){ u.atk++; u.buffs.push({atk:1,hp:0,dist:0,move:0,kw:[]}); L(`【${u.name}】学舌：+1 攻击`); }
+    else { u.hp++; u.maxHp++; u.buffs.push({atk:0,hp:1,dist:0,move:0,kw:[]}); L(`【${u.name}】学舌：+1 生命`); }
+  }
+  if(/入场时[，,]?将一张随机通用卡包装备加入手牌/.test(eff)){   // 笨拙发明家
+    const pool=CARD_DATA['通用卡包（80张）'].filter(c=>c.type==='装备'&&!c.summonOnly);
+    if(pool.length){ const g={...pool[Math.floor(Math.random()*pool.length)],pack:'通用卡包（80张）'}; sd.hand.push(g); L(`【${u.name}】蹩脚造物：获得【${g.name}】`); }
+  }
+  if(/入场时[，,]?从牌库中随机抽取一张费用≤4的部队卡/.test(eff)) drawFiltered(side,c=>c.type==='部队'&&(c.cost||0)<=4,`【${u.name}】希腊雇佣兵`);   // 普萨美提克
+  if(/入场时[，,]?复制场上一个非英雄单位的词条/.test(eff)){   // 托勒密一世
+    let src=null;
+    for(const r of ROWS) for(const x of S.board[r]) if(x&&x.type!=='英雄'&&x!==u){ src=x; break; }
+    if(src){
+      Object.keys(src.kw).forEach(k=>{ if(!u.kw[k]) u.kw[k]=src.kw[k]; });
+      L(`【${u.name}】继业者：复制了【${src.name}】的词条`);
+    }
+  }
+  if(/入场时[，,]?选择一个友方建筑卡，?其获得[“"]无法被攻击/.test(eff)){   // 斯尼弗鲁
+    let bld=null;
+    for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x.type==='建筑'&&x!==u){ bld=x; break; }
+    if(bld){ bld._untargetable=true; bld._untargetableUntil=side; L(`【${u.name}】弯曲金字塔：【${bld.name}】无法被攻击（到你的下回合开始）`); }
+  }
+  if(/入场时[，,]?你下一个部署的建筑卡费用-1/.test(eff)){ sd._nextBuildingDisc=(sd._nextBuildingDisc||0)+1; L(`【${u.name}】设计：下一座建筑 -1 RP`); }   // 绿洲建筑师
+  if(/三回合后，?自动摧毁此卡/.test(eff)) u._dieRound=S.round+3;   // 马克里努斯
   if(/入场时，?无RP消耗发动指定一个友方建筑主动词条/.test(eff)){
     let bld=null;
     for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x.type==='建筑'&&(x.actives||[]).length){ bld=x; break; }
@@ -1243,8 +1355,12 @@ function moveUnit(fromRow, fromCol, toRow, toCol){
   if(S.board[toRow][toCol]) return false;
   if(toRow==='front' && S.board.front.some(x=>x && x.owner!==u.owner)) return false;  // 前线独占
   S.board[toRow][toCol] = u; S.board[fromRow][fromCol] = null;
-  u.ap--; u.acted = true; u.justDeployed = false; u.stealthed = false;
+  u.ap--; u.acted = true; u._moved = true; u.justDeployed = false; u.stealthed = false;
   if(u._stealthOnce){ delete u.kw.伪装; u._stealthOnce=false; }
+  if(/进入前线后获得伪装/.test(u.card.effect||'') && toRow==='front'){   // 苇草陆战队
+    u.kw.伪装=true; u.stealthed=true;
+    log('效果',`【${u.name}】两栖登陆：获得伪装`,'sys');
+  }
   log('',`${u.name} 移动至${rowName(toRow)}${toCol+1}号位`);
   // 警戒：相邻战线有敌方单位进入时抽牌
   const foe = u.owner==='player'?'enemy':'player';
@@ -1260,6 +1376,10 @@ function moveUnit(fromRow, fromCol, toRow, toCol){
       killUnit(toRow,i);
       if(u.hp<=0){ killUnit(toRow,toCol); return true; }
     }
+  }
+  // 湿滑苔藓：任何单位进入其相邻战线，本回合移动力-1
+  for(const ar of adjRows(toRow)) for(const m2 of S.board[ar]){
+    if(m2 && /进入本单位相邻战线的单位本回合移动力-1/.test(m2.card.effect||'')) applyDebuff(u,'move',-1,u.owner,m2.name);
   }
   // 相邻战线敌方建筑：入场减速 / 烽火台抽牌 / 畏惧
   for(const ar of adjRows(toRow)) for(const b of S.board[ar]){
@@ -1277,31 +1397,39 @@ function moveUnit(fromRow, fromCol, toRow, toCol){
 function rowDist(a,b){ return Math.abs(ROWS.indexOf(a)-ROWS.indexOf(b)); }
 
 function unitPos(u){ for(const row of ROWS){ const i=S.board[row].indexOf(u); if(i>=0) return [row,i]; } return [null,-1]; }
-function hasGuardNeighbor(row, col, owner){
+function hasGuardNeighbor(row, col, owner, att){
+  // 以神之名：攻击方本回合无视守卫
+  if(att && S.sides[att.owner] && S.sides[att.owner]._ignoreGuardRound===S.round) return false;
   // 守卫：左右相邻的友方守卫存活时，本单位不可被攻击
   for(const dc of [-1,1]){
     const c = col+dc; if(c<0||c>=COLS) continue;
     const g = S.board[row][c];
-    if(g && g.owner===owner && g.kw.守卫) return true;
+    if(g && g.owner===owner && (g.kw.守卫 || (g._aura&&g._aura.guard))) return true;
   }
   return false;
 }
 function canTargetUnit(att, def){
-  if(def.stealthed) return false;
+  if(def._untargetable) return false;   // 无法被攻击（如斯尼弗鲁的弯曲金字塔）
+  if(def.stealthed && !matchText(att,/可攻击伪装单位/)) return false;
+  if(/只被光属性单位攻击/.test(def.card.effect||'') && att.attr!=='光') return false;   // 不安的幽灵
+  if(/仅在该战线无其他友方单位时可被攻击/.test(def.card.effect||'')){   // 闪烁的萤火虫
+    const [dr]=unitPos(def);
+    if(dr && S.board[dr].some(x=>x&&x!==def&&x.owner===def.owner)) return false;
+  }
   const [dr,dc] = unitPos(def);
-  if(dr && hasGuardNeighbor(dr, dc, def.owner)) return false;
+  if(dr && hasGuardNeighbor(dr, dc, def.owner, att)) return false;
   return true;
 }
 
 /* ================= 增益 / 减益（打击·压制·削弱·畏惧·燃烧·驱散·净化） ================= */
-function applyDebuff(u, kind, amount, untilSide, srcName){
-  // kind: 'move'|'atk'；amount: -1 或 'zero'；untilSide 的下个回合开始时复原
+function applyDebuff(u, kind, amount, untilSide, srcName, rounds){
+  // kind: 'move'|'atk'；amount: -1 或 'zero'；untilSide 的下个回合开始时复原；rounds>1 持续多轮
   u.debuffs = u.debuffs||[];
   const cur = u[kind];
   const delta = amount==='zero' ? -cur : Math.max(amount, -cur);
   u[kind] = Math.max(0, cur+delta);
   if(kind==='move') u.ap = Math.min(u.ap, u.move);
-  u.debuffs.push({[kind]:-delta, until:untilSide});
+  u.debuffs.push({[kind]:-delta, until:untilSide, rounds:rounds||1});
   log('效果',`【${srcName}】：【${u.name}】${kind==='move'?'移动力':'攻击力'}${amount==='zero'?'清零':amount}，持续到 ${S.sides[untilSide].name} 下回合开始`,'sys');
 }
 function expireDebuffs(side){
@@ -1310,7 +1438,11 @@ function expireDebuffs(side){
     if(u.debuffs && u.debuffs.length){
       const stay=[];
       for(const d of u.debuffs){
-        if(d.until===side){ if(d.move) u.move+=d.move; if(d.atk) u.atk+=d.atk; }
+        if(d.until===side){
+          d.rounds=(d.rounds||1)-1;
+          if(d.rounds<=0){ if(d.move) u.move+=d.move; if(d.atk) u.atk+=d.atk; }
+          else stay.push(d);
+        }
         else stay.push(d);
       }
       if(stay.length!==u.debuffs.length) log('效果',`【${u.name}】的属性削弱已复原`,'sys');
@@ -1319,6 +1451,11 @@ function expireDebuffs(side){
     if(u.kwTemp && u.kwTemp.length){
       u.kwTemp=u.kwTemp.filter(x=>{ if(x.until===side){ delete u.kw[x.kw]; return false; } return true; });
     }
+    if(u._curseHp && u._curseHp.until===side){
+      u._curseHp.rounds--;
+      if(u._curseHp.rounds<=0){ u.maxHp+=u._curseHp.restore; u.hp+=u._curseHp.restore; u._curseHp=null; }
+    }
+    if(u._untargetable && u._untargetableUntil===side){ u._untargetable=false; u._untargetableUntil=null; }
     if(u.armorTemp && u.armorTemp.length){
       u.armorTemp=u.armorTemp.filter(x=>{
         if(x.until===side){ u.kw.armor=(u.kw.armor||0)-1; if(u.kw.armor<=0) delete u.kw.armor; return false; }
@@ -1663,15 +1800,18 @@ function applyAbilityEffect(side, u, ab, tRow, tCol){
 
 function attack(fr, fc, tr, tc){
   const att = S.board[fr][fc];
-  if(!att || att.ap<1 || att.atk<=0) return false;
+  if(!att || att.ap<1 || att.atk<=0 || att._noAtkTurn || att._noMoreAtk) return false;
   att.ap--; att.hasAttacked = true; att.acted = true; att.justDeployed = false; att.stealthed = false;
   if(att._stealthOnce){ delete att.kw.伪装; att._stealthOnce=false; }
   let baseAtk = att.atk;
-  if(att.kw.连击 && att._combo2) baseAtk = Math.floor(att.atk/2);   // 连击第二次减半
+  if(att.kw.连击 && att._combo2 && !/第二次攻击时伤害不减少/.test(att.card.effect||'')) baseAtk = Math.floor(att.atk/2);   // 连击第二次减半（蝎子王除外）
+  const attAttr = (S.sides[att.owner]._lightRound===S.round) ? '光' : att.attr;   // 以神之名：伤害视为光属性
   if(tr==='core'){
     const def = S.sides[att.owner==='player'?'enemy':'player'];
     const cm=matchText(att,/攻击核心时\+(\d+)攻击/);
     if(cm) baseAtk+=+cm[1];
+    const cx=matchText(att,/攻击核心时[，,]?(?:对其)?(?:造成)?额外?(\d+)点(?:额外)?伤害/);
+    if(cx) baseAtk+=+cx[1];   // 邋遢盗贼/斯尼弗鲁：核心额外伤害
     if(matchText(att,/攻击核心时[，,]?你获得1RP/)){ S.sides[att.owner].rp++; log('效果',`【${att.name}】征税：获得 1 RP`,'sys'); }
     def.core -= baseAtk;
     def._coreHurtRound = S.round;
@@ -1683,7 +1823,39 @@ function attack(fr, fc, tr, tc){
   }
   const def = S.board[tr][tc];
   if(!def) return false;
-  let dmgA = baseAtk + (restrain(att.attr,def.attr)?2:0);
+  if(def._immuneRound===S.round){ log('效果',`【${def.name}】免疫本次伤害`,'sys'); return true; }   // 万神殿的祈祷
+  // 克制加成（维斯塔贞女：相邻友方不受克制影响）
+  let restrainBonus = restrain(attAttr,def.attr) ? 2 : 0;
+  if(restrainBonus){
+    const [dr0,dc0]=unitPos(def);
+    for(const c2 of [dc0-1,dc0+1]){
+      const g=S.board[dr0]&&S.board[dr0][c2];
+      if(g && g.owner===def.owner && /不受属性相克/.test(g.card.effect||'')){ restrainBonus=0; break; }
+    }
+  }
+  let dmgA = baseAtk + restrainBonus;
+  if(/攻击英雄卡时，?攻击力翻倍/.test(att.card.effect||'') && def.type==='英雄') dmgA=baseAtk*2+restrainBonus;   // 圣乔治
+  if(/攻击木属性或无属性单位时，?攻击\+1/.test(att.card.effect||'') && (def.attr==='木'||def.attr==='无')) dmgA+=1;   // 埃及精锐步兵
+  if(/攻击未被守卫的单位时/.test(att.card.effect||'')){ const [dr1,dc1]=unitPos(def); if(dr1&&!hasGuardNeighbor(dr1,dc1,def.owner,att)) dmgA+=1; }   // 努比亚弓箭手
+  if(/首次攻击时，?造成额外2点伤害/.test(att.card.effect||'') && !att._firstAtkDmg) dmgA+=2;   // 沙漠侦察兵
+  if(/攻击伪装单位时，?造成额外2点伤害/.test(att.card.effect||'') && def.stealthed) dmgA+=2;   // 荷鲁斯之眼
+  // 沙漠强盗：攻击伪装单位直接摧毁且不受反击
+  if(/攻击伪装状态下的单位时，?直接将其毁坏/.test(att.card.effect||'') && def.stealthed){
+    log('战斗',`【${att.name}】伏击：【${def.name}】被直接摧毁！`,'dmg');
+    killUnit(tr,tc,att);
+    att._firstAtkDmg=true;
+    if(S.tut && att.owner==='player') tutNotify('attack', att);
+    afterAttack(att,fr,fc); checkGameOver(); return true;
+  }
+  // 拉美西斯二世：被攻击时召唤战车兵抵挡（每三回合限一次）
+  if(/被攻击时，?召唤一个埃及战车兵/.test(def.card.effect||'') && (def._ramsesRound==null || S.round>=def._ramsesRound+3)){
+    def._ramsesRound=S.round;
+    spawnAdjacent(def.owner,tr,tc,{...findCardAny('埃及战车兵')||{type:'部队',name:'埃及战车兵',attr:'土',range:'近',cost:0,atk:2,hp:3,move:1,dist:1,effect:'守卫'}});
+    const g=S.board[tr][tc-1]&&S.board[tr][tc-1].name==='埃及战车兵'?S.board[tr][tc-1]:(S.board[tr][tc+1]||null);
+    if(g) g.kw.守卫=true;
+    log('效果',`【${def.name}】卡迭石之战：召唤埃及战车兵抵挡本次伤害！`,'sys');
+    afterAttack(att,fr,fc); checkGameOver(); return true;   // 本次伤害被抵挡
+  }
   const bm=matchText(att,/攻击建筑时\+(\d+)攻击/);
   if(bm && def.type==='建筑') dmgA+=+bm[1];   // 攻城类加成
   let armorNote = '';
@@ -1696,12 +1868,16 @@ function attack(fr, fc, tr, tc){
   def.hp -= dmgA;
   mobBreak(def);
   let msg = `【${att.name}】→【${def.name}】造成 ${dmgA} 点伤害`;
-  if(restrain(att.attr,def.attr)) msg += '（克制+2）';
+  if(restrainBonus) msg += '（克制+2）';
   if(bm && def.type==='建筑') msg += `（攻城+${bm[1]}）`;
   msg += armorNote;
   log('战斗', msg, 'dmg');
   if(att.kw.吸血 && dmgA>0){ att.hp=Math.min(att.maxHp,att.hp+1); log('效果',`【${att.name}】吸血：回复 1 点生命`,'heal'); }
-  // 反击：近↔近 或 远↔远，且防御方有攻击力且仍存活
+  // 长枪阵：攻击本单位的单位受到 1 点反弹伤害
+  if(/攻击本单位的单位受到1点反弹伤害/.test(def.card.effect||'') && att.hp>0){
+    att.hp-=1; mobBreak(att);
+    log('效果',`【${def.name}】长枪阵：【${att.name}】受到 1 点反弹伤害`,'dmg');
+  }
   if(def.atk>0 && att.range===def.range && def.type!=='建筑' && def.hp>0){
     let dmgD = def.atk + (restrain(def.attr,att.attr)?2:0);
     if(att._aura && att._aura.def>0 && dmgD>1) dmgD=Math.max(1,dmgD-att._aura.def);
@@ -1713,6 +1889,37 @@ function attack(fr, fc, tr, tc){
     mobBreak(att);
     log('战斗',`【${def.name}】反击，对【${att.name}】造成 ${dmgD} 点伤害`,'dmg');
     if(def.kw.吸血 && dmgD>0) def.hp=Math.min(def.maxHp,def.hp+1);
+  }
+  // 镰刃战车 / 尼禄的金琴：攻击时对目标相邻单位溅射
+  {
+    const splashFull=/攻击时，?对目标及其相邻单位造成伤害/.test(att.card.effect||'');
+    const splash1=matchText(att,/攻击时，?对目标相邻单位造成1点伤害/);
+    if((splashFull||splash1) && tr!=='core'){
+      for(const dc of [-1,1]){
+        const c=tc+dc; if(c<0||c>=COLS) continue;
+        const x=S.board[tr][c];
+        if(x && x!==def){
+          const sd2=splashFull?dmgA:1;
+          x.hp-=sd2; mobBreak(x);
+          log('效果',`【${att.name}】溅射：波及【${x.name}】造成 ${sd2} 点伤害`,'dmg');
+          if(x.hp<=0) killUnit(tr,c,att);
+        }
+      }
+    }
+    const th30=matchText(att,/攻击时，?有30%几率对目标造成额外(\d+)点/);
+    if(th30 && def.hp>0 && Math.random()<0.3){
+      def.hp-=+th30[1]; mobBreak(def);
+      log('效果',`【${att.name}】神怒：额外 ${th30[1]} 点光属性伤害`,'dmg');
+    }
+    if(/本单位首次攻击时，?获得1点RP/.test(att.card.effect||'') && !att._firstAtkRP){   // 贪吃鼠
+      att._firstAtkRP=true; S.sides[att.owner].rp++;
+      log('效果',`【${att.name}】偷吃粮草：获得 1 RP`,'sys');
+    }
+    att._firstAtkDmg=true;
+    if(/被攻击时，?攻击者本回合无法再次攻击/.test(def.card.effect||'') && def.hp>0){   // 迷路小孩
+      att._noMoreAtk=true; att.ap=0;
+      log('效果',`【${def.name}】哭喊：【${att.name}】本回合无法再次攻击`,'sys');
+    }
   }
   // 攻击命中附加词条：打击/压制/削弱/畏惧/燃烧/驱散（目标仍存活才生效）
   if(def.hp>0){
@@ -1768,6 +1975,19 @@ function afterAttack(att, fr, fc){
 }
 function killUnit(row,col,killer){
   const u = S.board[row][col]; if(!u) return;
+  // 普鲁托的硬币：支付 2RP 复生
+  if((u.buffs||[]).some(b=>/买路钱/.test(b.effect||'')) && !u._coinUsed){
+    const sd2=S.sides[u.owner];
+    if(sd2.rp>=2){ sd2.rp-=2; u._coinUsed=true; u.hp=1; u.stealthed=false; log('效果',`【${u.name}】买路钱：支付 2RP 复生！`,'heal'); return; }
+  }
+  // 金鹰盔甲：首次被摧毁移回手牌
+  const wingIdx=(u.buffs||[]).findIndex(b=>/首次被摧毁时，?将其移回手牌/.test(b.effect||''));
+  if(wingIdx>=0){
+    S.sides[u.owner].hand.push(u.card);
+    S.board[row][col]=null;
+    log('效果',`【${u.name}】神圣守护：移回持有者手牌`,'heal');
+    return;
+  }
   if(u.kw.复生 && !u._revived){
     u._revived = true; u.hp = 1; u.stealthed = false;
     log('效果',`【${u.name}】复生：以 1 点生命值复活！`,'heal');
@@ -1811,7 +2031,21 @@ function killUnit(row,col,killer){
     for(const x of S.board[row]) if(x && x.owner===u.owner){ x.atk+=1; x.tempMods.push({atk:1,hp:0,dist:0,move:0}); }
     log('效果',`【${u.name}】：战狮出闸！此战线友方单位本回合 +1 攻击`,'sys');
   }
-  if(/被摧毁时，?你获得1RP/.test(eff)){ sd.rp++; log('效果',`【${u.name}】：你获得 1 RP`,'sys'); }
+  if(/被摧毁时，?你获得1RP|被摧毁后返还1RP|被摧毁时，?你获得1点RP/.test(eff)){ sd.rp++; log('效果',`【${u.name}】：你获得 1 RP`,'sys'); }
+  if(/被摧毁时，?对手卡组洗入一张乌鸦/.test(eff)){   // 乌鸦
+    const crow=findCardAny('乌鸦');
+    if(crow){ S.sides[foe].deck.push({...crow}); shuffle(S.sides[foe].deck); log('效果',`【${u.name}】呱噪：对手卡组洗入一张乌鸦`,'sys'); }
+  }
+  // 地痞：击杀者失去 1RP
+  if(killer && killer.owner && killer.owner!==u.owner && /消灭本单位的单位操控者失去1点RP/.test(eff)){
+    S.sides[killer.owner].rp=Math.max(0,S.sides[killer.owner].rp-1);
+    log('效果',`【${u.name}】勒索：击杀者失去 1 RP`,'sys');
+  }
+  // 尼禄的金琴：装备单位被摧毁时，对所在战线所有单位造成 3 点伤害
+  if((u.buffs||[]).some(b=>/纵火者的狂欢/.test(b.effect||''))){
+    for(let i=0;i<COLS;i++){ const x=S.board[row][i]; if(x){ x.hp-=3; mobBreak(x); if(x.hp<=0) killUnit(row,i); } }
+    log('效果',`【${u.name}】纵火者的狂欢：所在战线所有单位受到 3 点伤害`,'dmg');
+  }
   if(/被摧毁时，?对手失去1RP/.test(eff)){ S.sides[foe].rp=Math.max(0,S.sides[foe].rp-1); log('效果',`【${u.name}】：对手失去 1 RP`,'sys'); }
   // 罗慕路斯离场：解除其控制的单位
   for(const r of ROWS) for(const x of S.board[r]) if(x && x._controller===u){
@@ -1889,6 +2123,7 @@ function applyEquip(side, card, row, col){
   const u = S.board[row][col];
   const sd = S.sides[side];
   if(!u || u.owner!==side || sd.rp<card.cost) return false;
+  if(/装备英雄卡获得/.test(card.effect||'') && u.type!=='英雄'){ if(side===CTRL) hint('该装备只能装备英雄卡'); return false; }   // 尼禄的金琴
   sd.rp -= card.cost; sd.hand.splice(sd.hand.indexOf(card),1);
   const m = parseMods(card.effect);
   u.atk+=m.atk; u.hp+=m.hp; u.maxHp+=m.hp; u.dist=Math.min(2,u.dist+m.dist); u.move+=m.move;
@@ -1903,7 +2138,7 @@ function applyEquip(side, card, row, col){
   });
   const newKw = Object.keys(granted).filter(k=>!u.kw[k]);   // 仅记录新增的词条，驱散时可安全移除
   Object.assign(u.kw, granted);
-  const buffRec={atk:m.temp?0:m.atk, hp:m.temp?0:m.hp, dist:m.temp?0:m.dist, move:m.temp?0:m.move, kw:newKw};
+  const buffRec={atk:m.temp?0:m.atk, hp:m.temp?0:m.hp, dist:m.temp?0:m.dist, move:m.temp?0:m.move, kw:newKw, effect:card.effect};
   const eqActives=parseActives(card.effect);   // 装备授予的主动技能（如莎草纸卷轴）
   if(eqActives.length){
     u.actives=u.actives||[];
@@ -1916,12 +2151,23 @@ function applyEquip(side, card, row, col){
   sd.discard.push(card);
   return true;
 }
+function skillTargetable(side, u){
+  // 哈特谢普苏特：本单位及相邻友方单位无法成为敌方技能卡目标
+  if(side===u.owner) return true;
+  if(/无法成为敌方技能卡目标/.test(u.card.effect||'')) return false;
+  const [r,c]=unitPos(u);
+  for(const dc of [-1,1]){
+    const g=S.board[r]&&S.board[r][c+dc];
+    if(g && g.owner===u.owner && /无法成为敌方技能卡目标/.test(g.card.effect||'')) return false;
+  }
+  return true;
+}
 function skillNeedsTarget(card){
   const t = card.effect||'';
   if(/消灭一个友方/.test(t)) return 'friendlyKill';
   if(/指定一个敌方建筑/.test(t)) return 'enemyBuilding';
   if(/指定一个友方建筑/.test(t)) return 'friendlyBuilding';
-  if(/选择一条战线|指定一个战线|对一条战线|在一条友方战线/.test(t)) return 'row';
+  if(/选择一条战线|指定一[条个]战线|对一条战线|在一条友方战线/.test(t)) return 'row';
   if(/指定一个敌方/.test(t)) return 'enemy';
   if(/指定一个友方/.test(t)) return 'friendly';
   return null;
@@ -1962,6 +2208,13 @@ function castSkill(side, card, tRow, tCol){
         S.board[tRow][empt[0]]=mkUnit(tokenCard(sumR[2],t),side);
         log('效果',`【${card.name}】：召唤【${sumR[2]}】至${rowName(tRow)}`,'sys');
       }
+      applied=true;
+    }
+    // 纸莎草沼泽：区域持续两回合
+    if(/使所有单位在此战线结束回合时，?-1攻击，?-1生命/.test(t)){
+      S.zones=S.zones||[];
+      S.zones.push({row:tRow, roundsLeft:2, owner:side});
+      log('技能',`【${card.name}】：${rowName(tRow)}陷入沼泽（两回合）`,'sys');
       applied=true;
     }
   }
@@ -2031,6 +2284,69 @@ function castSkill(side, card, tRow, tCol){
     log('技能',`【${card.name}】：所有友方单位本回合 +1 移动力`,'sys');
     applied=true;
   }
+  // 征用粮草：+2RP，下回合 RP 上限 -1
+  if(/你获得2点RP[。，]/.test(t)){ sd.rp+=2; log('技能',`【${card.name}】：获得 2 RP`,'sys'); applied=true; }
+  if(/下回合你的-1RP上限/.test(t)) sd._nextRpCapMod=(sd._nextRpCapMod||0)-1;
+  // 万神殿的祈祷：复活 + 本回合免疫
+  if(/复活一个本场对决中被摧毁的友方非英雄单位/.test(t)){
+    const idx=sd.discard.map((c,i)=>[c,i]).filter(([c])=>c.type!=='英雄'&&c.atk!==undefined).pop();
+    if(idx){
+      const [c]=idx; sd.discard.splice(idx[1],1);
+      const rows=[side==='player'?'playerBack':'enemyBack', side==='player'?'playerBase':'enemyBase'];
+      let placed=false;
+      for(const r of rows){ for(let i=0;i<COLS&&!placed;i++){
+        if(!S.board[r][i] && !(r===BASE_ROW[side]&&i===CORE_COL)){
+          const nu2=mkUnit({...c},side); nu2.hp=1; nu2._immuneRound=S.round;
+          S.board[r][i]=nu2; placed=true;
+        }
+      }}
+      log('技能',`【${card.name}】：【${c.name}】以 1 生命复活并本回合免疫伤害`,'heal');
+      applied=true;
+    }
+  }
+  // 以神之名：本回合无视守卫 + 伤害视为光属性
+  if(/本回合内，?你所有单位的攻击无视守卫/.test(t)){
+    sd._ignoreGuardRound=S.round; sd._lightRound=S.round;
+    log('技能',`【${card.name}】：本回合无视守卫，伤害视为光属性`,'sys');
+    applied=true;
+  }
+  // 迦太基的诅咒：攻击或生命变为 1，持续两回合
+  if(/其攻击或生命变为1，?持续两回合/.test(t) && tgt){
+    if(tgt.atk>=tgt.hp){ applyDebuff(tgt,'atk',-(tgt.atk-1),side,card.name,2); }
+    else { const dh=tgt.maxHp-1; tgt.hp=Math.min(tgt.hp,1); tgt.maxHp=1; tgt._curseHp={until:side,rounds:2,restore:dh}; }
+    log('技能',`【${card.name}】：【${tgt.name}】被诅咒（两回合）`,'sys');
+    applied=true;
+  }
+  // 罗马大道急行军：所有单位 +2 移动力
+  if(/本回合内?，?你所有单位\+2移动力/.test(t)){
+    for(const r of ROWS) for(const x of S.board[r]) if(x&&x.owner===side&&x.type!=='建筑'){ x.move+=2; x.ap+=2; x.tempMods.push({atk:0,hp:0,dist:0,move:2}); }
+    log('技能',`【${card.name}】：所有单位本回合 +2 移动力`,'sys');
+    applied=true;
+  }
+  // 最终议和：消灭所有单位，核心受费用总和一半伤害
+  if(/消灭场上所有单位/.test(t)){
+    const sum={player:0,enemy:0};
+    for(const r of ROWS) for(let i=0;i<COLS;i++){
+      const u=S.board[r][i];
+      if(u){ sum[u.owner]+=u.card.cost||0; killUnit(r,i); }
+    }
+    S.sides.player.core-=Math.floor(sum.player/2); S.sides.player._coreHurtRound=S.round;
+    S.sides.enemy.core-=Math.floor(sum.enemy/2); S.sides.enemy._coreHurtRound=S.round;
+    log('技能',`【${card.name}】：所有单位被消灭，双方核心承受费用总和一半的伤害`,'dmg');
+    applied=true;
+  }
+  // 神谴：消灭攻击≥5的单位
+  if(/消灭场上所有攻击≥5的单位/.test(t)){
+    for(const r of ROWS) for(let i=0;i<COLS;i++){ const u=S.board[r][i]; if(u&&u.atk>=5) killUnit(r,i); }
+    log('技能',`【${card.name}】：消灭了所有攻击≥5的单位`,'dmg');
+    applied=true;
+  }
+  // 巨石滚落：摧毁所有远程单位
+  if(/摧毁场上所有远程单位/.test(t)){
+    for(const r of ROWS) for(let i=0;i<COLS;i++){ const u=S.board[r][i]; if(u&&u.range==='远') killUnit(r,i); }
+    log('技能',`【${card.name}】：所有远程单位被摧毁`,'dmg');
+    applied=true;
+  }
   // 群体伤害（如「沙暴」：对敌方所有非土属性单位造成1点伤害，并使其获得削弱）
   const aoe = t.match(/对敌方所有(?:非(\S)属性)?单位造成(\d+)点伤害/);
   if(aoe){
@@ -2098,7 +2414,7 @@ function aiMain(){
     } else {
       const need = skillNeedsTarget(card);
       if(need==='enemy'){
-        const tg=[]; for(const row of ROWS) S.board[row].forEach((u,i)=>{if(u&&u.owner==='player'&&!u.stealthed)tg.push([row,i]);});
+        const tg=[]; for(const row of ROWS) S.board[row].forEach((u,i)=>{if(u&&u.owner==='player'&&!u.stealthed&&skillTargetable('enemy',u))tg.push([row,i]);});
         if(!tg.length) break;
         const [r,c]=tg[Math.floor(Math.random()*tg.length)]; castSkill('enemy',card,r,c);
       } else if(need==='friendly'){
@@ -2183,7 +2499,7 @@ function doSlotClick(side,row,col){
       if(u && u.owner===side){ applyEquip(side,card,row,col); S.sel=null; render(); }
     } else {
       const need = skillNeedsTarget(card);
-      if(need==='enemy' && u && u.owner!==side && !u.stealthed){ castSkill(side,card,row,col); S.sel=null; render(); }
+      if(need==='enemy' && u && u.owner!==side && !u.stealthed && skillTargetable(side,u)){ castSkill(side,card,row,col); S.sel=null; render(); }
       else if(need==='friendly' && u && u.owner===side){ castSkill(side,card,row,col); S.sel=null; render(); }
       else if(need==='friendlyKill' && u && u.owner===side && u.type!=='英雄'){ castSkill(side,card,row,col); S.sel=null; render(); }
       else if(need==='enemyBuilding' && u && u.owner!==side && u.type==='建筑'){ castSkill(side,card,row,col); S.sel=null; render(); }
@@ -2223,11 +2539,18 @@ function doSlotClick(side,row,col){
 }
 function moveTargets(u,row,col){
   if(!u || u.ap<1 || (u.hasAttacked && !u.kw.游击) || u.type==='建筑') return [];
+  // 稻草人：相邻战线有敌方单位时无法移动
+  if(/相邻战线有敌方单位时无法移动/.test(u.card.effect||'')){
+    const hasFoe=adjRows(row).some(ar=>S.board[ar].some(x=>x&&x.owner!==u.owner));
+    if(hasFoe) return [];
+  }
   const path = PATH[u.owner];
   const i = path.indexOf(row);
   if(i<0) return [];
+  // 固执盾卫：无法后退
+  const dirs = /无法后退/.test(u.card.effect||'') ? [i+1] : [i-1,i+1];
   const out=[];
-  [i-1,i+1].forEach(j=>{
+  dirs.forEach(j=>{
     if(j<0||j>=path.length) return;
     const r = path[j];
     if(r==='front' && S.board.front.some(x=>x&&x.owner!==u.owner)) return;  // 前线独占
@@ -2240,10 +2563,15 @@ function moveTargets(u,row,col){
   return out;
 }
 function attackTargets(u,row){
-  if(!u || u.ap<1 || u.atk<=0) return [];
+  if(!u || u.ap<1 || u.atk<=0 || u._noMoreAtk || u._noAtkTurn) return [];
   const out=[];
+  const noLight=/无法攻击光属性单位/.test(u.card.effect||'');    // 狂热信徒
+  const noAdj=/仅可攻击非相邻战线/.test(u.card.effect||'');      // 胆小鬼
   for(const r of ROWS) S.board[r].forEach((d,i)=>{
-    if(d && d.owner!==u.owner && rowDist(row,r)<=u.dist && canTargetUnit(u,d)) out.push([r,i]);
+    if(!d || d.owner===u.owner) return;
+    if(noLight && d.attr==='光') return;
+    if(noAdj && rowDist(row,r)<=1) return;
+    if(rowDist(row,r)<=u.dist && canTargetUnit(u,d)) out.push([r,i]);
   });
   return out;
 }
@@ -2408,7 +2736,7 @@ function render(){
       if(selH && selH.type==='技能'){
         const nd=skillNeedsTarget(selH);
         if(nd==='row') slot.classList.add('hl-atk');
-        else if(u && ((nd==='enemy'&&u.owner!==ME&&!u.stealthed)||(nd==='friendly'&&u.owner===ME)||(nd==='friendlyKill'&&u.owner===ME&&u.type!=='英雄')||(nd==='enemyBuilding'&&u.owner!==ME&&u.type==='建筑')||(nd==='friendlyBuilding'&&u.owner===ME&&u.type==='建筑'))) slot.classList.add('hl-atk');
+        else if(u && ((nd==='enemy'&&u.owner!==ME&&!u.stealthed&&skillTargetable(ME,u))||(nd==='friendly'&&u.owner===ME)||(nd==='friendlyKill'&&u.owner===ME&&u.type!=='英雄')||(nd==='enemyBuilding'&&u.owner!==ME&&u.type==='建筑')||(nd==='friendlyBuilding'&&u.owner===ME&&u.type==='建筑'))) slot.classList.add('hl-atk');
       }
       if(selU && !u && mvT.some(([r,c])=>r===row&&c===i)) slot.classList.add('hl');
       if(selU && u && atT.some(([r,c])=>r===row&&c===i)) slot.classList.add('hl-atk');
