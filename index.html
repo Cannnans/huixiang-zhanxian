@@ -138,6 +138,12 @@ button{font-family:inherit;cursor:pointer}
 #hint{position:fixed;left:50%;bottom:8px;transform:translateX(-50%);z-index:200;background:rgba(20,26,40,.95);
   border:1px solid var(--gold);border-radius:8px;padding:7px 18px;font-size:13.5px;color:var(--gold);
   opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw;text-align:center}
+#ability-bar{position:fixed;left:50%;bottom:126px;transform:translateX(-50%);display:none;gap:8px;align-items:center;
+  z-index:65;background:rgba(20,26,40,.95);border:1px solid var(--purple);border-radius:10px;padding:7px 12px}
+.ab-btn{padding:7px 14px;font-size:13px;border:none;border-radius:7px;font-weight:700;
+  background:linear-gradient(135deg,#7a5a9e,#a97fe0);color:#160a24}
+.ab-btn:disabled{filter:grayscale(.9);opacity:.45;cursor:not-allowed}
+.ab-tip{font-size:11px;color:var(--dim)}
 #reward-line{font-size:17px;color:var(--gold);font-weight:700}
 
 /* ---------- 教程条 ---------- */
@@ -270,6 +276,7 @@ button{font-family:inherit;cursor:pointer}
   #detail-box h2{font-size:18px}
   #detail-box .eff{font-size:12px;padding:8px 10px}
   #tut-bar{bottom:96px;padding:10px 14px}
+  #ability-bar{bottom:96px;max-width:94vw;flex-wrap:wrap;justify-content:center}
   #tut-bar .tt{font-size:12.5px;line-height:1.6}
   #phase-tip{font-size:22px;letter-spacing:5px}
   #hint{font-size:12px;padding:5px 12px}
@@ -343,7 +350,7 @@ button{font-family:inherit;cursor:pointer}
 <!-- 联机对战 -->
 <div class="screen" id="online-screen" style="display:none">
   <h1 style="font-size:30px">联 机 对 战</h1>
-  <div class="sub">通过 6 位邀请码与好友对战 · 双方使用各自设计的卡包</div>
+  <div class="sub">通过 6 位邀请码与好友对战 · 双方使用各自设计的卡包<br>胜利 +200 金币 · 两连胜起 ×1.2 递增</div>
   <div class="dialog-box" style="border-color:var(--line);min-width:400px">
     <div id="online-create-row"><button class="menu-btn primary" id="btn-create-room" style="width:240px">创 建 房 间</button></div>
     <div id="room-code-box" style="display:none;text-align:center">
@@ -517,6 +524,7 @@ button{font-family:inherit;cursor:pointer}
   </div>
 </div>
 <div id="phase-tip"></div>
+<div id="ability-bar"></div>
 <div id="hint"></div>
 
 <script>
@@ -585,6 +593,7 @@ const MECH_GLOSSARY = [
   ['警戒','本单位相邻战线有敌方单位进入时，抽一张卡。'],
   ['游击','本单位攻击后可移动。'],
   ['重甲（X）','本单位受到攻击时，受到伤害≤1，溢出部分免除，并失去一层重甲。'],
+  ['主动技能','带有「（主动，消耗XRP）」字样的卡牌部署后，左键选中该单位，屏幕下方会出现技能按钮，点击并选择目标即可发动；大多数主动技能每回合限一次。建筑不能移动和攻击，但可以正常使用主动技能。'],
   ['属性克制','金→木→土→水→火→金循环克制，光暗互克；克制时攻击效果+2。无属性不参与克制。'],
   ['战线规则','双方各有后场与二线，中央为前线。单位从己方后场部署，可沿直线或斜向移动；一方进入前线后另一方不可进入；任何单位不可进入对方后场。摧毁位于敌方后场中央的核心的牌手获胜。'],
 ];
@@ -738,6 +747,7 @@ function execAct(side, data){
   if(fn==='slot') doSlotClick(side, args[0], args[1]);
   else if(fn==='hand') doHandClick(side, args[0]);
   else if(fn==='core') doCoreClick(side, args[0]);
+  else if(fn==='ability') doAbility(side, args[0], args[1], args[2], args[3], args[4]);
   else if(fn==='end') doEndTurn(side);
 }
 function receiveState(data){
@@ -807,6 +817,32 @@ function parseMods(text){
 }
 const restrain = (a,d)=> a!=='无' && d!=='无' && (ATTR_BEATS[a]===d || (a==='光'&&d==='暗') || (a==='暗'&&d==='光'));
 
+/* ================= 主动技能解析 ================= */
+function abilityTarget(text){
+  if(/指定一个相邻友方(部队|单位)/.test(text)) return 'friendlyAdjacent';
+  if(/指定[一个名]*(?:敌方|对手)/.test(text)) return 'enemy';
+  if(/指定[一个名]*友方/.test(text)) return 'friendly';
+  if(/指定一个战线|选择一条战线|对一条战线/.test(text)) return 'row';
+  return 'none';
+}
+function parseActives(effect){
+  const out=[];
+  if(!effect) return out;
+  const re=/【([^】]+)】[：:，,]?\s*[（(]?主动[，,：:]\s*消耗(\d+)\s*RP[)）]?[：:，,]?([^【]*)/g;
+  let m;
+  while((m=re.exec(effect))){
+    let text=(m[3]||'').trim();
+    let limit=null;
+    if(/每三回合/.test(text)) limit='three';
+    else if(/每局/.test(text)) limit='game';
+    else if(/每回合限/.test(text)) limit='turn';
+    text=text.replace(/每(回合|局|三回合)限[^。.]*[。.]?/g,'').replace(/[\/\s]+$/,'').trim();
+    if(!text) continue;
+    out.push({name:m[1], cost:+m[2], text, limit, target:abilityTarget(text)});
+  }
+  return out;
+}
+
 /* ================= 初始化 ================= */
 function buildAIDeck(packKey){
   const cards = CARD_DATA[packKey];
@@ -870,6 +906,7 @@ function startTurn(side){
   tickBurn(side);        // 燃烧在持有者的每个回合开始结算
   for(const row of ROWS) for(const u of S.board[row]) if(u && u.owner===side){
     u.ap = u.move; u.hasAttacked = false; u._combo2 = false;
+    if(u._actState) for(const k in u._actState) u._actState[k].turn=false;   // 主动技能的「每回合限一次」重置
     // 伪装：上回合未行动则本回合不可被攻击
     u.stealthed = !!u.kw.伪装 && !u.acted;
     u.acted = false;
@@ -892,6 +929,8 @@ function endTurn(){
       u.tempMods = [];
       if(u.hp<=0){ killUnit(row,i); continue; }
     }
+    if(u && u.tempKws && u.tempKws.length){ u.tempKws.forEach(k=>delete u.kw[k]); u.tempKws=[]; }
+    if(u) u.tempBleed=false;
   }
   if(side==='enemy') S.round++;
   log('系统',`${S.sides[side].name}回合结束`,'sys');
@@ -917,6 +956,7 @@ function mkUnit(card, owner){
     atk:card.atk||0, hp:card.hp||0, maxHp:card.hp||0, move:card.move??0, dist:Math.min(card.dist||1,2),
     kw, tags, ap:0, hasAttacked:false, acted:false, justDeployed:true, tempMods:[], equips:[],
     buffs:[], debuffs:[], burn:0,
+    actives:parseActives(card.effect), _actState:{}, tempKws:[], tempBleed:false,
     stealthed:!!kw.伪装, _combo2:false, _revived:false};
   if(kw.闪击) u.ap = u.move;
   if(u.type==='建筑') u.ap = 0;
@@ -1013,7 +1053,9 @@ function dispelBuffs(u, srcName){
   for(const b of (u.buffs||[])){
     u.atk-=b.atk; u.maxHp-=b.hp; u.hp=Math.min(u.hp,u.maxHp);
     u.dist=Math.max(1,u.dist-(b.dist||0)); u.move=Math.max(0,u.move-(b.move||0)); u.ap=Math.min(u.ap,u.move);
-    (b.kw||[]).forEach(k=>delete u.kw[k]); n++;
+    (b.kw||[]).forEach(k=>delete u.kw[k]);
+    (b.actives||[]).forEach(nm=>{ const i=(u.actives||[]).findIndex(a=>a.name===nm); if(i>=0) u.actives.splice(i,1); });
+    n++;
   }
   u.buffs=[]; u.equips=[];
   const keep=[];
@@ -1028,6 +1070,209 @@ function cleanse(u, srcName){
   for(const d of (u.debuffs||[])){ if(d.move) u.move+=d.move; if(d.atk) u.atk+=d.atk; }
   u.debuffs=[]; u.burn=0;
   if(n) log('效果',`【${srcName}】净化：移除【${u.name}】的负面效果`,'sys');
+}
+
+/* ================= 主动技能 ================= */
+function canUseAbility(u, ab){
+  u._actState = u._actState||{};
+  const st=u._actState[ab.name]||{};
+  if(ab.limit==='turn' && st.turn) return false;
+  if(ab.limit==='game' && st.game) return false;
+  if(ab.limit==='three' && st.lastRound!=null && S.round < st.lastRound+3) return false;
+  return true;
+}
+function abilityTargets(u, row, col, ab){
+  const out=[];
+  if(ab.target==='enemy' || ab.target==='friendly'){
+    for(const r of ROWS) S.board[r].forEach((x,i)=>{
+      if(!x) return;
+      if(ab.target==='enemy' && x.owner!==u.owner) out.push([r,i]);
+      if(ab.target==='friendly' && x.owner===u.owner) out.push([r,i]);
+    });
+  } else if(ab.target==='friendlyAdjacent'){
+    for(const dc of [-1,1]){
+      const c=col+dc; if(c<0||c>=COLS) continue;
+      const x=S.board[row][c];
+      if(x && x.owner===u.owner && x.type==='部队') out.push([row,c]);
+    }
+  } else if(ab.target==='row'){
+    for(const r of ROWS) for(let i=0;i<COLS;i++){
+      if((r==='enemyBase'||r==='playerBase') && i===CORE_COL) continue;
+      out.push([r,i]);
+    }
+  }
+  return out;
+}
+function spawnAdjacent(side, row, col, cardObj){
+  for(const dc of [-1,1]){
+    const c=col+dc; if(c<0||c>=COLS) continue;
+    if(row===BASE_ROW[side] && c===CORE_COL) continue;
+    if(!S.board[row][c]){
+      S.board[row][c]=mkUnit({...cardObj}, side);
+      log('效果',`【${cardObj.name}】被召唤至${rowName(row)}${c+1}号位`,'sys');
+      return true;
+    }
+  }
+  log('效果','相邻站位已满，召唤失败','sys');
+  return false;
+}
+function drawFiltered(side, pred, desc){
+  const sd=S.sides[side];
+  if(!sd.deck.length && sd.discard.length){ sd.deck=shuffle(sd.discard.splice(0)); log('系统',sd.name+'重置出战牌组','sys'); }
+  const i=sd.deck.findIndex(pred);
+  if(i<0){ log('技能','牌库中没有符合条件的牌（'+desc+'）','sys'); return; }
+  sd.hand.push(sd.deck.splice(i,1)[0]);
+  log('技能',desc+'：加入手牌','sys');
+}
+function executeAbility(side, fr, fc, ab, tRow, tCol){
+  const sd=S.sides[side], u=S.board[fr][fc];
+  if(!u || sd.rp<ab.cost || !canUseAbility(u,ab)) return false;
+  sd.rp-=ab.cost;
+  const st=u._actState[ab.name]||(u._actState[ab.name]={});
+  if(ab.limit==='turn') st.turn=true;
+  if(ab.limit==='game') st.game=true;
+  if(ab.limit==='three') st.lastRound=S.round;
+  applyAbilityEffect(side, u, ab, tRow, tCol);
+  checkGameOver();
+  return true;
+}
+function applyAbilityEffect(side, u, ab, tRow, tCol){
+  const t=ab.text, foe=side==='player'?'enemy':'player';
+  const sd=S.sides[side];
+  const tgt=(tRow!=null && tCol!=null && tCol>=0) ? S.board[tRow][tCol] : null;
+  log('技能',`【${u.name}】发动【${ab.name}】（消耗 ${ab.cost} RP）`,'sys');
+  // —— 战线类 ——
+  if(ab.target==='row' && tRow){
+    const dm=t.match(/所有单位造成(\d+)点/);
+    if(dm){
+      const victims=[];
+      S.board[tRow].forEach((x,i)=>{ if(x) victims.push(i); });
+      victims.forEach(i=>{
+        const x=S.board[tRow][i]; if(!x) return;
+        let dmg=+dm[1];
+        if(x.kw.armor>0){ dmg=Math.min(dmg,1); x.kw.armor--; if(x.kw.armor<=0) delete x.kw.armor; }
+        x.hp-=dmg;
+        log('技能',`【${ab.name}】对【${x.name}】造成 ${dmg} 点伤害`,'dmg');
+        if(x.hp<=0) killUnit(tRow,i);
+      });
+      return;
+    }
+    if(/本回合无法攻击/.test(t)){
+      let n=0;
+      S.board[tRow].forEach(x=>{ if(x && x.owner!==side){ applyDebuff(x,'atk','zero',side,ab.name); n++; } });
+      log('技能',`【${ab.name}】：${rowName(tRow)}的 ${n} 个敌方单位本回合无法攻击`,'sys');
+      return;
+    }
+    const buffM=t.match(/本回合\+(\d+)攻击/);
+    if(buffM){
+      let n=0;
+      S.board[tRow].forEach(x=>{
+        if(x && x.owner===side){
+          x.atk+=+buffM[1]; x.tempMods.push({atk:+buffM[1],hp:0,dist:0,move:0}); n++;
+          if(/获得闪击/.test(t) && !x.kw.闪击){ x.kw.闪击=true; x.tempKws.push('闪击'); }
+        }
+      });
+      log('技能',`【${ab.name}】：${rowName(tRow)}的 ${n} 个友方单位本回合 +${buffM[1]} 攻击`,'sys');
+      return;
+    }
+  }
+  // —— 单体目标类 ——
+  if(tgt){
+    const dm=t.match(/造成(\d+)(?:\s*~\s*(\d+))?点(?:随机)?伤害/);
+    if(dm){
+      let dmg=dm[2] ? (+dm[1])+Math.floor(Math.random()*(+dm[2]-+dm[1]+1)) : +dm[1];
+      if(tgt.kw.armor>0){ dmg=Math.min(dmg,1); tgt.kw.armor--; if(tgt.kw.armor<=0) delete tgt.kw.armor; }
+      tgt.hp-=dmg;
+      log('技能',`【${ab.name}】对【${tgt.name}】造成 ${dmg} 点伤害`,'dmg');
+      if(/获得削弱/.test(t) && tgt.hp>0) applyDebuff(tgt,'atk',-1,side,ab.name);
+      if(tgt.hp<=0) killUnit(tRow,tCol);
+      return;
+    }
+    const permAtk=t.match(/永久获得\+(\d+)攻击/);
+    if(permAtk){
+      tgt.atk+=+permAtk[1]; tgt.buffs.push({atk:+permAtk[1],hp:0,dist:0,move:0,kw:[]});
+      log('技能',`【${ab.name}】：【${tgt.name}】永久 +${permAtk[1]} 攻击`,'heal');
+      return;
+    }
+    const decAtk=t.match(/本回合-(\d+)攻击/);
+    if(decAtk){ applyDebuff(tgt,'atk',-(+decAtk[1]),side,ab.name); return; }
+    const tempAtk=t.match(/本回合\+(\d+)攻击/);
+    if(tempAtk){
+      tgt.atk+=+tempAtk[1]; tgt.tempMods.push({atk:+tempAtk[1],hp:0,dist:0,move:0});
+      log('技能',`【${ab.name}】：【${tgt.name}】本回合 +${tempAtk[1]} 攻击`,'sys');
+      return;
+    }
+    const hpM=t.match(/\+(\d+)生命/);
+    if(hpM){
+      tgt.hp+=+hpM[1]; tgt.maxHp+=+hpM[1]; tgt.buffs.push({atk:0,hp:+hpM[1],dist:0,move:0,kw:[]});
+      log('技能',`【${ab.name}】：【${tgt.name}】+${hpM[1]} 生命`,'heal');
+      return;
+    }
+    if(/本回合获得连击/.test(t)){
+      if(!tgt.kw.连击){ tgt.kw.连击=true; tgt.tempKws.push('连击'); }
+      if(/每次攻击后受到1点伤害/.test(t)) tgt.tempBleed=true;
+      log('技能',`【${ab.name}】：【${tgt.name}】本回合获得连击`,'sys');
+      return;
+    }
+  }
+  // —— 召唤类 ——
+  const sumRnd=t.match(/相邻站位随机部署(.+?)中的一个/);
+  if(sumRnd){
+    const names=sumRnd[1].split(/[、,，]/).map(s=>s.trim());
+    const pool=names.map(n=>Object.values(CARD_DB).find(c=>c.name===n)).filter(Boolean);
+    if(pool.length) spawnAdjacent(side, ...unitPos(u), pool[Math.floor(Math.random()*pool.length)]);
+    return;
+  }
+  const sumNamed=t.match(/召唤一个(\S+?)在/);
+  if(sumNamed){
+    const c=Object.values(CARD_DB).find(c=>c.name===sumNamed[1]);
+    if(c) spawnAdjacent(side, ...unitPos(u), c);
+    return;
+  }
+  // —— 抽牌 / 牌库类 ——
+  if(/翻三张牌/.test(t)){
+    const top=sd.deck.splice(-3);
+    const pick=top.find(c=>c.type==='技能');
+    if(pick){ sd.hand.push(pick); top.splice(top.indexOf(pick),1); log('技能',`【${ab.name}】：翻到【${pick.name}】加入手牌`,'sys'); }
+    else log('技能',`【${ab.name}】：三张中没有技能卡`,'sys');
+    top.forEach(c=>sd.discard.push(c));
+    return;
+  }
+  if(/查看牌库顶三张牌/.test(t)){
+    const top=sd.deck.splice(-3);
+    if(top.length){
+      sd.hand.push(top[0]);
+      top.slice(1).forEach(c=>sd.deck.unshift(c));
+      shuffle(sd.deck);
+      log('技能',`【${ab.name}】：将【${top[0].name}】加入手牌，其余洗回牌库`,'sys');
+    }
+    return;
+  }
+  if(/窥视对手的一?张手牌/.test(t)){
+    const fh=S.sides[foe].hand;
+    if(fh.length){ const c=fh[Math.floor(Math.random()*fh.length)]; log('技能',`【${ab.name}】：窥视到对手手牌【${c.name}】`,'sys'); }
+    else log('技能',`【${ab.name}】：对手没有手牌`,'sys');
+    return;
+  }
+  if(/指定一张牌弃置/.test(t)){
+    drawCards(side,1);
+    if(sd.hand.length){
+      const i=Math.floor(Math.random()*sd.hand.length);
+      const c=sd.hand.splice(i,1)[0]; sd.discard.push(c);
+      log('技能',`【${ab.name}】：抽一张牌，弃置【${c.name}】`,'sys');
+    }
+    return;
+  }
+  const drF=t.match(/抽一张(古埃及|埃及|罗马)?(金|木|水|火|土|光|暗)?(?:属性)?(装备|技能|部队|英雄)?[牌卡]/);
+  if(drF){
+    drawFiltered(side, c=>
+      (!drF[1] || (c.pack||'').includes(drF[1]==='埃及'?'古埃及':drF[1])) &&
+      (!drF[2] || c.attr===drF[2]) &&
+      (!drF[3] || c.type===drF[3]),
+      `【${ab.name}】抽${drF[1]||''}${drF[2]||''}${drF[3]||''}牌`);
+    return;
+  }
+  log('技能',`【${ab.name}】的效果「${t}」将于后续版本实装`,'sys');
 }
 
 function attack(fr, fc, tr, tc){
@@ -1095,6 +1340,12 @@ function afterAttack(att, fr, fc){
     att._combo2 = true; att.ap += 1;
     log('效果',`【${att.name}】连击：可进行第二次攻击（伤害减半）`,'sys');
   }
+  // 调色板反噬：本回合每次攻击后受到 1 点伤害
+  if(att.tempBleed && S.board[fr] && S.board[fr][fc]===att){
+    att.hp-=1;
+    log('效果',`【${att.name}】受到调色板反噬：-1 生命`,'dmg');
+    if(att.hp<=0) killUnit(fr,fc);
+  }
 }
 function killUnit(row,col){
   const u = S.board[row][col]; if(!u) return;
@@ -1134,13 +1385,25 @@ function checkGameOver(){
   }
 }
 
-/* 联机/通用结算弹窗：按本端视角显示胜负 */
+/* 联机/通用结算弹窗：按本端视角显示胜负；联机胜利 +200 金币，两连胜起 ×1.2 递增 */
 function showGameOver(kind){
   const mine=S.sides[CTRL].core, theirs=S.sides[CTRL==='player'?'enemy':'player'].core;
   const title = kind==='leave' ? '对手离场'
     : (mine<=0&&theirs<=0 ? '两 败 俱 伤' : (theirs<=0 ? '胜 利' : '战 败'));
+  let rewardText='';
+  if(kind==='leave') rewardText='对方已离开房间，对局结束';
+  else if(NET.mode){
+    if(mine<=0 && theirs<=0){ PROFILE.streak=0; rewardText='两败俱伤，连胜中断'; }
+    else if(theirs<=0){
+      PROFILE.streak++;
+      const reward=Math.round(200*Math.pow(1.2, PROFILE.streak-1));   // 两连胜起 ×1.2 递增
+      PROFILE.gold+=reward;
+      rewardText=`胜利奖励 +${reward} 金币`+(PROFILE.streak>=2?`（当前 ${PROFILE.streak} 连胜）`:'');
+    } else { PROFILE.streak=0; rewardText='连胜中断，再接再厉'; }
+    saveProfile();
+  }
   document.getElementById('gameover-title').textContent = title;
-  document.getElementById('reward-line').textContent = kind==='leave' ? '对方已离开房间，对局结束' : '联机对局 · 无金币奖励';
+  document.getElementById('reward-line').textContent = rewardText;
   document.getElementById('btn-again').style.display='none';
   show('gameover-overlay');
 }
@@ -1164,7 +1427,14 @@ function applyEquip(side, card, row, col){
   });
   const newKw = Object.keys(granted).filter(k=>!u.kw[k]);   // 仅记录新增的词条，驱散时可安全移除
   Object.assign(u.kw, granted);
-  u.buffs.push({atk:m.temp?0:m.atk, hp:m.temp?0:m.hp, dist:m.temp?0:m.dist, move:m.temp?0:m.move, kw:newKw});
+  const buffRec={atk:m.temp?0:m.atk, hp:m.temp?0:m.hp, dist:m.temp?0:m.dist, move:m.temp?0:m.move, kw:newKw};
+  const eqActives=parseActives(card.effect);   // 装备授予的主动技能（如莎草纸卷轴）
+  if(eqActives.length){
+    u.actives=u.actives||[];
+    u.actives.push(...eqActives);
+    buffRec.actives=eqActives.map(a=>a.name);
+  }
+  u.buffs.push(buffRec);
   if(u.kw.伪装 && !u.acted) u.stealthed = true;
   log(sd.name,`【${card.name}】装备给【${u.name}】（${card.effect}）`);
   sd.discard.push(card);
@@ -1317,6 +1587,18 @@ function doSlotClick(side,row,col){
     }
     return;
   }
+  if(S.sel && S.sel.kind==='ability'){
+    const {row:fr,col:fc,abIdx}=S.sel;
+    const au=S.board[fr][fc], ab=au&&(au.actives||[])[abIdx];
+    if(au && ab){
+      const legal=abilityTargets(au,fr,fc,ab).some(([r,c])=>r===row&&(ab.target==='row'||c===col));
+      if(legal){
+        if(NET.mode==='guest'){ try{NET.sendAct({fn:'ability',args:[fr,fc,abIdx,row,col]});}catch(e){} }
+        else doAbility(side,fr,fc,abIdx,row,col);
+      }
+    }
+    S.sel=null; render(); return;
+  }
   if(S.sel && S.sel.kind==='unit'){
     const {row:fr,col:fc}=S.sel;
     const att=S.board[fr][fc];
@@ -1327,7 +1609,8 @@ function doSlotClick(side,row,col){
     S.sel=null; render(); return;
   }
   if(u && u.owner===side){
-    if(u.ap>0){ S.sel={kind:'unit',row,col}; render(); }
+    const hasUsableAb=(u.actives||[]).length>0;
+    if(u.ap>0 || hasUsableAb){ S.sel={kind:'unit',row,col}; render(); }
     else hint('「'+u.name+'」本回合已无法行动（右键/长按查看详情）');
     return;
   }
@@ -1403,6 +1686,35 @@ function playerEndTurn(){
   if(S.busy) return;
   doEndTurn(CTRL);
 }
+function onAbilityClick(abIdx){
+  if(!S || S.over || S.active!==CTRL) return;
+  if(!(S.sel && (S.sel.kind==='unit'||S.sel.kind==='ability'))) return;
+  const {row,col}=S.sel;
+  const u=S.board[row][col];
+  if(!u || u.owner!==CTRL) return;
+  const ab=(u.actives||[])[abIdx]; if(!ab) return;
+  if(!canUseAbility(u,ab)){ hint('「'+ab.name+'」暂时无法再次发动'); return; }
+  if(S.sides[CTRL].rp<ab.cost){ hint('共鸣点不足：需要 '+ab.cost+' RP'); return; }
+  if(ab.target==='none'){
+    if(NET.mode==='guest'){ try{NET.sendAct({fn:'ability',args:[row,col,abIdx,null,null]});}catch(e){} }
+    else doAbility(CTRL,row,col,abIdx,null,null);
+    S.sel=null; render(); return;
+  }
+  S.sel={kind:'ability',row,col,abIdx};
+  hint('选择【'+ab.name+'】的目标');
+  render();
+}
+function doAbility(side,fr,fc,abIdx,tRow,tCol){
+  if(S.active!==side || S.over) return;
+  const u=S.board[fr][fc]; if(!u || u.owner!==side) return;
+  const ab=(u.actives||[])[abIdx]; if(!ab) return;
+  if(ab.target!=='none'){
+    const legal=abilityTargets(u,fr,fc,ab).some(([r,c])=>r===tRow&&(ab.target==='row'||c===tCol));
+    if(!legal) return;
+  }
+  executeAbility(side,fr,fc,ab,tRow,tCol);
+  S.sel=null; render();
+}
 function doEndTurn(side){
   if(S.active!==side || S.over || S._ending) return;
   S._ending=true; S.busy=true; S.sel=null; render();
@@ -1455,6 +1767,10 @@ function render(){
   const mvT = selU ? moveTargets(selU,S.sel.row,S.sel.col) : [];
   const atT = selU ? attackTargets(selU,S.sel.row) : [];
   const selH = S.sel&&S.sel.kind==='hand' ? S.sel.card : null;
+  const selAb = S.sel&&S.sel.kind==='ability' ? S.sel : null;
+  const selAbU = selAb ? S.board[selAb.row][selAb.col] : null;
+  const selAbAb = selAbU ? (selAbU.actives||[])[selAb.abIdx] : null;
+  const abT = selAbAb ? abilityTargets(selAbU,selAb.row,selAb.col,selAbAb) : [];
   const dispRows = ME==='enemy' ? ROWS.slice().reverse() : ROWS;
   for(const row of dispRows){
     const isBase = row==='enemyBase'||row==='playerBase';
@@ -1481,6 +1797,7 @@ function render(){
       if(selH && selH.type==='技能' && u && ((skillNeedsTarget(selH)==='enemy'&&u.owner!==ME&&!u.stealthed)||(skillNeedsTarget(selH)==='friendly'&&u.owner===ME))) slot.classList.add('hl-atk');
       if(selU && !u && mvT.some(([r,c])=>r===row&&c===i)) slot.classList.add('hl');
       if(selU && u && atT.some(([r,c])=>r===row&&c===i)) slot.classList.add('hl-atk');
+      if(selAb && abT.some(([r,c])=>r===row&&(selAbAb.target==='row'||c===i))) slot.classList.add('hl-atk');
       if(u){
         const cd=document.createElement('div');
         cd.className=`card t-${u.type}`+(u.ap<=0||u.hasAttacked?' exhausted':'')+(S.sel&&S.sel.kind==='unit'&&S.sel.row===row&&S.sel.col===i?' selected':'')+(selU&&atT.some(([r,c])=>r===row&&c===i)?' targetable':'');
@@ -1509,6 +1826,23 @@ function render(){
     w.appendChild(cd); hand.appendChild(w);
   });
   const logEl=document.getElementById('log'); logEl.scrollTop=logEl.scrollHeight;
+  // 主动技能栏：选中带技能的己方单位时显示
+  const abBar=document.getElementById('ability-bar');
+  abBar.innerHTML='';
+  const selUnit=(S.sel&&(S.sel.kind==='unit'||S.sel.kind==='ability')) ? S.board[S.sel.row][S.sel.col] : null;
+  if(selUnit && selUnit.owner===ME && (selUnit.actives||[]).length && S.active===ME && !S.over){
+    abBar.style.display='flex';
+    const tip=document.createElement('span'); tip.className='ab-tip'; tip.textContent='主动技能：'; abBar.appendChild(tip);
+    selUnit.actives.forEach((ab,ai)=>{
+      const b=document.createElement('button');
+      b.className='ab-btn';
+      b.disabled=!(canUseAbility(selUnit,ab) && S.sides[ME].rp>=ab.cost);
+      b.textContent=`${ab.name} · ${ab.cost}RP`;
+      b.title=ab.text;
+      b.onclick=()=>onAbilityClick(ai);
+      abBar.appendChild(b);
+    });
+  } else abBar.style.display='none';
   if(S && !S.tut && !S.over && !NET.mode) saveGame(SAVE_AUTO);
   // 联机房主：每次状态变化后同步给对手
   if(NET.mode==='host' && NET.peer && S && !S.tut){
@@ -1533,6 +1867,7 @@ function showDetail(card, u){
       ${card.dist!==undefined?row('攻击距离', card.dist):''}
       ${u&&(u.burn>0||(u.debuffs&&u.debuffs.length))?row('状态', [u.burn>0?`🔥 燃烧：每回合 -1 生命（剩 ${u.burn} 回合）`:'', u.debuffs&&u.debuffs.length?`⬇ 属性被削弱 ${u.debuffs.length} 项（届时自动复原）`:''].filter(Boolean).join('<br>')):''}
       ${row('词条', kwStr)}
+      ${u&&(u.actives||[]).length?row('主动技能', u.actives.map(a=>`【${a.name}】${a.cost}RP${a.limit==='turn'?'（每回合限一次）':a.limit==='game'?'（每局限一次）':a.limit==='three'?'（每三回合限一次）':''}`).join('<br>')):''}
       ${u&&u.equips.length?row('已装备', u.equips.join('、')):''}
     </table>
     <div class="eff">${card.effect||'（无效果）'}</div>`;
