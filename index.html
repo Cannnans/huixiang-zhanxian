@@ -149,6 +149,9 @@ button{font-family:inherit;cursor:pointer}
 #choice-body .ccards{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 #choice-body .ccards .card{cursor:pointer}
 #choice-body .cbtn{display:block;width:100%;margin-top:8px}
+#btn-gallery{position:fixed;top:6px;left:6px;z-index:85;width:34px;height:34px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);font-size:15px;display:none;align-items:center;justify-content:center;cursor:pointer}
+#btn-feedback{position:fixed;top:6px;right:6px;z-index:85;height:34px;padding:0 12px;border-radius:17px;background:var(--panel2);border:1px solid var(--line);color:var(--txt);font-size:13px;display:none;align-items:center;cursor:pointer}
+#feedback-text{width:100%;min-height:110px;background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;resize:vertical}
 #reward-line{font-size:17px;color:var(--gold);font-weight:700}
 
 /* ---------- 教程条 ---------- */
@@ -495,6 +498,19 @@ button{font-family:inherit;cursor:pointer}
     <div id="choice-body"></div>
   </div>
 </div>
+<!-- 对局 HUD：左上图鉴 / 右上反馈 -->
+<button id="btn-gallery" onclick="openGallery()" title="图鉴">📖</button>
+<button id="btn-feedback" onclick="openFeedback()" title="反馈 Bug">🐛 反馈</button>
+<!-- 反馈 -->
+<div class="overlay" id="feedback-overlay">
+  <div class="dialog-box">
+    <h2>🐛 反馈 Bug</h2>
+    <div style="font-size:12px;color:var(--dim);text-align:left">描述你遇到的问题，发送后会附带当前对局信息。</div>
+    <textarea id="feedback-text" rows="5" placeholder="例如：乌鸦战船击杀后没有弹出选择…"></textarea>
+    <button class="btn" onclick="sendFeedback()">发 送</button>
+    <button class="btn ghost" onclick="hide('feedback-overlay')">取 消</button>
+  </div>
+</div>
 <!-- 图鉴 -->
 <div class="overlay" id="gallery-overlay">
   <div class="wide-box">
@@ -683,6 +699,15 @@ async function netLoad(){
   return NET.lib;
 }
 function setOnlineStatus(t){ document.getElementById('online-status').textContent=t; }
+let _onlineTimer=null;
+function onlineStage(t, timeoutMs, timeoutMsg){
+  setOnlineStatus(t);
+  clearTimeout(_onlineTimer);
+  if(timeoutMs) _onlineTimer = setTimeout(()=>{
+    const el = document.getElementById('online-status');
+    if(el && el.textContent === t) setOnlineStatus(timeoutMsg);
+  }, timeoutMs);
+}
 function resetOnlineUI(){
   document.getElementById('online-create-row').style.display='';
   document.getElementById('room-code-box').style.display='none';
@@ -691,29 +716,31 @@ function leaveRoomSilent(){
   try{ NET.room && NET.room.leave(); }catch(e){}
   NET.mode=null; NET.room=null; NET.peer=null; NET.actPeer=null; NET.overShown=false;
 }
-function leaveLobby(){ leaveRoomSilent(); resetOnlineUI(); setOnlineStatus(''); }
+function leaveLobby(){ leaveRoomSilent(); resetOnlineUI(); clearTimeout(_onlineTimer); setOnlineStatus(''); }
 async function createRoom(){
   const errs = deckErrors(activeDeckKeys());
   if(errs.length){ hint('卡组未就绪：'+errs[0]+'，请先设计卡组'); return; }
-  setOnlineStatus('正在连接联机网络…');
-  try{ await netLoad(); }catch(e){ setOnlineStatus('联机模块加载失败，请检查网络后重试'); return; }
+  onlineStage('正在加载联机模块…');
+  try{ await netLoad(); }catch(e){ onlineStage('联机模块加载失败（网络受限或 CDN 不可达），请检查网络后重试'); return; }
   NET.mode='host'; NET.code=genCode();
+  onlineStage('正在连接服务器…', 8000, '连接服务器超时：可能是网络慢或境外中继被拦截');
   setupRoom(NET.code);
   document.getElementById('online-create-row').style.display='none';
   document.getElementById('room-code-box').style.display='block';
   document.getElementById('room-code').textContent = NET.code.split('').join(' ');
-  setOnlineStatus('房间已创建，等待对手加入…');
+  onlineStage('房间已创建，正在加入匹配…', 15000, '仍在匹配中：请确认好友能访问联机网络');
 }
 async function joinRoomByCode(){
   const errs = deckErrors(activeDeckKeys());
   if(errs.length){ hint('卡组未就绪：'+errs[0]+'，请先设计卡组'); return; }
   const code = document.getElementById('code-input').value.trim().toUpperCase();
   if(code.length!==6){ hint('请输入 6 位邀请码'); return; }
-  setOnlineStatus('正在连接联机网络…');
-  try{ await netLoad(); }catch(e){ setOnlineStatus('联机模块加载失败，请检查网络后重试'); return; }
+  onlineStage('正在加载联机模块…');
+  try{ await netLoad(); }catch(e){ onlineStage('联机模块加载失败（网络受限或 CDN 不可达），请检查网络后重试'); return; }
   NET.mode='guest'; NET.code=code; CTRL='enemy';
+  onlineStage('正在连接服务器…', 8000, '连接服务器超时：可能是网络慢或境外中继被拦截');
   setupRoom(code);
-  setOnlineStatus('正在寻找房间「'+code+'」…（长时间无响应请核对邀请码）');
+  onlineStage('正在加入匹配，寻找房间「'+code+'」…', 15000, '仍未找到房间：请核对邀请码或确认房主在线');
 }
 function setupRoom(code){
   NET.room = NET.lib.joinRoom({appId:'huixiang-zhanxian-v1', relayUrls:NET_RELAYS}, code);
@@ -724,10 +751,10 @@ function setupRoom(code){
   NET.room.onPeerJoin(id=>{
     if(NET.mode==='host'){
       if(NET.peer && NET.peer!==id){ try{NET.sendMsg({kind:'full'}, id);}catch(e){} return; }
-      setOnlineStatus('对手已连接，正在接收卡包…');
+      onlineStage('对手已连接，正在接收卡包…');
     } else if(NET.mode==='guest'){
       try{ NET.sendHello({deck:activeDeckKeys()}, id); }catch(e){}
-      setOnlineStatus('已连接房主，等待对局开始…');
+      onlineStage('已连接房主，等待对局开始…');
     }
   });
   NET.room.onPeerLeave(id=>{
@@ -2892,6 +2919,7 @@ function render(){
     try{ NET.sendState({...S, sel:null, busy:false}); }catch(e){}
   }
   renderChoices();
+  setGameHud(true);
 }
 
 /* ================= 详情弹窗 ================= */
@@ -3356,6 +3384,7 @@ function showScreen(id){
 }
 function backToMenu(){
   CHOICE_QUEUE=[];
+  setGameHud(false);
   if(NET.mode) leaveRoomSilent();
   CTRL='player';
   hide('gameover-overlay'); hide('ingame-menu'); hide('dice-overlay');
@@ -3438,6 +3467,30 @@ function renderChoices(){
     });
   }
   show('choice-overlay');
+}
+
+/* ================= 对局 HUD：图鉴 / 反馈 ================= */
+function openFeedback(){
+  show('feedback-overlay');
+}
+async function sendFeedback(){
+  const ta = document.getElementById('feedback-text');
+  const txt = ta.value.trim();
+  if(!txt){ hint('请先输入问题描述'); return; }
+  const meta = S ? `【对局】第${S.round}轮 · ${DIFF_NAME[(S.aiDifficulty||'normal')]} · 敌方 ${S.sides.enemy.pack}` : '【主界面】';
+  const body = `回响战线 Bug 反馈\n${meta}\n时间：${new Date().toLocaleString()}\n设备：${navigator.userAgent}\n---\n${txt}`;
+  // 本地兜底：无论云端是否可达，都存一份到浏览器本地
+  try{ const arr = JSON.parse(localStorage.getItem('hx_feedback')||'[]'); arr.push({t:Date.now(), body}); localStorage.setItem('hx_feedback', JSON.stringify(arr.slice(-50))); }catch(e){}
+  try{
+    const r = await fetch('https://ntfy.sh/huixiang-zhanxian-bug', { method:'POST', body, headers:{ 'Title':'回响战线 Bug 反馈' } });
+    if(r.ok){ ta.value=''; hide('feedback-overlay'); hint('反馈已发送，感谢！'); }
+    else hint('云端发送失败（HTTP '+r.status+'），已存本地');
+  }catch(e){ hint('云端不可达，已存本地'); }
+}
+function setGameHud(on){
+  const g=document.getElementById('btn-gallery'), f=document.getElementById('btn-feedback');
+  if(g) g.style.display = on ? 'flex' : 'none';
+  if(f) f.style.display = on ? 'flex' : 'none';
 }
 function phaseTip(t){
   const el=document.getElementById('phase-tip'); el.textContent=t; el.style.opacity=1;
